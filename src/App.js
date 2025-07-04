@@ -1,6 +1,9 @@
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import Navbar from './components/Navbar';
 import MainCard from './components/MainCard';
+import { BrowserRouter as Router, Routes, Route, Link} from "react-router-dom";
+import LoginPage from './pages/LoginPage';
+import SuccessPage from './pages/SuccessPage';
 
 const theme = createTheme({
   typography: {
@@ -11,9 +14,15 @@ const theme = createTheme({
 function App() {
   return (
     <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Navbar />
-      <MainCard />
+      <Router>
+        <CssBaseline />
+        <Navbar />
+        <Routes>
+          <Route path='/' element={<MainCard />} />
+          <Route path='/login' element={<LoginPage />}/>
+          <Route path='/success' element={<SuccessPage />} />
+        </Routes>
+      </Router>
     </ThemeProvider>
   );
 }
