@@ -40,22 +40,26 @@ function LoginPage() {
     navigate('/success')
   };
 
+    const handleSignupClick = () => {
+    navigate('/signup');
+  };
+
   return (
     <Box sx={{ display: 'flex', justifyContent: 'center', padding: 4 }}>
       <Card sx={{ maxWidth: 400, width: '100%' }}>
         <CardContent>
           <Typography variant="h4" gutterBottom>
-            SMU Faculty Login
+            Login
           </Typography>
           
           <Typography variant="body2" color="text.secondary" gutterBottom>
-            Use your SMU faculty email to access WanderWise
+            Use your SMU email to access WanderWise
           </Typography>
           
           <form onSubmit={handleSubmit}>
             <TextField
               fullWidth
-              label="SMU Faculty Email"
+              label="Enter here"
               type="email"
               value={email}
               onChange={handleEmailChange}
@@ -82,8 +86,20 @@ function LoginPage() {
               }}
               disabled={!isValidEmail}
             >
-              Continue with SMU Email
+              Sign In
             </Button>
+            <Box sx={{ mt: 2, textAlign: 'center' }}>
+                <Typography variant="body2" color="text.secondary">
+                    Don't have an account?{' '}
+                    <Button 
+                    variant="text" 
+                    onClick={handleSignupClick}
+                    sx={{ color: '#FF3F00' }}
+                    >
+                    Sign Up
+                    </Button>
+                </Typography>
+            </Box>
           </form>
         </CardContent>
       </Card>
