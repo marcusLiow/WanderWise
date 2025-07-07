@@ -1,19 +1,32 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useLocation } from 'react-router-dom';
 import './UniversityProfile.css';
 
 function UniversityProfile() {
+  const { universitySlug } = useParams();
+  const location = useLocation();
   const [universityData, setUniversityData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchUniversityData();
-  }, []);
+  }, [universitySlug]);
 
   const fetchUniversityData = async () => {
     try {
-      // need to change this (fetch from db)
-      const response = await fetch('/api/university/essec-business-school');
+      setLoading(true);
+      let url;
+      
+      // Check if we have universityId from search results
+      if (location.state?.universityId) {
+        url = `/api/university/${location.state.universityId}`;
+      } else {
+        // Fallback to slug-based lookup
+        url = `/api/university/slug/${universitySlug}`;
+      }
+      
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error('Failed to fetch university data');
       }
@@ -82,7 +95,7 @@ function UniversityProfile() {
 
           <div className="reviews-section">
             <h2>Featured Reviews</h2>
-            {universityData.reviews.map((review, index) => (
+            {universityData.reviews && universityData.reviews.map((review, index) => (
               <div key={index} className="review-card">
                 <div className="review-header">
                   <img src={review.avatar} alt="Reviewer" className="reviewer-avatar" />
@@ -111,19 +124,19 @@ function UniversityProfile() {
             <div className="expense-item">
               <span>Rent</span>
               <div className="expense-bar">
-                <div className="expense-fill" style={{ width: `${universityData.expenses.rent}%` }}></div>
+                <div className="expense-fill" style={{ width: `${universityData.expenses?.rent || 0}%` }}></div>
               </div>
             </div>
             <div className="expense-item">
               <span>Food & Groceries</span>
               <div className="expense-bar">
-                <div className="expense-fill" style={{ width: `${universityData.expenses.food}%` }}></div>
+                <div className="expense-fill" style={{ width: `${universityData.expenses?.food || 0}%` }}></div>
               </div>
             </div>
             <div className="expense-item">
               <span>Transport</span>
               <div className="expense-bar">
-                <div className="expense-fill" style={{ width: `${universityData.expenses.transport}%` }}></div>
+                <div className="expense-fill" style={{ width: `${universityData.expenses?.transport || 0}%` }}></div>
               </div>
             </div>
           </div>
@@ -131,7 +144,7 @@ function UniversityProfile() {
           <div className="photo-highlights">
             <h3>Photo Highlights</h3>
             <div className="photo-grid">
-              {universityData.photoHighlights.map((photo, index) => (
+              {universityData.photoHighlights && universityData.photoHighlights.map((photo, index) => (
                 <img key={index} src={photo} alt={`Highlight ${index + 1}`} className="highlight-photo" />
               ))}
             </div>
@@ -140,7 +153,7 @@ function UniversityProfile() {
           <div className="countries-section">
             <h3>Top 3 Countries Travelled To</h3>
             <div className="countries-list">
-              {universityData.topCountries.map((country, index) => (
+              {universityData.topCountries && universityData.topCountries.map((country, index) => (
                 <div key={index} className="country-item">
                   <img src={country.flag} alt={country.name} className="country-flag" />
                   <span>{country.name}</span>
@@ -155,4 +168,3 @@ function UniversityProfile() {
 }
 
 export default UniversityProfile;
-
