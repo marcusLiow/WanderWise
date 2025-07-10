@@ -6,7 +6,7 @@ import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import Navbar from './components/Navbar';
 import MainCard from './components/MainCard';
 import SearchResults from './components/SearchResults';
-import UniversityProfile from './components/UniversityProfile';
+import UniversityProfile from './pages/UniversityProfile';
 
 // Import all pages
 import LoginPage from './pages/LoginPage';
@@ -30,12 +30,12 @@ function App() {
           <Routes>
             {/* Home page route */}
             <Route path="/" element={<MainCard />} />
-            
+
             {/* Authentication routes */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/success" element={<SuccessPage />} />
-            
+
             {/* Search and university routes */}
             <Route path="/search" element={<SearchResults />} />
             <Route path="/university/:universitySlug" element={<UniversityProfile />} />
