@@ -13,15 +13,12 @@ function Navbar() {
   };
 
   return (
-    <AppBar position="static" sx={{ backgroundColor: "#FF3F00" }}>
-      <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
-        {/* Left side: logo/title */}
-        <Typography variant="h6" sx={{ flexShrink: 0 }}>
+    <AppBar position="static" sx={{backgroundColor: "#FF3F00"}}>
+      <Toolbar>
+        <Typography variant="h6" sx={{ flexGrow: 1 }}>
           WanderWise
         </Typography>
-
-        {/* Right side: nav buttons */}
-        <Box sx={{ display: 'flex', gap: 1 }}>
+        <Box sx={{ display: 'flex', gap: 2 }}>
           <Button color="inherit" onClick={handleHomeClick}>Home</Button>
           <Button color="inherit">Reviews</Button>
           <Button color="inherit">Universities</Button>
