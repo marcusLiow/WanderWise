@@ -1,18 +1,112 @@
 import React, { useState } from 'react';
-import { Card, CardContent, TextField, Button, Typography, Box, Alert } from '@mui/material';
+import { Card, CardContent, TextField, Button, Typography, Box, Alert, MenuItem } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 function SignUpPage() {
   const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [nationality, setNationality] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [firstNameError, setFirstNameError] = useState('');
+  const [lastNameError, setLastNameError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const [isValidEmail, setIsValidEmail] = useState(false);
+  const [isValidFirstName, setIsValidFirstName] = useState(false);
+  const [isValidLastName, setIsValidLastName] = useState(false);
   const [isValidPassword, setIsValidPassword] = useState(false);
   const [isValidConfirmPassword, setIsValidConfirmPassword] = useState(false);
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [dateOfBirthError, setDateOfBirthError] = useState('');
+  const [isValidDateOfBirth, setIsValidDateOfBirth] = useState(false);
   const navigate = useNavigate();
+
+  // List of common nationalities (Singaporean first, then alphabetical)
+  const nationalities = [
+    'Singaporean',
+    ...['Malaysian',
+    'Chinese',
+    'Indian',
+    'Indonesian',
+    'Thai',
+    'Vietnamese',
+    'Philippine',
+    'Korean',
+    'Japanese',
+    'Australian',
+    'British',
+    'American',
+    'Canadian',
+    'French',
+    'German',
+    'Italian',
+    'Spanish',
+    'Dutch',
+    'Swedish',
+    'Norwegian',
+    'Danish',
+    'Finnish',
+    'Russian',
+    'Ukrainian',
+    'Polish',
+    'Czech',
+    'Hungarian',
+    'Romanian',
+    'Bulgarian',
+    'Croatian',
+    'Serbian',
+    'Greek',
+    'Turkish',
+    'Iranian',
+    'Iraqi',
+    'Lebanese',
+    'Syrian',
+    'Jordanian',
+    'Saudi Arabian',
+    'Emirati',
+    'Qatari',
+    'Kuwaiti',
+    'Bahraini',
+    'Omani',
+    'Yemeni',
+    'Egyptian',
+    'Libyan',
+    'Tunisian',
+    'Algerian',
+    'Moroccan',
+    'South African',
+    'Nigerian',
+    'Kenyan',
+    'Ethiopian',
+    'Ghanaian',
+    'Ugandan',
+    'Tanzanian',
+    'Zimbabwean',
+    'Zambian',
+    'Botswana',
+    'Brazilian',
+    'Argentinian',
+    'Chilean',
+    'Colombian',
+    'Peruvian',
+    'Venezuelan',
+    'Ecuadorian',
+    'Uruguayan',
+    'Paraguayan',
+    'Bolivian',
+    'Mexican',
+    'Guatemalan',
+    'Costa Rican',
+    'Panamanian',
+    'Cuban',
+    'Jamaican',
+    'Barbadian',
+    'Trinidadian',
+    'Other'].sort()
+  ];
 
   const checkSMUEmail = (email) => {
     const smuPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.smu\.edu\.sg$/;
@@ -23,6 +117,12 @@ function SignUpPage() {
     // At least 8 characters, one uppercase, one lowercase, one number
     const strongPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/;
     return strongPassword.test(password);
+  };
+
+  const checkName = (name) => {
+    // Name should be at least 2 characters and contain only letters, spaces, hyphens, and apostrophes
+    const namePattern = /^[a-zA-Z\s\-']{2,}$/;
+    return namePattern.test(name.trim());
   };
 
   const handleEmailChange = (e) => {
@@ -38,6 +138,38 @@ function SignUpPage() {
     } else {
       setEmailError('');
       setIsValidEmail(true);
+    }
+  };
+
+  const handleFirstNameChange = (e) => {
+    const newFirstName = e.target.value;
+    setFirstName(newFirstName);
+
+    if (newFirstName === '') {
+      setFirstNameError('');
+      setIsValidFirstName(false);
+    } else if (!checkName(newFirstName)) {
+      setFirstNameError('Please enter a valid first name (at least 2 characters)');
+      setIsValidFirstName(false);
+    } else {
+      setFirstNameError('');
+      setIsValidFirstName(true);
+    }
+  };
+
+  const handleLastNameChange = (e) => {
+    const newLastName = e.target.value;
+    setLastName(newLastName);
+
+    if (newLastName === '') {
+      setLastNameError('');
+      setIsValidLastName(false);
+    } else if (!checkName(newLastName)) {
+      setLastNameError('Please enter a valid last name (at least 2 characters)');
+      setIsValidLastName(false);
+    } else {
+      setLastNameError('');
+      setIsValidLastName(true);
     }
   };
 
@@ -82,7 +214,59 @@ function SignUpPage() {
     }
   };
 
-const handleSubmit = async (e) => {
+  const checkDateOfBirth = (date) => {
+    // Check DD/MM/YYYY format
+    const datePattern = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+    const match = date.match(datePattern);
+    
+    if (!match) return false;
+    
+    const day = parseInt(match[1]);
+    const month = parseInt(match[2]);
+    const year = parseInt(match[3]);
+    
+    // Basic validation
+    if (month < 1 || month > 12) return false;
+    if (day < 1 || day > 31) return false;
+    if (year < 1900 || year > new Date().getFullYear()) return false;
+    
+    // Check if date is valid (e.g., no February 30th)
+    const testDate = new Date(year, month - 1, day);
+    return testDate.getDate() === day && 
+          testDate.getMonth() === month - 1 && 
+          testDate.getFullYear() === year;
+  };
+
+  const handleDateOfBirthChange = (e) => {
+    let value = e.target.value;
+    
+    // Auto-format as user types (add slashes)
+    value = value.replace(/\D/g, ''); // Remove non-digits
+    if (value.length >= 2 && value.length < 4) {
+      value = value.slice(0, 2) + '/' + value.slice(2);
+    } else if (value.length >= 4) {
+      value = value.slice(0, 2) + '/' + value.slice(2, 4) + '/' + value.slice(4, 8);
+    }
+    
+    setDateOfBirth(value);
+
+    if (value === '') {
+      setDateOfBirthError('');
+      setIsValidDateOfBirth(false);
+    } else if (value.length < 10) {
+      setDateOfBirthError('Please enter complete date (DD/MM/YYYY)');
+      setIsValidDateOfBirth(false);
+    } else if (!checkDateOfBirth(value)) {
+      setDateOfBirthError('Please enter a valid date in DD/MM/YYYY format');
+      setIsValidDateOfBirth(false);
+    } else {
+      setDateOfBirthError('');
+      setIsValidDateOfBirth(true);
+    }
+  };
+
+  
+  const handleSubmit = async (e) => {
   e.preventDefault();
   console.log('Form submitted!');
   
@@ -92,7 +276,7 @@ const handleSubmit = async (e) => {
   }
 
   try {
-    console.log('About to send request...'); // This should show in browser console
+    console.log('About to send request...');
     
     const response = await fetch('http://localhost:5000/api/register', {
       method: 'POST',
@@ -101,6 +285,10 @@ const handleSubmit = async (e) => {
       },
       body: JSON.stringify({
         email: email,
+        firstName: firstName,
+        lastName: lastName,
+        nationality: nationality,
+        dateOfBirth: dateOfBirth,  // ← ADD THIS LINE
         password: password
       })
     });
@@ -108,7 +296,20 @@ const handleSubmit = async (e) => {
     const data = await response.json();
 
     if (response.ok) {
-      navigate('/login');
+      // Save user to localStorage using data from backend
+      const userData = {
+        email: email,
+        id: data.userId,
+        firstName: data.user.firstName,    // Get from backend response
+        lastName: data.user.lastName,      // Get from backend response
+        name: data.user.firstName + ' ' + data.user.lastName,
+        nationality: data.user.nationality,
+        university: data.user.university
+      };
+      localStorage.setItem('wanderwise_user', JSON.stringify(userData));
+      
+      // Navigate to home page instead of login
+      navigate('/');
     } else {
       alert(data.error);
     }
@@ -118,11 +319,12 @@ const handleSubmit = async (e) => {
   }
 };
 
-  const isFormValid = isValidEmail && isValidPassword && isValidConfirmPassword;
+  const isFormValid = isValidEmail && isValidFirstName && isValidLastName && isValidDateOfBirth && isValidPassword && isValidConfirmPassword && nationality !== '';
+
 
   return (
     <Box sx={{ display: 'flex', justifyContent: 'center', padding: 4 }}>
-      <Card sx={{ maxWidth: 400, width: '100%' }}>
+      <Card sx={{ maxWidth: 500, width: '100%' }}>
         <CardContent>
           <Typography variant="h4" gutterBottom>
             Sign Up
@@ -145,11 +347,69 @@ const handleSubmit = async (e) => {
               helperText={emailError || 'Example: john.doe@business.smu.edu.sg'}
             />
             
-            {isValidEmail && (
-              <Alert severity="success" sx={{ mt: 1 }}>
-                Valid SMU email! ✓
-              </Alert>
-            )}
+
+
+            <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+              <Box sx={{ flex: 1 }}>
+                <TextField
+                  fullWidth
+                  label="First Name"
+                  type="text"
+                  value={firstName}
+                  onChange={handleFirstNameChange}
+                  required
+                  error={!!firstNameError}
+                  helperText={firstNameError || 'Enter your first name'}
+                />
+
+              </Box>
+              
+              <Box sx={{ flex: 1 }}>
+                <TextField
+                  fullWidth
+                  label="Last Name"
+                  type="text"
+                  value={lastName}
+                  onChange={handleLastNameChange}
+                  required
+                  error={!!lastNameError}
+                  helperText={lastNameError || 'Enter your last name'}
+                />
+
+              </Box>
+            </Box>
+
+            <TextField
+              fullWidth
+              select
+              label="Nationality"
+              value={nationality}
+              onChange={(e) => setNationality(e.target.value)}
+              margin="normal"
+              required
+              helperText="Select your nationality"
+            >
+              {nationalities.map((option) => (
+                <MenuItem key={option} value={option}>
+                  {option}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <TextField
+              fullWidth
+              label="Date of Birth"
+              value={dateOfBirth}
+              onChange={handleDateOfBirthChange}
+              margin="normal"
+              required
+              error={!!dateOfBirthError}
+              helperText={dateOfBirthError || 'Format: DD/MM/YYYY (e.g., 15/06/1995)'}
+              placeholder="DD/MM/YYYY"
+              inputProps={{
+                maxLength: 10
+              }}
+            />
 
             <TextField
               fullWidth
@@ -163,11 +423,7 @@ const handleSubmit = async (e) => {
               helperText={passwordError || 'At least 8 characters with uppercase, lowercase, and number'}
             />
 
-            {isValidPassword && (
-              <Alert severity="success" sx={{ mt: 1 }}>
-                Strong password! ✓
-              </Alert>
-            )}
+
 
             <TextField
               fullWidth
@@ -181,11 +437,7 @@ const handleSubmit = async (e) => {
               helperText={confirmPasswordError || 'Re-enter your password'}
             />
 
-            {isValidConfirmPassword && (
-              <Alert severity="success" sx={{ mt: 1 }}>
-                Passwords match! ✓
-              </Alert>
-            )}
+
             
             <Button
               type="submit"
