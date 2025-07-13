@@ -27,19 +27,26 @@ db.connect((err) => {
 
 // Helper function to extract university from email domain
 function extractUniversityFromDomain(domain) {
-  const universityMapping = {
-    'nus.edu.sg': 'National University of Singapore',
-    'ntu.edu.sg': 'Nanyang Technological University',
-    'smu.edu.sg': 'Singapore Management University',
-    'sutd.edu.sg': 'Singapore University of Technology and Design',
-    'singaporetech.edu.sg': 'Singapore Institute of Technology',
-    'suss.edu.sg': 'Singapore University of Social Sciences',
-    'uas.edu.sg': 'University of the Arts Singapore',
-    'lasalle.edu.sg': 'LASALLE College of the Arts',
-    'nafa.edu.sg': 'Nanyang Academy of Fine Arts'
-  };
+  const universityMapping = [
+    { pattern: 'nus.edu.sg', name: 'National University of Singapore' },
+    { pattern: 'ntu.edu.sg', name: 'Nanyang Technological University' },
+    { pattern: 'smu.edu.sg', name: 'Singapore Management University' },
+    { pattern: 'sutd.edu.sg', name: 'Singapore University of Technology and Design' },
+    { pattern: 'singaporetech.edu.sg', name: 'Singapore Institute of Technology' },
+    { pattern: 'suss.edu.sg', name: 'Singapore University of Social Sciences' },
+    { pattern: 'uas.edu.sg', name: 'University of the Arts Singapore' },
+    { pattern: 'lasalle.edu.sg', name: 'LASALLE College of the Arts' },
+    { pattern: 'nafa.edu.sg', name: 'Nanyang Academy of Fine Arts' }
+  ];
   
-  return universityMapping[domain] || 'Unknown University';
+  // Check if domain contains any of the university patterns
+  for (const university of universityMapping) {
+    if (domain.includes(university.pattern)) {
+      return university.name;
+    }
+  }
+  
+  return 'Unknown University';
 }
 
 // Helper function to validate Singapore university email
@@ -64,6 +71,58 @@ function isValidSingaporeUniversityEmail(email) {
 app.get('/api/names', (req, res) => {
   db.query('SELECT * FROM names', (err, results) => {
     res.json(results);
+  });
+});
+
+
+app.post('/api/login', async (req, res) => {
+  console.log('Login request received:', req.body);
+  
+  const { email, password } = req.body;
+  
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password required' });
+  }
+  
+  // Check if user exists in database
+  db.query('SELECT * FROM users WHERE email = ?', [email], async (err, results) => {
+    if (err) {
+      console.log('Database error:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    
+    // No user found with that email
+    if (results.length === 0) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    
+    const user = results[0];
+    
+    try {
+      // Compare the plain text password with the hashed password using bcrypt
+      const passwordMatch = await bcrypt.compare(password, user.password);
+      
+      if (!passwordMatch) {
+        console.log('Password mismatch for:', email);
+        return res.status(401).json({ error: 'Invalid email or password' });
+      }
+      
+      // Login successful
+      console.log('Login successful for:', email);
+      res.status(200).json({ 
+        message: 'Login successful',
+        userId: user.id,
+        email: user.email,
+        firstName: user.firstName,  
+        lastName: user.lastName,
+        university: user.university
+      });
+      
+      
+    } catch (bcryptError) {
+      console.error('Bcrypt error:', bcryptError);
+      return res.status(500).json({ error: 'Login error' });
+    }
   });
 });
 
@@ -170,18 +229,6 @@ app.post('/api/register', async (req, res) => {
     console.error('Registration error:', error);
     res.status(500).json({ error: 'Registration failed' });
   }
-});
-
-// Basic login endpoint (you'll need to update this later)
-app.post('/api/login', (req, res) => {
-  const { email, password } = req.body;
-  
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password required' });
-  }
-  
-  // For now, just return success - you'll implement proper login later
-  res.json({ message: 'Login endpoint - implementation needed' });
 });
 
 app.listen(5000, () => console.log('Server running on port 5000'));

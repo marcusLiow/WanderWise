@@ -4,43 +4,86 @@ import { useNavigate } from 'react-router-dom';
 
 function LoginPage() {
   const [email, setEmail] = useState('');
-  const [emailError, setEmailError] = useState('');
-  const [isValidEmail, setIsValidEmail] = useState(false);
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const checkSMUEmail = (email) => {
-    const smuPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.smu\.edu\.sg$/;
-    return smuPattern.test(email);
-  };
+  // Add this line to test if the component is loading
+  console.log('LoginPage component loaded!');
 
   const handleEmailChange = (e) => {
-    const newEmail = e.target.value;
-    setEmail(newEmail);
-
-    if (newEmail === '') {
-      setEmailError('');
-      setIsValidEmail(false);
-    } else if (!checkSMUEmail(newEmail)) {
-      setEmailError('Please use your SMU faculty email (@faculty.smu.edu.sg)');
-      setIsValidEmail(false);
-    } else {
-      setEmailError('');
-      setIsValidEmail(true);
-    }
+    console.log('Email changed:', e.target.value); // Test if this runs
+    setEmail(e.target.value);
+    setError(''); // Clear any previous errors when user types
   };
 
-  const handleSubmit = (e) => {
+  const handlePasswordChange = (e) => {
+    console.log('Password changed'); // Test if this runs
+    setPassword(e.target.value);
+    setError(''); // Clear any previous errors when user types
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('FORM SUBMITTED - THIS SHOULD SHOW!'); // This is key
     
-    if (!isValidEmail) {
-      alert('Please enter a valid SMU faculty email');
+    if (!email || !password) {
+      setError('Please enter both email and password');
       return;
     }
 
-    navigate('/success')
+    setIsLoading(true);
+    setError('');
+
+    try {
+      console.log('Attempting login with:', { email, password }); // Debug log
+      
+      const response = await fetch('http://localhost:5000/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password
+        })
+      });
+
+      console.log('Response status:', response.status); // Debug log
+      
+      const data = await response.json();
+      console.log('Response data:', data); // Debug log
+
+      if (response.ok) {
+        // Only login if backend confirms credentials are correct
+        console.log('Login successful, saving user data'); // Debug log
+        const userData = {
+          email: email,
+          id: data.userId,
+          firstName: data.firstName,         // Get from backend response
+          lastName: data.lastName,           // Get from backend response
+          name: data.name,                   // Full name from backend
+          university: data.university        // University from backend
+        };
+        localStorage.setItem('wanderwise_user', JSON.stringify(userData));
+        
+        // Navigate to home page
+        navigate('/');
+      } else {
+        // Show error from backend
+        console.log('Login failed:', data.error); // Debug log
+        setError(data.error || 'Invalid email or password');
+      }
+    } catch (error) {
+      console.error('Network/API error:', error);
+      setError('Unable to connect to server. Please check if your backend is running.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-    const handleSignupClick = () => {
+  const handleSignupClick = () => {
     navigate('/signup');
   };
 
@@ -57,23 +100,31 @@ function LoginPage() {
           </Typography>
           
           <form onSubmit={handleSubmit}>
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+            
             <TextField
               fullWidth
-              label="Enter here"
+              label="Email"
               type="email"
               value={email}
               onChange={handleEmailChange}
               margin="normal"
               required
-              error={!!emailError}
-              helperText={emailError || 'Example: john.doe@business.smu.edu.sg'}
             />
-            
-            {isValidEmail && (
-              <Alert severity="success" sx={{ mt: 1 }}>
-                Valid SMU email! ✓
-              </Alert>
-            )}
+
+            <TextField
+              fullWidth
+              label="Password"
+              type="password"
+              value={password}
+              onChange={handlePasswordChange}
+              margin="normal"
+              required
+            />
             
             <Button
               type="submit"
@@ -84,21 +135,22 @@ function LoginPage() {
                 backgroundColor: '#FF3F00',
                 '&:disabled': { backgroundColor: '#ccc' }
               }}
-              disabled={!isValidEmail}
+              disabled={isLoading || !email || !password}
             >
-              Sign In
+              {isLoading ? 'Signing In...' : 'Sign In'}
             </Button>
+            
             <Box sx={{ mt: 2, textAlign: 'center' }}>
-                <Typography variant="body2" color="text.secondary">
-                    Don't have an account?{' '}
-                    <Button 
-                    variant="text" 
-                    onClick={handleSignupClick}
-                    sx={{ color: '#FF3F00' }}
-                    >
-                    Sign Up
-                    </Button>
-                </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Don't have an account?{' '}
+                <Button 
+                  variant="text" 
+                  onClick={handleSignupClick}
+                  sx={{ color: '#FF3F00' }}
+                >
+                  Sign Up
+                </Button>
+              </Typography>
             </Box>
           </form>
         </CardContent>

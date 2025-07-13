@@ -212,43 +212,56 @@ function SignUpPage() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    console.log('Form submitted!');
+  e.preventDefault();
+  console.log('Form submitted!');
+  
+  if (!isValidEmail || !isValidPassword || !isValidConfirmPassword) {
+    alert('Please fill in all fields correctly');
+    return;
+  }
+
+  try {
+    console.log('About to send request...');
     
-    if (!isValidEmail || !isValidFirstName || !isValidLastName || !isValidPassword || !isValidConfirmPassword || !nationality) {
-      alert('Please fill in all fields correctly');
-      return;
-    }
+    const response = await fetch('http://localhost:5000/api/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: email,
+        firstName: firstName,
+        lastName: lastName,
+        nationality: nationality,
+        password: password
+      })
+    });
 
-    try {
-      console.log('About to send request...'); // This should show in browser console
+    const data = await response.json();
+
+    if (response.ok) {
+      // Save user to localStorage using data from backend
+      const userData = {
+        email: email,
+        id: data.userId,
+        firstName: data.user.firstName,    // Get from backend response
+        lastName: data.user.lastName,      // Get from backend response
+        name: data.user.firstName + ' ' + data.user.lastName,
+        nationality: data.user.nationality,
+        university: data.user.university
+      };
+      localStorage.setItem('wanderwise_user', JSON.stringify(userData));
       
-      const response = await fetch('http://localhost:5000/api/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email,
-          firstName: firstName,
-          lastName: lastName,
-          nationality: nationality,
-          password: password
-        })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        navigate('/login');
-      } else {
-        alert(data.error);
-      }
-    } catch (error) {
-      alert('Error creating account');
-      console.error('Error:', error);
+      // Navigate to home page instead of login
+      navigate('/');
+    } else {
+      alert(data.error);
     }
-  };
+  } catch (error) {
+    alert('Error creating account');
+    console.error('Error:', error);
+  }
+};
 
   const isFormValid = isValidEmail && isValidFirstName && isValidLastName && isValidPassword && isValidConfirmPassword && nationality !== '';
 
