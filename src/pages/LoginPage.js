@@ -57,15 +57,26 @@ function LoginPage() {
 
       if (response.ok) {
         // Only login if backend confirms credentials are correct
-        console.log('Login successful, saving user data'); // Debug log
+        console.log('Login successful, backend response:', data); // Debug log
+        
+        // Save ALL data returned from backend
         const userData = {
-          email: email,
+          email: data.email,
           id: data.userId,
-          firstName: data.firstName,         // Get from backend response
-          lastName: data.lastName,           // Get from backend response
-          name: data.name,                   // Full name from backend
-          university: data.university        // University from backend
+          firstName: data.firstName,
+          lastName: data.lastName,
+          name: data.name,
+          nationality: data.nationality,
+          dateOfBirth: data.dateOfBirth,          // ← ADD THIS LINE
+          university: data.university,
+          profileImage: data.profileImage
         };
+        
+        console.log('Saving user data to localStorage:', {
+          ...userData,
+          profileImage: userData.profileImage ? 'INCLUDED' : 'NULL'
+        });
+        
         localStorage.setItem('wanderwise_user', JSON.stringify(userData));
         
         // Navigate to home page
@@ -81,7 +92,7 @@ function LoginPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }; // ← This was missing!
 
   const handleSignupClick = () => {
     navigate('/signup');

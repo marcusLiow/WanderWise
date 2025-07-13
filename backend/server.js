@@ -6,7 +6,8 @@ const bcrypt = require('bcrypt');
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Increase payload size limit
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Connect to database
 const db = mysql.createConnection({
@@ -75,6 +76,9 @@ app.get('/api/names', (req, res) => {
 });
 
 
+// COMPLETE REPLACEMENT for your login endpoint in backend/server.js
+// This ensures ALL user data is returned from the database
+
 app.post('/api/login', async (req, res) => {
   console.log('Login request received:', req.body);
   
@@ -84,7 +88,7 @@ app.post('/api/login', async (req, res) => {
     return res.status(400).json({ error: 'Email and password required' });
   }
   
-  // Check if user exists in database
+  // SELECT ALL COLUMNS from users table - this is key!
   db.query('SELECT * FROM users WHERE email = ?', [email], async (err, results) => {
     if (err) {
       console.log('Database error:', err);
@@ -97,6 +101,15 @@ app.post('/api/login', async (req, res) => {
     }
     
     const user = results[0];
+    console.log('Found user in database:', {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      nationality: user.nationality,
+      university: user.university,
+      hasProfileImage: !!user.profileImage
+    });
     
     try {
       // Compare the plain text password with the hashed password using bcrypt
@@ -107,17 +120,28 @@ app.post('/api/login', async (req, res) => {
         return res.status(401).json({ error: 'Invalid email or password' });
       }
       
-      // Login successful
+      // Login successful - RETURN ALL USER DATA FROM DATABASE
       console.log('Login successful for:', email);
-      res.status(200).json({ 
+
+      const responseData = { 
         message: 'Login successful',
         userId: user.id,
         email: user.email,
-        firstName: user.firstName,  
+        firstName: user.firstName,
         lastName: user.lastName,
-        university: user.university
+        name: user.firstName + ' ' + user.lastName,
+        nationality: user.nationality,
+        dateOfBirth: user.dateOfBirth,          // ← ADD THIS LINE
+        university: user.university,
+        profileImage: user.profileImage
+      };
+
+      console.log('Sending login response:', {
+        ...responseData,
+        profileImage: responseData.profileImage ? 'INCLUDED' : 'NULL'
       });
-      
+
+      res.status(200).json(responseData);
       
     } catch (bcryptError) {
       console.error('Bcrypt error:', bcryptError);
@@ -135,12 +159,14 @@ app.post('/api/names', (req, res) => {
 });
 
 // Updated User registration endpoint
+// Update your registration endpoint in backend/server.js to include dateOfBirth
+
 app.post('/api/register', async (req, res) => {
   console.log('Registration request received:', req.body);
   
-  const { email, firstName, lastName, nationality, password } = req.body;
+  const { email, firstName, lastName, nationality, dateOfBirth, password } = req.body;
   
-  // Validate all required fields
+  // Validate all required fields (dateOfBirth is optional)
   if (!email || !firstName || !lastName || !nationality || !password) {
     return res.status(400).json({ 
       error: 'All fields are required: email, firstName, lastName, nationality, password' 
@@ -189,13 +215,13 @@ app.post('/api/register', async (req, res) => {
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
         
-        // Insert new user into database
+        // Insert new user into database (including dateOfBirth)
         const insertQuery = `
-          INSERT INTO users (firstName, lastName, email, password, nationality, university, created_at) 
-          VALUES (?, ?, ?, ?, ?, ?, NOW())
+          INSERT INTO users (firstName, lastName, email, password, nationality, dateOfBirth, university, created_at) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
         `;
         
-        db.query(insertQuery, [firstName, lastName, email, hashedPassword, nationality, university], (err, result) => {
+        db.query(insertQuery, [firstName, lastName, email, hashedPassword, nationality, dateOfBirth, university], (err, result) => {
           if (err) {
             console.log('Insert error:', err);
             if (err.code === 'ER_DUP_ENTRY') {
@@ -214,6 +240,7 @@ app.post('/api/register', async (req, res) => {
               lastName,
               email,
               nationality,
+              dateOfBirth,
               university
             }
           });
@@ -228,6 +255,81 @@ app.post('/api/register', async (req, res) => {
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({ error: 'Registration failed' });
+  }
+});
+
+// Update your profile endpoint in backend/server.js to include dateOfBirth
+
+app.put('/api/profile', async (req, res) => {
+  console.log('Profile update request received:', req.body);
+  
+  const { userId, firstName, lastName, nationality, dateOfBirth, profileImage } = req.body;
+  
+  if (!userId) {
+    return res.status(400).json({ error: 'User ID is required' });
+  }
+  
+  if (!firstName || !lastName) {
+    return res.status(400).json({ error: 'First name and last name are required' });
+  }
+  
+  try {
+    // Check if user exists
+    db.query('SELECT * FROM users WHERE id = ?', [userId], (err, results) => {
+      if (err) {
+        console.log('Database error:', err);
+        return res.status(500).json({ error: 'Database error' });
+      }
+      
+      if (results.length === 0) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      const currentUser = results[0];
+      
+      // Update user profile (including dateOfBirth)
+      const updateQuery = `
+        UPDATE users 
+        SET firstName = ?, lastName = ?, nationality = ?, dateOfBirth = ?, profileImage = ?, updated_at = NOW()
+        WHERE id = ?
+      `;
+      
+      db.query(updateQuery, [firstName, lastName, nationality, dateOfBirth, profileImage, userId], (err, result) => {
+        if (err) {
+          console.log('Update error:', err);
+          return res.status(500).json({ error: 'Failed to update profile' });
+        }
+        
+        // Return updated user data
+        db.query('SELECT * FROM users WHERE id = ?', [userId], (err, updatedResults) => {
+          if (err) {
+            console.log('Fetch updated user error:', err);
+            return res.status(500).json({ error: 'Profile updated but failed to fetch updated data' });
+          }
+          
+          const updatedUser = updatedResults[0];
+          
+          console.log('Profile updated successfully for user:', userId);
+          res.status(200).json({
+            message: 'Profile updated successfully',
+            user: {
+              id: updatedUser.id,
+              firstName: updatedUser.firstName,
+              lastName: updatedUser.lastName,
+              email: updatedUser.email,
+              nationality: updatedUser.nationality,
+              dateOfBirth: updatedUser.dateOfBirth,
+              university: updatedUser.university,
+              profileImage: updatedUser.profileImage
+            }
+          });
+        });
+      });
+    });
+    
+  } catch (error) {
+    console.error('Profile update error:', error);
+    res.status(500).json({ error: 'Profile update failed' });
   }
 });
 

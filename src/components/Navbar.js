@@ -12,11 +12,32 @@ function Navbar() {
   useEffect(() => {
     const savedUser = localStorage.getItem('wanderwise_user');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      const parsedUser = JSON.parse(savedUser);
+      setUser(parsedUser);
     } else {
       setUser(null);
     }
   }, [location]); // Add location as dependency so it re-runs on navigation
+
+  // Listen for profile updates
+  useEffect(() => {
+    const handleUserDataUpdate = () => {
+      const savedUser = localStorage.getItem('wanderwise_user');
+      if (savedUser) {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+        console.log('Navbar updated with new user data:', parsedUser);
+      }
+    };
+
+    // Listen for custom event when profile is updated
+    window.addEventListener('userDataUpdated', handleUserDataUpdate);
+    
+    // Cleanup event listener
+    return () => {
+      window.removeEventListener('userDataUpdated', handleUserDataUpdate);
+    };
+  }, []);
 
   const handleLoginClick = () => {
     navigate('/login');
@@ -31,6 +52,11 @@ function Navbar() {
   };
 
   const handleProfileMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleProfileNavigation = () => {
+    navigate('/profile');
     setAnchorEl(null);
   };
 
@@ -72,6 +98,7 @@ function Navbar() {
                 sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
               >
                 <Avatar 
+                  src={user?.profileImage || null}
                   sx={{ 
                     bgcolor: 'rgba(255, 255, 255, 0.2)', 
                     width: 32, 
@@ -79,7 +106,7 @@ function Navbar() {
                     fontSize: '14px'
                   }}
                 >
-                  {getUserInitials()}
+                  {!user?.profileImage && getUserInitials()}
                 </Avatar>
                 <Typography variant="body2">
                   {user?.firstName || user?.name || user?.email?.split('@')[0] || 'Profile'}
@@ -91,8 +118,7 @@ function Navbar() {
                 open={Boolean(anchorEl)}
                 onClose={handleProfileMenuClose}
               >
-                <MenuItem onClick={handleProfileMenuClose}>Profile</MenuItem>
-                <MenuItem onClick={handleProfileMenuClose}>Settings</MenuItem>
+                <MenuItem onClick={handleProfileNavigation}>Profile</MenuItem>
                 <MenuItem onClick={handleLogout}>Logout</MenuItem>
               </Menu>
             </>

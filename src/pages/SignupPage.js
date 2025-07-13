@@ -19,6 +19,9 @@ function SignUpPage() {
   const [isValidLastName, setIsValidLastName] = useState(false);
   const [isValidPassword, setIsValidPassword] = useState(false);
   const [isValidConfirmPassword, setIsValidConfirmPassword] = useState(false);
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [dateOfBirthError, setDateOfBirthError] = useState('');
+  const [isValidDateOfBirth, setIsValidDateOfBirth] = useState(false);
   const navigate = useNavigate();
 
   // List of common nationalities (Singaporean first, then alphabetical)
@@ -211,6 +214,58 @@ function SignUpPage() {
     }
   };
 
+  const checkDateOfBirth = (date) => {
+    // Check DD/MM/YYYY format
+    const datePattern = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+    const match = date.match(datePattern);
+    
+    if (!match) return false;
+    
+    const day = parseInt(match[1]);
+    const month = parseInt(match[2]);
+    const year = parseInt(match[3]);
+    
+    // Basic validation
+    if (month < 1 || month > 12) return false;
+    if (day < 1 || day > 31) return false;
+    if (year < 1900 || year > new Date().getFullYear()) return false;
+    
+    // Check if date is valid (e.g., no February 30th)
+    const testDate = new Date(year, month - 1, day);
+    return testDate.getDate() === day && 
+          testDate.getMonth() === month - 1 && 
+          testDate.getFullYear() === year;
+  };
+
+  const handleDateOfBirthChange = (e) => {
+    let value = e.target.value;
+    
+    // Auto-format as user types (add slashes)
+    value = value.replace(/\D/g, ''); // Remove non-digits
+    if (value.length >= 2 && value.length < 4) {
+      value = value.slice(0, 2) + '/' + value.slice(2);
+    } else if (value.length >= 4) {
+      value = value.slice(0, 2) + '/' + value.slice(2, 4) + '/' + value.slice(4, 8);
+    }
+    
+    setDateOfBirth(value);
+
+    if (value === '') {
+      setDateOfBirthError('');
+      setIsValidDateOfBirth(false);
+    } else if (value.length < 10) {
+      setDateOfBirthError('Please enter complete date (DD/MM/YYYY)');
+      setIsValidDateOfBirth(false);
+    } else if (!checkDateOfBirth(value)) {
+      setDateOfBirthError('Please enter a valid date in DD/MM/YYYY format');
+      setIsValidDateOfBirth(false);
+    } else {
+      setDateOfBirthError('');
+      setIsValidDateOfBirth(true);
+    }
+  };
+
+  
   const handleSubmit = async (e) => {
   e.preventDefault();
   console.log('Form submitted!');
@@ -233,6 +288,7 @@ function SignUpPage() {
         firstName: firstName,
         lastName: lastName,
         nationality: nationality,
+        dateOfBirth: dateOfBirth,  // ← ADD THIS LINE
         password: password
       })
     });
@@ -263,7 +319,8 @@ function SignUpPage() {
   }
 };
 
-  const isFormValid = isValidEmail && isValidFirstName && isValidLastName && isValidPassword && isValidConfirmPassword && nationality !== '';
+  const isFormValid = isValidEmail && isValidFirstName && isValidLastName && isValidDateOfBirth && isValidPassword && isValidConfirmPassword && nationality !== '';
+
 
   return (
     <Box sx={{ display: 'flex', justifyContent: 'center', padding: 4 }}>
@@ -338,6 +395,21 @@ function SignUpPage() {
                 </MenuItem>
               ))}
             </TextField>
+
+            <TextField
+              fullWidth
+              label="Date of Birth"
+              value={dateOfBirth}
+              onChange={handleDateOfBirthChange}
+              margin="normal"
+              required
+              error={!!dateOfBirthError}
+              helperText={dateOfBirthError || 'Format: DD/MM/YYYY (e.g., 15/06/1995)'}
+              placeholder="DD/MM/YYYY"
+              inputProps={{
+                maxLength: 10
+              }}
+            />
 
             <TextField
               fullWidth
