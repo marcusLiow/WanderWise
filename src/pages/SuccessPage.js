@@ -1,5 +1,3 @@
-import React from 'react';
-
 function SuccessPage() {
   return (
     <div style={{ textAlign: 'center', padding: '50px' }}>

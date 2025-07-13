@@ -14,15 +14,15 @@ CREATE TABLE universities (
 
 CREATE TABLE users (
   id INT PRIMARY KEY AUTO_INCREMENT,
-  name VARCHAR(255) NOT NULL,
-  email VARCHAR(255) UNIQUE,
-  avatar VARCHAR(255),
-  country VARCHAR(100),
-  country_flag VARCHAR(255),
-  university_id INT,
+  firstName VARCHAR(255) NOT NULL,
+  lastName VARCHAR(255) NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  nationality VARCHAR(100) NOT NULL,
   university VARCHAR(255),
+  avatar VARCHAR(255),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (university_id) REFERENCES universities(id)
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- Reviews table
@@ -30,6 +30,7 @@ CREATE TABLE reviews (
   id INT PRIMARY KEY AUTO_INCREMENT,
   user_id INT NOT NULL,
   university_id INT NOT NULL,
+  exchange_university_id INT NOT NULL,
   content TEXT NOT NULL,
   rating INT CHECK (rating >= 1 AND rating <= 5),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
