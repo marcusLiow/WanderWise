@@ -6,6 +6,18 @@ const HomePage = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const navigate = useNavigate();
 
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   // University carousel data
   const universitySlides = [
     {
@@ -63,7 +75,7 @@ const HomePage = () => {
       text: 'The professors were incredibly knowledgeable and the international student community was so welcoming. Paris offered endless opportunities for cultural immersion!'
     },
     {
-      name: 'Barry Kim',
+      name: 'Marcus Kim',
       university: 'SMU → University of Melbourne, Australia',
       avatar: 'MK',
       rating: 5,
@@ -445,9 +457,13 @@ const HomePage = () => {
                 placeholder="Search universities, countries, or programs..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={handleKeyPress}
                 style={styles.searchInput}
               />
-              <button style={styles.searchButton}>
+              <button 
+                style={styles.searchButton}
+                onClick={handleSearch}
+              >
                 Search
               </button>
             </div>

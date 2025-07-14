@@ -333,4 +333,60 @@ app.put('/api/profile', async (req, res) => {
   }
 });
 
+app.get('/api/search', (req, res) => {
+  console.log('Search request received:', req.query);
+  
+  const { q } = req.query;
+  
+  if (!q || q.trim() === '') {
+    return res.status(400).json({ 
+      error: 'Search query is required',
+      universities: []
+    });
+  }
+  
+  const searchTerm = `%${q.trim()}%`;
+  
+  // Search in university name, country, and description
+  const searchQuery = `
+    SELECT id, name, description, country, rating, logo, flag, created_at
+    FROM universities 
+    WHERE name LIKE ? 
+       OR country LIKE ? 
+       OR description LIKE ?
+    ORDER BY 
+      CASE 
+        WHEN name LIKE ? THEN 1
+        WHEN country LIKE ? THEN 2
+        ELSE 3
+      END,
+      rating DESC,
+      name ASC
+    LIMIT 50
+  `;
+  
+  db.query(
+    searchQuery, 
+    [searchTerm, searchTerm, searchTerm, searchTerm, searchTerm], 
+    (err, results) => {
+      if (err) {
+        console.error('Database search error:', err);
+        return res.status(500).json({ 
+          error: 'Database error occurred during search',
+          universities: []
+        });
+      }
+      
+      console.log(`Search for "${q}" returned ${results.length} results`);
+      
+      res.json({
+        success: true,
+        query: q,
+        count: results.length,
+        universities: results
+      });
+    }
+  );
+});
+
 app.listen(5000, () => console.log('Server running on port 5000'));
