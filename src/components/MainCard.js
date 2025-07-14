@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, Typography, TextField, Button, Box } from '@mui/material';
+import { Card, CardContent, Typography, TextField, Button, Box, InputAdornment, IconButton } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
 import { useNavigate } from 'react-router-dom';
 
 function MainCard() {
@@ -24,11 +25,25 @@ function MainCard() {
         return () => clearInterval(interval);
     }, [images.length]);
 
+    // Function to handle search
+    const handleSearch = async () => {
+        if (!searchTerm.trim()) return;
+
+        // Navigate to the UniversityProfile component with search query
+        // This will trigger the search logic in UniversityProfile
+        navigate(`/search/${encodeURIComponent(searchTerm.trim())}`);
+    };
+
+    // Handle Enter key press
+    const handleKeyPress = (event) => {
+        if (event.key === 'Enter') {
+            handleSearch();
+        }
+    };
+
     const handleSearchSubmit = (e) => {
         e.preventDefault();
-        if (searchTerm.trim()) {
-            navigate(`/search?q=${encodeURIComponent(searchTerm)}`);
-        }
+        handleSearch();
     };
 
     return (
@@ -65,10 +80,11 @@ function MainCard() {
                     <TextField
                         fullWidth
                         size="large"
-                        placeholder="Search universities..."
+                        placeholder="Search universities or countries..."
                         variant="outlined"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        onKeyPress={handleKeyPress}
                         sx={{
                             backgroundColor: 'white',
                             borderRadius: 2,
@@ -80,11 +96,21 @@ function MainCard() {
                                 padding: '12px 16px',
                             },
                         }}
+                        InputProps={{
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <IconButton onClick={handleSearch} edge="end">
+                                        <SearchIcon />
+                                    </IconButton>
+                                </InputAdornment>
+                            ),
+                        }}
                     />
                     <Button
                         type="submit"
                         variant="contained"
                         size="large"
+                        onClick={handleSearch}
                         sx={{
                             backgroundColor: '#FF3F00',
                             '&:hover': {
@@ -106,6 +132,14 @@ function MainCard() {
                     fontStyle: 'italic'
                 }}>
                     Find your perfect university destination
+                </Typography>
+                
+                <Typography
+                    variant="caption"
+                    align="center"
+                    sx={{ marginTop: 2, display: 'block', color: 'text.secondary' }}
+                >
+                    Try searching for "Harvard University" or "USA"
                 </Typography>
             </CardContent>
         </Card>

@@ -68,6 +68,8 @@ function isValidSingaporeUniversityEmail(email) {
   return validDomains.some(validDomain => domain && domain.includes(validDomain));
 }
 
+// ==================== EXISTING ROUTES ====================
+
 // Get all names (keep your existing endpoint)
 app.get('/api/names', (req, res) => {
   db.query('SELECT * FROM names', (err, results) => {
@@ -75,10 +77,7 @@ app.get('/api/names', (req, res) => {
   });
 });
 
-
-// COMPLETE REPLACEMENT for your login endpoint in backend/server.js
-// This ensures ALL user data is returned from the database
-
+// Login endpoint
 app.post('/api/login', async (req, res) => {
   console.log('Login request received:', req.body);
   
@@ -131,7 +130,7 @@ app.post('/api/login', async (req, res) => {
         lastName: user.lastName,
         name: user.firstName + ' ' + user.lastName,
         nationality: user.nationality,
-        dateOfBirth: user.dateOfBirth,          // ← ADD THIS LINE
+        dateOfBirth: user.dateOfBirth,
         university: user.university,
         profileImage: user.profileImage
       };
@@ -158,9 +157,7 @@ app.post('/api/names', (req, res) => {
   });
 });
 
-// Updated User registration endpoint
-// Update your registration endpoint in backend/server.js to include dateOfBirth
-
+// User registration endpoint
 app.post('/api/register', async (req, res) => {
   console.log('Registration request received:', req.body);
   
@@ -258,8 +255,7 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
-// Update your profile endpoint in backend/server.js to include dateOfBirth
-
+// Profile update endpoint
 app.put('/api/profile', async (req, res) => {
   console.log('Profile update request received:', req.body);
   
@@ -331,6 +327,102 @@ app.put('/api/profile', async (req, res) => {
     console.error('Profile update error:', error);
     res.status(500).json({ error: 'Profile update failed' });
   }
+});
+
+// ==================== MISSING ROUTES - ADD THESE ====================
+
+// Search universities by name
+app.get('/api/universities/search', (req, res) => {
+  const { name } = req.query;
+  
+  if (!name) {
+    return res.status(400).json({ error: 'Name parameter is required' });
+  }
+
+  db.query(
+    'SELECT * FROM universities WHERE LOWER(name) LIKE LOWER(?)',
+    [`%${name.trim()}%`],
+    (err, results) => {
+      if (err) {
+        console.error('Error searching universities:', err);
+        return res.status(500).json({ error: 'Internal server error' });
+      }
+      
+      res.json(results);
+    }
+  );
+});
+
+// Get universities by country - THIS IS THE MISSING ROUTE!
+app.get('/api/universities/by-country', (req, res) => {
+  const { country } = req.query;
+  
+  if (!country) {
+    return res.status(400).json({ error: 'Country parameter is required' });
+  }
+
+  console.log('Searching for universities in country:', country);
+
+  db.query(
+    'SELECT * FROM universities WHERE LOWER(country) = LOWER(?) ORDER BY name',
+    [country.trim()],
+    (err, results) => {
+      if (err) {
+        console.error('Error fetching universities by country:', err);
+        return res.status(500).json({ error: 'Internal server error' });
+      }
+      
+      console.log('Found universities:', results.length);
+      res.json(results);
+    }
+  );
+});
+
+// Search countries by name - THIS IS THE OTHER MISSING ROUTE!
+app.get('/api/countries/search', (req, res) => {
+  const { name } = req.query;
+  
+  if (!name) {
+    return res.status(400).json({ error: 'Name parameter is required' });
+  }
+
+  console.log('Searching for country:', name);
+
+  db.query(
+    'SELECT * FROM countries WHERE LOWER(name) = LOWER(?)',
+    [name.trim()],
+    (err, results) => {
+      if (err) {
+        console.error('Error searching countries:', err);
+        return res.status(500).json({ error: 'Internal server error' });
+      }
+      
+      console.log('Found countries:', results.length);
+      res.json(results);
+    }
+  );
+});
+
+// Get university by ID (for the university profile page)
+app.get('/api/universities/:id', (req, res) => {
+  const { id } = req.params;
+  
+  db.query(
+    'SELECT * FROM universities WHERE id = ?',
+    [id],
+    (err, results) => {
+      if (err) {
+        console.error('Error fetching university:', err);
+        return res.status(500).json({ error: 'Internal server error' });
+      }
+      
+      if (results.length === 0) {
+        return res.status(404).json({ error: 'University not found' });
+      }
+      
+      res.json(results[0]);
+    }
+  );
 });
 
 app.listen(5000, () => console.log('Server running on port 5000'));

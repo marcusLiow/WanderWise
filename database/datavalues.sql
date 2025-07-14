@@ -1,5 +1,6 @@
 -- Insert scripts for universities from SMU International Student Exchange Programme
 -- Based on iGPA Spring 2025 data
+use wanderwise;
 
 -- Insert countries first (expanding the existing list)
 INSERT INTO countries (name, flag) VALUES
@@ -16,6 +17,7 @@ INSERT INTO countries (name, flag) VALUES
 ('Czech Republic', '/images/czech-flag.png'),
 ('Denmark', '/images/denmark-flag.png'),
 ('Finland', '/images/finland-flag.png'),
+('France', '/images/france-flag.png'),
 ('Hungary', '/images/hungary-flag.png'),
 ('Iceland', '/images/iceland-flag.png'),
 ('Ireland', '/images/ireland-flag.png'),
@@ -344,8 +346,7 @@ INSERT INTO universities (name, description, logo, country, flag, rating) VALUES
 'Hanken School of Economics is Finland\'s leading business school, founded in 1909. Located in Helsinki, it offers comprehensive business education in a Nordic context. The school is known for its strong alumni network and excellent career opportunities.',
 '/images/hanken-logo.png', 'Finland', '/images/finland-flag.png', 4.4),
 
--- FRANCE (updating the existing entry)
+-- FRANCE
 ('EMLYON Business School', 
 'EMLYON Business School is one of France\'s leading business schools, founded in 1872. Located in Lyon, it offers world-class business education with strong emphasis on entrepreneurship and innovation. The school has excellent industry connections and modern facilities.',
-'/images/emlyon-logo.png', 'France', '/images/france-flag.png', 4.3)
-);
+'/images/emlyon-logo.png', 'France', '/images/france-flag.png', 4.3);

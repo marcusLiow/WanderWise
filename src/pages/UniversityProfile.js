@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import './UniversityProfile.css';
 
 const UniversityProfile = () => {
-  const { id } = useParams();
+  const { id, searchQuery } = useParams();
+  const navigate = useNavigate();
   const [university, setUniversity] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [averageExpenses, setAverageExpenses] = useState(null);
@@ -13,56 +14,124 @@ const UniversityProfile = () => {
   const [error, setError] = useState(null);
   const [hoveredExpense, setHoveredExpense] = useState(null);
 
+  // New states for search functionality
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchType, setSearchType] = useState(null); // 'university', 'country', or 'not-found'
+  const [isSearchMode, setIsSearchMode] = useState(false);
+
   useEffect(() => {
-    const fetchUniversityData = async () => {
-      try {
-        setLoading(true);
-        
-        // Fetch university details
-        const universityResponse = await fetch(`/api/universities/${id}`);
-        if (!universityResponse.ok) throw new Error('University not found');
-        const universityData = await universityResponse.json();
-        setUniversity(universityData);
-
-        // Fetch reviews for this university
-        const reviewsResponse = await fetch(`/api/universities/${id}/reviews`);
-        if (reviewsResponse.ok) {
-          const reviewsData = await reviewsResponse.json();
-          setReviews(reviewsData);
-        }
-
-        // Fetch average expenses
-        const expensesResponse = await fetch(`/api/universities/${id}/average-expenses`);
-        if (expensesResponse.ok) {
-          const expensesData = await expensesResponse.json();
-          setAverageExpenses(expensesData);
-        }
-
-        // Fetch photo highlights
-        const photosResponse = await fetch(`/api/universities/${id}/photos`);
-        if (photosResponse.ok) {
-          const photosData = await photosResponse.json();
-          setPhotoHighlights(photosData);
-        }
-
-        // Fetch top countries students travel to
-        const countriesResponse = await fetch(`/api/universities/${id}/top-travel-countries`);
-        if (countriesResponse.ok) {
-          const countriesData = await countriesResponse.json();
-          setTopCountries(countriesData);
-        }
-
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (id) {
-      fetchUniversityData();
+      // Direct university ID access
+      fetchUniversityData(id);
+    } else if (searchQuery) {
+      // Search mode
+      handleSearchQuery(searchQuery);
     }
-  }, [id]);
+  }, [id, searchQuery]);
+
+  // UPDATED handleSearchQuery function
+  const handleSearchQuery = async (query) => {
+    try {
+      setLoading(true);
+      setIsSearchMode(true);
+      
+      // First, try to find exact university match
+      // Changed from '/api/search/universities' to '/api/universities/search'
+      const universityResponse = await fetch(`/api/universities/search?name=${encodeURIComponent(query)}`);
+      if (universityResponse.ok) {
+        const universityData = await universityResponse.json();
+        
+        if (universityData.length === 1) {
+          // Exact match found - redirect to university page
+          navigate(`/university/${universityData[0].id}`);
+          return;
+        } else if (universityData.length > 1) {
+          // Multiple universities found
+          setSearchResults(universityData);
+          setSearchType('university');
+          setLoading(false);
+          return;
+        }
+      }
+      
+      // If no university found, try country search
+      // Changed from '/api/search/countries' to '/api/countries/search'
+      const countryResponse = await fetch(`/api/countries/search?name=${encodeURIComponent(query)}`);
+      if (countryResponse.ok) {
+        const countryData = await countryResponse.json();
+        
+        if (countryData.length > 0) {
+          // Get universities for this country
+          const universitiesResponse = await fetch(`/api/universities/by-country?country=${encodeURIComponent(query)}`);
+          if (universitiesResponse.ok) {
+            const universitiesData = await universitiesResponse.json();
+            setSearchResults(universitiesData);
+            setSearchType('country');
+            setLoading(false);
+            return;
+          }
+        }
+      }
+      
+      // No results found
+      setSearchType('not-found');
+      setLoading(false);
+      
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
+  const fetchUniversityData = async (universityId) => {
+    try {
+      setLoading(true);
+      setIsSearchMode(false);
+      
+      // Fetch university details
+      const universityResponse = await fetch(`/api/universities/${universityId}`);
+      if (!universityResponse.ok) throw new Error('University not found');
+      const universityData = await universityResponse.json();
+      setUniversity(universityData);
+
+      // Fetch reviews for this university
+      const reviewsResponse = await fetch(`/api/universities/${universityId}/reviews`);
+      if (reviewsResponse.ok) {
+        const reviewsData = await reviewsResponse.json();
+        setReviews(reviewsData);
+      }
+
+      // Fetch average expenses
+      const expensesResponse = await fetch(`/api/universities/${universityId}/average-expenses`);
+      if (expensesResponse.ok) {
+        const expensesData = await expensesResponse.json();
+        setAverageExpenses(expensesData);
+      }
+
+      // Fetch photo highlights
+      const photosResponse = await fetch(`/api/universities/${universityId}/photos`);
+      if (photosResponse.ok) {
+        const photosData = await photosResponse.json();
+        setPhotoHighlights(photosData);
+      }
+
+      // Fetch top countries students travel to
+      const countriesResponse = await fetch(`/api/universities/${universityId}/top-travel-countries`);
+      if (countriesResponse.ok) {
+        const countriesData = await countriesResponse.json();
+        setTopCountries(countriesData);
+      }
+
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUniversityClick = (universityId) => {
+    navigate(`/university/${universityId}`);
+  };
 
   const renderStars = (rating) => {
     const stars = [];
@@ -105,10 +174,68 @@ const UniversityProfile = () => {
     setHoveredExpense(null);
   };
 
+  // UPDATED renderSearchResults function
+  const renderSearchResults = () => {
+    if (searchType === 'not-found') {
+      return (
+        <div className="no-results">
+          <h2>No Results Found</h2>
+          <p>Sorry, we couldn't find any universities or countries matching "{searchQuery}".</p>
+          <p>Please try a different search term.</p>
+          <button onClick={() => navigate('/')} className="back-button">
+            Back to Search
+          </button>
+        </div>
+      );
+    }
+
+    if (searchType === 'university' || searchType === 'country') {
+      return (
+        <div className="search-results">
+          <h2>
+            {searchType === 'country' 
+              ? `Universities in ${searchQuery}` 
+              : `Universities matching "${searchQuery}"`}
+          </h2>
+          <div className="universities-grid">
+            {searchResults.map((uni) => (
+              <div 
+                key={uni.id} 
+                className="university-card"
+                onClick={() => handleUniversityClick(uni.id)}
+              >
+                <div className="university-card-header">
+                  <img src={uni.logo} alt={uni.name} className="university-logo-small" />
+                  <div className="university-card-info">
+                    <h3>{uni.name}</h3>
+                    <div className="country-info">
+                      <img src={uni.flag} alt={uni.country} className="country-flag-small" />
+                      <span>{uni.country}</span>
+                    </div>
+                    <div className="rating">
+                      {renderStars(uni.rating)}
+                      <span className="rating-number">{uni.rating}/5</span>
+                    </div>
+                  </div>
+                </div>
+                <p className="university-description">{uni.description}</p>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => navigate('/')} className="back-button">
+            Back to Search
+          </button>
+        </div>
+      );
+    }
+  };
+
   if (loading) {
     return (
       <div className="university-profile">
-        <div className="loading">Loading university information...</div>
+        <div className="loading">
+          {isSearchMode ? 'Searching...' : 'Loading university information...'}
+        </div>
       </div>
     );
   }
@@ -121,6 +248,29 @@ const UniversityProfile = () => {
     );
   }
 
+  // Render search results if in search mode
+  if (isSearchMode) {
+    return (
+      <div className="university-profile">
+        <div className="header">
+          <div className="brand">
+            <span className="brand-name">Wander</span>
+            <span className="brand-accent">Wise</span>
+          </div>
+          <div className="user-info">
+            <span>Welcome, Jinhong!</span>
+            <div className="user-avatar">
+              <img src="/images/user-avatar.png" alt="User" />
+            </div>
+          </div>
+        </div>
+        <div className="main-content">
+          {renderSearchResults()}
+        </div>
+      </div>
+    );
+  }
+
   if (!university) {
     return (
       <div className="university-profile">
@@ -129,6 +279,7 @@ const UniversityProfile = () => {
     );
   }
 
+  // Original university profile render
   return (
     <div className="university-profile">
       <div className="header">

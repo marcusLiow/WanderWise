@@ -1,4 +1,6 @@
 -- Database Schema for WanderWise
+CREATE DATABASE Wanderwise;
+use wanderwise;
 
 CREATE TABLE universities (
   id INT PRIMARY KEY AUTO_INCREMENT,
