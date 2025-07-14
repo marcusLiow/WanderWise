@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Student Exchange Review</title>
+  <!-- Load libraries in specific order -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .star-button {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #d1d5db;
+      transition: color 0.2s;
+    }
+    .star-button.filled {
+      color: #fbbf24;
+    }
+    .star-button:disabled {
+      cursor: default;
+    }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div style="padding: 20px; text-align: center;">
+      <p>Loading...</p>
+      <p id="error-message" style="color: red; display: none;">Error loading libraries. Check console for details.</p>
+    </div>
+  </div>
+
+  <script type="text/babel">
+    // Check if all libraries loaded
+    if (typeof React === 'undefined') {
+      document.getElementById('error-message').style.display = 'block';
+      document.getElementById('error-message').textContent = 'React failed to load';
+      throw new Error('React not loaded');
+    }
+    if (typeof ReactDOM === 'undefined') {
+      document.getElementById('error-message').style.display = 'block';
+      document.getElementById('error-message').textContent = 'ReactDOM failed to load';
+      throw new Error('ReactDOM not loaded');
+    }
+    if (typeof supabase === 'undefined') {
+      document.getElementById('error-message').style.display = 'block';
+      document.getElementById('error-message').textContent = 'Supabase failed to load';
+      throw new Error('Supabase not loaded');
+    }
+
+    const { useState, useMemo } = React;
+
+    // Initialize Supabase
+    const supabaseUrl = 'https://aojighzqmzouwhxyndbs.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvamlnaHpxbXpvdXdoeHluZGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MDgyNTMsImV4cCI6MjA2Nzk4NDI1M30.1f2HHXbYxP8KaABhv4uw151Xj1mRDWxd63pHYgKIXnQ';
+    const { createClient } = supabase;
+    const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+    function WriteReview() {
+      // State hooks
+      const [selectedCountry, setSelectedCountry] = useState('');
+      const [selectedUniversity, setSelectedUniversity] = useState('');
+      const [courseStudied, setCourseStudied] = useState('');
+      const [gpa, setGpa] = useState('');
+      const [academicRating, setAcademicRating] = useState(0);
+      const [academicComment, setAcademicComment] = useState('');
+      const [cultureRating, setCultureRating] = useState(0);
+      const [cultureComment, setCultureComment] = useState('');
+      const [foodRating, setFoodRating] = useState(0);
+      const [foodComment, setFoodComment] = useState('');
+      const [accommodationRating, setAccommodationRating] = useState(0);
+      const [accommodationComment, setAccommodationComment] = useState('');
+      const [safetyRating, setSafetyRating] = useState(0);
+      const [safetyComment, setSafetyComment] = useState('');
+      const [selectedTags, setSelectedTags] = useState([]);
+      const [reviewText, setReviewText] = useState('');
+      const [tipsText, setTipsText] = useState('');
+      const [isSubmitting, setIsSubmitting] = useState(false);
+      const [submitMessage, setSubmitMessage] = useState('');
+      const [currentStep, setCurrentStep] = useState(1);
+      const [currency, setCurrency] = useState('');
+      const [expenses, setExpenses] = useState({
+        food: '',
+        shopping: '',
+        rental: '',
+        public_transport: '',
+        travel: '',
+        miscellaneous: ''
+      });
+
+      // Helper functions now inside component:
+      const handleNext = () => setCurrentStep(2);
+      const handleBack = () => setCurrentStep(1);
+      const handleExpenseChange = (category, value) => {
+        setExpenses(prev => ({ ...prev, [category]: value }));
+      };
+
+      // Auto-compute overall rating
+      const computedOverallRating = useMemo(() => {
+        const ratings = [academicRating, cultureRating, foodRating, accommodationRating, safetyRating];
+        const validRatings = ratings.filter(rating => rating > 0);
+        if (validRatings.length === 0) return 0;
+        const average = validRatings.reduce((sum, rating) => sum + rating, 0) / validRatings.length;
+        return Math.round(average);
+      }, [academicRating, cultureRating, foodRating, accommodationRating, safetyRating]);
+
+      // Static data
+      const experienceTags = [
+        'Friendly Locals', 'Beautiful Campus',
+        'Travel Opportunities', 'Supportive Professors',
+        'Great Nightlife', 'Rich History',
+        'Safe Environment', 'Delicious Food'
+      ];
+
+      const countries = [
+        'Australia','Austria','Belgium','Canada','China','Denmark','Finland',
+        'France','Germany','Hong Kong','Italy','Japan','Netherlands','New Zealand',
+        'Norway','South Korea','Spain','Sweden','Switzerland','United Kingdom','United States'
+      ];
+
+      const universities = {
+        'United States': ['Harvard University','Stanford University','MIT','UC Berkeley','NYU'],
+        'United Kingdom': ['Oxford University','Cambridge University','Imperial College London','UCL','LSE'],
+        'Australia': ['University of Melbourne','Australian National University','University of Sydney','UNSW'],
+        'Canada': ['University of Toronto','UBC','McGill University','University of Waterloo'],
+        'Germany': ['Technical University of Munich','Heidelberg University','Humboldt University'],
+        'France': ['Sorbonne University','École Normale Supérieure','Sciences Po'],
+        'Japan': ['University of Tokyo','Kyoto University','Waseda University','Keio University'],
+        'South Korea': ['Seoul National University','KAIST','Yonsei University','Korea University'],
+        'China': ['Peking University','Tsinghua University','Fudan University','Shanghai Jiao Tong University'],
+        'Netherlands': ['University of Amsterdam','Delft University of Technology','Erasmus University'],
+        'Sweden': ['KTH Royal Institute of Technology','Stockholm University','Lund University'],
+        'Switzerland': ['ETH Zurich','University of Zurich','EPFL'],
+        'Italy': ['Bocconi University','University of Bologna','Sapienza University of Rome'],
+        'Spain': ['IE University','Universidad Carlos III de Madrid','University of Barcelona'],
+        'Norway': ['University of Oslo','Norwegian University of Science and Technology'],
+        'Denmark': ['University of Copenhagen','Technical University of Denmark'],
+        'Finland': ['University of Helsinki','Aalto University'],
+        'Austria': ['University of Vienna','Vienna University of Technology'],
+        'Belgium': ['KU Leuven','Ghent University'],
+        'Hong Kong': ['University of Hong Kong','HKUST','Chinese University of Hong Kong'],
+        'New Zealand': ['University of Auckland','University of Otago']
+      };
+
+      const currencies = [
+        'USD - US Dollar','EUR - Euro','GBP - British Pound','JPY - Japanese Yen',
+        'AUD - Australian Dollar','CAD - Canadian Dollar','CHF - Swiss Franc',
+        'CNY - Chinese Yuan','KRW - South Korean Won','SGD - Singapore Dollar',
+        'HKD - Hong Kong Dollar','NOK - Norwegian Krone','SEK - Swedish Krona',
+        'DKK - Danish Krone'
+      ];
+
+      // StarRating sub-component
+      const StarRating = ({ rating, setRating, label, readOnly=false, comment, setComment, placeholder }) => (
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {label} *
+            {readOnly && <span className="text-sm text-gray-500 ml-2">(Auto-calculated)</span>}
+          </label>
+          <div className="flex gap-1 mb-3">
+            {[1,2,3,4,5].map(star => (
+              <button
+                key={star}
+                type="button"
+                onClick={() => !readOnly && setRating(star)}
+                className={`star-button ${star <= rating ? 'filled' : ''}`}
+                disabled={readOnly}
+              >★</button>
+            ))}
+          </div>
+          {!readOnly && (
+            <textarea
+              value={comment}
+              onChange={e => setComment(e.target.value)}
+              placeholder={placeholder}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
+              rows="3"
+            />
+          )}
+        </div>
+      );
+
+      // Tag click handler
+      const handleTagClick = tag => {
+        setSelectedTags(prev =>
+          prev.includes(tag)
+            ? prev.filter(t => t !== tag)
+            : [...prev, tag]
+        );
+      };
+
+      // Submit handler
+      const handleSubmit = async () => {
+        setIsSubmitting(true);
+        setSubmitMessage('');
+        try {
+          const reviewData = {
+            country: selectedCountry,
+            university: selectedUniversity,
+            course_studied: courseStudied,
+            gpa: parseFloat(gpa),
+            overall_rating: computedOverallRating,
+            academic_rating: academicRating,
+            academic_comment: academicComment,
+            culture_rating: cultureRating,
+            culture_comment: cultureComment,
+            food_rating: foodRating,
+            food_comment: foodComment,
+            accommodation_rating: accommodationRating,
+            accommodation_comment: accommodationComment,
+            safety_rating: safetyRating,
+            safety_comment: safetyComment,
+            tags: selectedTags,
+            review_text: reviewText,
+            tips_text: tipsText,
+            currency: currency,
+            expense_food: parseFloat(expenses.food) || 0,
+            expense_shopping: parseFloat(expenses.shopping) || 0,
+            expense_rental: parseFloat(expenses.rental) || 0,
+            expense_public_transport: parseFloat(expenses.public_transport) || 0,
+            expense_travel: parseFloat(expenses.travel) || 0,
+            expense_miscellaneous: parseFloat(expenses.miscellaneous) || 0
+          };
+          const { data, error } = await supabaseClient.from('reviews').insert([reviewData]);
+          if (error) throw error;
+          setSubmitMessage('Review submitted successfully! Thank you for sharing your experience.');
+          // reset form...
+          setCurrentStep(1);
+          setSelectedCountry('');
+          setSelectedUniversity('');
+          setCourseStudied('');
+          setGpa('');
+          setAcademicRating(0);
+          setAcademicComment('');
+          setCultureRating(0);
+          setCultureComment('');
+          setFoodRating(0);
+          setFoodComment('');
+          setAccommodationRating(0);
+          setAccommodationComment('');
+          setSafetyRating(0);
+          setSafetyComment('');
+          setSelectedTags([]);
+          setReviewText('');
+          setTipsText('');
+          setCurrency('');
+          setExpenses({ food:'', shopping:'', rental:'', public_transport:'', travel:'', miscellaneous:'' });
+        } catch (err) {
+          console.error(err);
+          setSubmitMessage('Error submitting review. Please try again.');
+        } finally {
+          setIsSubmitting(false);
+        }
+      };
+
+      // Render UI...
+      return (
+        <div className="min-h-screen bg-gray-50 py-8">
+          <div className="max-w-2xl mx-auto px-4">
+            <div className="bg-white rounded-lg shadow-sm p-8">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">SMU</span>
+                </div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  {currentStep === 1 ? 'Write a Review' : 'Add Expenses'}
+                </h1>
+                <div className="ml-auto">
+                  <span className="text-sm text-gray-500">Step {currentStep} of 2</span>
+                </div>
+              </div>
+
+              {currentStep === 1 ? (
+                <div className="space-y-6">
+                  {/* Country */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Country of Exchange *
+                    </label>
+                    <select
+                      value={selectedCountry}
+                      onChange={e => { setSelectedCountry(e.target.value); setSelectedUniversity(''); }}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    >
+                      <option value="">Select a Country</option>
+                      {countries.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+
+                  {/* University */}
+                  {selectedCountry && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        University *
+                      </label>
+                      <select
+                        value={selectedUniversity}
+                        onChange={e => setSelectedUniversity(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      >
+                        <option value="">Select a University</option>
+                        {universities[selectedCountry].map(u => <option key={u} value={u}>{u}</option>)}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Course & GPA */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Course Studied *</label>
+                    <input
+                      type="text"
+                      value={courseStudied}
+                      onChange={e => setCourseStudied(e.target.value)}
+                      placeholder="e.g., Business Administration"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">GPA *</label>
+                    <input
+                      type="number"
+                      value={gpa}
+                      onChange={e => setGpa(e.target.value)}
+                      placeholder="e.g., 3.5"
+                      min="0" max="4" step="0.01"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div className="border-t border-gray-200 my-6" />
+
+                  {/* Ratings */}
+                  <StarRating rating={computedOverallRating} setRating={()=>{}} label="Overall Rating" readOnly />
+                  <StarRating rating={academicRating} setRating={setAcademicRating} label="Academic Experience"
+                    comment={academicComment} setComment={setAcademicComment}
+                    placeholder="Courses, professors, workload..." />
+                  <StarRating rating={cultureRating} setRating={setCultureRating} label="Cultural Experience"
+                    comment={cultureComment} setComment={setCultureComment}
+                    placeholder="Local customs, social interactions..." />
+                  <StarRating rating={foodRating} setRating={setFoodRating} label="Food"
+                    comment={foodComment} setComment={setFoodComment}
+                    placeholder="Local cuisine, quality..." />
+                  <StarRating rating={accommodationRating} setRating={setAccommodationRating} label="Accommodation"
+                    comment={accommodationComment} setComment={setAccommodationComment}
+                    placeholder="Housing quality, facilities..." />
+                  <StarRating rating={safetyRating} setRating={setSafetyRating} label="Safety"
+                    comment={safetyComment} setComment={setSafetyComment}
+                    placeholder="Personal, campus, neighborhood safety..." />
+
+                  {/* Tags */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      What did you love about your exchange? *
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {experienceTags.map(tag => (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => handleTagClick(tag)}
+                          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                            selectedTags.includes(tag)
+                              ? 'bg-blue-100 text-blue-700 border-2 border-blue-200'
+                              : 'bg-gray-100 text-gray-700 border-2 border-transparent hover:bg-gray-200'
+                          }`}
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Review & Tips */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Overall exchange experience *
+                    </label>
+                    <textarea
+                      value={reviewText}
+                      onChange={e => setReviewText(e.target.value)}
+                      placeholder="Your key highlights..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
+                      rows="6"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Tips for future exchange students
+                    </label>
+                    <textarea
+                      value={tipsText}
+                      onChange={e => setTipsText(e.target.value)}
+                      placeholder="Your advice..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
+                      rows="4"
+                    />
+                  </div>
+
+                  {/* Next button */}
+                  <div className="flex justify-end pt-6">
+                    {submitMessage && (
+                      <div className={`mr-4 p-3 rounded-lg text-sm ${
+                        submitMessage.includes('Error')
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-green-100 text-green-700'
+                      }`}>
+                        {submitMessage}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleNext}
+                      className="px-8 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    >
+                      Next: Add Expenses
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Currency */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Currency *
+                    </label>
+                    <select
+                      value={currency}
+                      onChange={e => setCurrency(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    >
+                      <option value="">Select Currency</option>
+                      {currencies.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+
+                  {/* Expenses */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {['food','shopping','rental','public_transport','travel','miscellaneous'].map(cat => (
+                      <div key={cat}>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          {cat.replace('_',' ').replace(/\b\w/g,l=>l.toUpperCase())}
+                        </label>
+                        <input
+                          type="number"
+                          value={expenses[cat]}
+                          onChange={e => handleExpenseChange(cat, e.target.value)}
+                          placeholder="0.00"
+                          min="0" step="0.01"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Total */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-medium text-gray-700">Total Expenses:</span>
+                      <span className="text-xl font-bold text-blue-600">
+                        {currency ? currency.split(' - ')[0] : ''}{' '}
+                        {(
+                          parseFloat(expenses.food||0) +
+                          parseFloat(expenses.shopping||0) +
+                          parseFloat(expenses.rental||0) +
+                          parseFloat(expenses.public_transport||0) +
+                          parseFloat(expenses.travel||0) +
+                          parseFloat(expenses.miscellaneous||0)
+                        ).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Back & Submit */}
+                  <div className="flex justify-between pt-6">
+                    <button
+                      type="button"
+                      onClick={handleBack}
+                      className="px-8 py-3 bg-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-400 transition-colors focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                    >
+                      Back
+                    </button>
+                    <div className="flex items-center">
+                      {submitMessage && (
+                        <div className={`mr-4 p-3 rounded-lg text-sm ${
+                          submitMessage.includes('Error')
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-green-100 text-green-700'
+                        }`}>
+                          {submitMessage}
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={isSubmitting}
+                        className={`px-8 py-3 font-medium rounded-lg transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                          isSubmitting
+                            ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                        }`}
+                      >
+                        {isSubmitting ? 'Submitting...' : 'Submit Review & Expenses'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<WriteReview />, document.getElementById('root'));
+  </script>
+</body>
+</html>
