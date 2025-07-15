@@ -345,20 +345,26 @@ app.get('/api/search', (req, res) => {
     });
   }
   
-  const searchTerm = `%${q.trim()}%`;
+  const searchTerm = q.trim();
+  const startsWithTerm = `${searchTerm}%`;  // For starts-with matching (e.g., "h%")
+  const containsTerm = `%${searchTerm}%`;   // For contains matching (e.g., "%h%")
   
-  // Search in university name, country, and description
+  // Hybrid search: prioritize first letters, then fall back to contains
   const searchQuery = `
     SELECT id, name, description, country, rating, logo, flag, created_at
     FROM universities 
     WHERE name LIKE ? 
-       OR country LIKE ? 
+       OR country LIKE ?
+       OR name LIKE ?
+       OR country LIKE ?
        OR description LIKE ?
     ORDER BY 
       CASE 
-        WHEN name LIKE ? THEN 1
-        WHEN country LIKE ? THEN 2
-        ELSE 3
+        WHEN name LIKE ? THEN 1          -- University name starts with term (highest priority)
+        WHEN country LIKE ? THEN 2       -- Country name starts with term
+        WHEN name LIKE ? THEN 3          -- University name contains term
+        WHEN country LIKE ? THEN 4       -- Country name contains term  
+        ELSE 5                           -- Description contains term (lowest priority)
       END,
       rating DESC,
       name ASC
@@ -367,7 +373,12 @@ app.get('/api/search', (req, res) => {
   
   db.query(
     searchQuery, 
-    [searchTerm, searchTerm, searchTerm, searchTerm, searchTerm], 
+    [
+      startsWithTerm, startsWithTerm,    // First two WHERE conditions: starts with matching
+      containsTerm, containsTerm, containsTerm,  // Next three WHERE conditions: contains matching
+      startsWithTerm, startsWithTerm,    // ORDER BY conditions: starts with matching
+      containsTerm, containsTerm         // ORDER BY conditions: contains matching
+    ], 
     (err, results) => {
       if (err) {
         console.error('Database search error:', err);
