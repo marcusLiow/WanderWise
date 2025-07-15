@@ -25,16 +25,54 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // Initialize Supabase client
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// API functions using Supabase
-const findUniversityByName = async (universityName) => {
+// Get list of countries from universities table
+const getCountriesList = async () => {
   try {
-    console.log('🔍 Searching for university:', universityName);
+    const { data, error } = await supabase
+      .from('universities')
+      .select('country')
+      .not('country', 'is', null);
     
-    // First try: Exact and partial matches
+    if (error) {
+      console.error('Error fetching countries:', error);
+      return [];
+    }
+    
+    // Get unique countries and normalize them
+    const countries = [...new Set(data.map(item => item.country.trim().toLowerCase()))];
+    return countries;
+  } catch (error) {
+    console.error('Error getting countries list:', error);
+    return [];
+  }
+};
+
+// MODIFIED: More restrictive university search that avoids country matches
+const findUniversityByName = async (searchTerm) => {
+  try {
+    console.log('🔍 Searching for university:', searchTerm);
+    
+    // First check if the search term is likely a country name
+    const countriesList = await getCountriesList();
+    const searchLower = searchTerm.toLowerCase().trim();
+    
+    // If search term matches a country name, don't treat it as university search
+    const isLikelyCountry = countriesList.some(country => 
+      country === searchLower || 
+      country.includes(searchLower) || 
+      searchLower.includes(country)
+    );
+    
+    if (isLikelyCountry) {
+      console.log('🏳️ Search term appears to be a country name, skipping university search');
+      return null;
+    }
+    
+    // Search for universities with more restrictive matching
     const { data, error } = await supabase
       .from('universities')
       .select('*')
-      .ilike('name', `%${universityName}%`)
+      .ilike('name', `%${searchTerm}%`)
       .order('name');
     
     if (error) {
@@ -54,7 +92,7 @@ const findUniversityByName = async (universityName) => {
     
     // Check for exact match first (case insensitive)
     const exactMatch = data.find(uni => 
-      uni.name.toLowerCase() === universityName.toLowerCase()
+      uni.name.toLowerCase() === searchTerm.toLowerCase()
     );
     
     if (exactMatch) {
@@ -62,45 +100,52 @@ const findUniversityByName = async (universityName) => {
       return exactMatch;
     }
     
-    // If only one result, return it
-    if (data.length === 1) {
-      console.log('✅ Single result found:', data[0].name);
-      return data[0];
-    }
+    // For partial matches, be more restrictive
+    // Only return a university if:
+    // 1. There's only one result, OR
+    // 2. The search term is clearly a university name (contains university keywords)
     
-    // Check for very close matches
-    const searchLower = universityName.toLowerCase();
-    const closeMatches = data.filter(uni => {
-      const uniNameLower = uni.name.toLowerCase();
+    const universityKeywords = ['university', 'college', 'institute', 'school', 'academy'];
+    const containsUniversityKeyword = universityKeywords.some(keyword => 
+      searchLower.includes(keyword)
+    );
+    
+    // If search contains university keywords and we have matches
+    if (containsUniversityKeyword && data.length > 0) {
+      // Look for the best match
+      const bestMatch = data.find(uni => {
+        const uniNameLower = uni.name.toLowerCase();
+        // Check if most words from search term appear in university name
+        const searchWords = searchLower.split(' ').filter(word => word.length > 2);
+        const matchedWords = searchWords.filter(word => uniNameLower.includes(word));
+        return matchedWords.length >= Math.max(1, searchWords.length - 1);
+      });
       
-      // Check if search term matches significant part of university name
-      const words = uniNameLower.split(' ');
-      const searchWords = searchLower.split(' ');
-      
-      // If search term matches any major word in university name
-      for (const searchWord of searchWords) {
-        if (searchWord.length >= 3) {
-          for (const uniWord of words) {
-            if (uniWord.includes(searchWord) || searchWord.includes(uniWord)) {
-              // Additional check: make sure it's a significant match
-              if (searchWord.length >= 4 || uniWord.length <= 5) {
-                return true;
-              }
-            }
-          }
-        }
+      if (bestMatch) {
+        console.log('✅ Best university match found:', bestMatch.name);
+        return bestMatch;
       }
-      
-      return false;
-    });
-    
-    if (closeMatches.length === 1) {
-      console.log('✅ Close match found:', closeMatches[0].name);
-      return closeMatches[0];
     }
     
-    console.log('❓ Multiple potential matches found:', closeMatches.length);
-    return null; // Multiple matches, let user choose from results
+    // If only one result and search term is substantial (not just a country name)
+    if (data.length === 1 && searchTerm.length > 3) {
+      const singleResult = data[0];
+      const uniNameLower = singleResult.name.toLowerCase();
+      
+      // Make sure the search term significantly matches the university name
+      const searchWords = searchLower.split(' ').filter(word => word.length > 2);
+      const significantMatch = searchWords.some(word => 
+        uniNameLower.includes(word) && word.length > 3
+      );
+      
+      if (significantMatch) {
+        console.log('✅ Single significant match found:', singleResult.name);
+        return singleResult;
+      }
+    }
+    
+    console.log('❓ No clear university match found, treating as potential country search');
+    return null; // Let it fall through to country search
     
   } catch (error) {
     console.error('❌ Error finding university:', error);
@@ -198,7 +243,7 @@ function SearchResults() {
         navigate(`/search?q=${encodeURIComponent(searchSlug)}`, { replace: true });
       }
 
-      // Step 1: Check if it's a university name
+      // Step 1: Check if it's a university name (now more restrictive)
       console.log('Step 1: Checking for university match...');
       const universityMatch = await findUniversityByName(trimmedSearch);
       
