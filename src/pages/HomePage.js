@@ -75,7 +75,7 @@ const HomePage = () => {
       text: 'The professors were incredibly knowledgeable and the international student community was so welcoming. Paris offered endless opportunities for cultural immersion!'
     },
     {
-      name: 'Marcus Kim',
+      name: 'Barry Kim',
       university: 'SMU → University of Melbourne, Australia',
       avatar: 'MK',
       rating: 5,

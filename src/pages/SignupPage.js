@@ -304,6 +304,7 @@ function SignUpPage() {
         lastName: data.user.lastName,      // Get from backend response
         name: data.user.firstName + ' ' + data.user.lastName,
         nationality: data.user.nationality,
+        dateOfBirth: data.user.dateOfBirth, 
         university: data.user.university
       };
       localStorage.setItem('wanderwise_user', JSON.stringify(userData));
