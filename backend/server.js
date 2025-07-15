@@ -1,3 +1,74 @@
+// Enhanced country search route with better debugging
+app.get('/api/countries/search', (req, res) => {
+  const { name } = req.query;
+  
+  if (!name) {
+    return res.status(400).json({ error: 'Name parameter is required' });
+  }
+
+  const searchTerm = name.trim();
+  console.log('=== COUNTRY SEARCH DEBUG ===');
+  console.log('Original search term:', name);
+  console.log('Trimmed search term:', searchTerm);
+  console.log('Search term length:', searchTerm.length);
+
+  // First, let's see all countries in the database
+  db.query('SELECT * FROM countries', (err, allResults) => {
+    if (err) {
+      console.error('Error fetching all countries:', err);
+    } else {
+      console.log('All countries in database:');
+      allResults.forEach(country => {
+        console.log(`- ID: ${country.id}, Name: "${country.name}" (length: ${country.name.length})`);
+      });
+    }
+  });
+
+  // Now do the actual search
+  db.query(
+    'SELECT * FROM countries WHERE LOWER(name) = LOWER(?)',
+    [searchTerm],
+    (err, results) => {
+      if (err) {
+        console.error('Error searching countries:', err);
+        return res.status(500).json({ error: 'Internal server error' });
+      }
+      
+      console.log('Search results count:', results.length);
+      if (results.length > 0) {
+        console.log('Found countries:', results);
+      } else {
+        console.log('No exact match found, trying partial match...');
+        
+        // Try a partial match as fallback
+        db.query(
+          'SELECT * FROM countries WHERE LOWER(name) LIKE LOWER(?)',
+          [`%${searchTerm}%`],
+          (err, partialResults) => {
+            if (err) {
+              console.error('Error in partial search:', err);
+              return res.status(500).json({ error: 'Internal server error' });
+            }
+            
+            console.log('Partial search results:', partialResults);
+            if (partialResults.length > 0) {
+              console.log('Found partial matches, returning first one');
+              return res.json([partialResults[0]]);
+            } else {
+              console.log('No partial matches found either');
+              return res.json([]);
+            }
+          }
+        );
+        return; // Don't continue to the normal response
+      }
+      
+      console.log('=== END DEBUG ===');
+      res.json(results);
+    }
+  );
+});
+
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
