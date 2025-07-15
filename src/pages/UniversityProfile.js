@@ -258,7 +258,7 @@ const UniversityProfile = () => {
 
           {/* REVIEWS SECTION */}
           <section>
-            <h3 className="text-2xl font-semibold mb-4">Featured Reviews</h3>
+            <h3 className="text-2xl font-semibold mb-4">Reviews</h3>
             
             {reviews.length === 0 ? (
               <div className="bg-white p-8 rounded-xl shadow text-center text-gray-500">
