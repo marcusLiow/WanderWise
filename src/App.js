@@ -37,13 +37,11 @@ function App() {
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/success" element={<SuccessPage />} />
             <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/uni" element={<UniversityProfile />} />
-            // Add this route to handle search queries
-
-
+            
             {/* Search and university routes */}
-            <Route path="/search/:searchQuery" element={<UniversityProfile />} />
+            <Route path="/search/:countryName" element={<SearchResults />} />
             <Route path="/university/:id" element={<UniversityProfile />} />
+            <Route path="/uni" element={<UniversityProfile />} />
           </Routes>
         </div>
       </Router>

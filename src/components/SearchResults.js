@@ -13,14 +13,21 @@ import {
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import SchoolIcon from '@mui/icons-material/School';
 
+// Base URL for your backend API
+const API_BASE_URL = 'http://localhost:5000';
+
 // API functions to interact with your database
 const getUniversitiesByCountry = async (countryName) => {
   try {
-    const response = await fetch(`/api/universities/by-country?country=${encodeURIComponent(countryName)}`);
-    if (response.ok) {
-      return await response.json();
+    const response = await fetch(`${API_BASE_URL}/api/universities/by-country?country=${encodeURIComponent(countryName)}`);
+    
+    if (!response.ok) {
+      console.error('Response not ok:', response.status, response.statusText);
+      return [];
     }
-    return [];
+    
+    const data = await response.json();
+    return data;
   } catch (error) {
     console.error('Error fetching universities by country:', error);
     return [];
@@ -29,12 +36,15 @@ const getUniversitiesByCountry = async (countryName) => {
 
 const getCountryByName = async (countryName) => {
   try {
-    const response = await fetch(`/api/countries/search?name=${encodeURIComponent(countryName)}`);
-    if (response.ok) {
-      const data = await response.json();
-      return data.length > 0 ? data[0] : null;
+    const response = await fetch(`${API_BASE_URL}/api/countries/search?name=${encodeURIComponent(countryName)}`);
+    
+    if (!response.ok) {
+      console.error('Response not ok:', response.status, response.statusText);
+      return null;
     }
-    return null;
+    
+    const data = await response.json();
+    return data.length > 0 ? data[0] : null;
   } catch (error) {
     console.error('Error fetching country:', error);
     return null;
@@ -49,30 +59,38 @@ function SearchResults() {
   const [country, setCountry] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchType, setSearchType] = useState('');
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const loadUniversities = async () => {
       setLoading(true);
+      setError(null);
       
       if (countryName) {
         try {
           // Get country details
           const countryFormatted = countryName.replace(/-/g, ' ');
+          console.log('Searching for country:', countryFormatted);
+          
           const countryData = await getCountryByName(countryFormatted);
+          console.log('Country data:', countryData);
           
           if (countryData) {
             setCountry(countryData);
             // Get universities for this country
             const universitiesData = await getUniversitiesByCountry(countryData.name);
+            console.log('Universities data:', universitiesData);
             setUniversities(universitiesData);
             setSearchType('country');
           } else {
             setUniversities([]);
             setSearchType('country');
+            setError(`Country "${countryFormatted}" not found`);
           }
         } catch (error) {
           console.error('Error loading universities:', error);
           setUniversities([]);
+          setError('Failed to load universities');
         }
       } else {
         // General search results (if you have other search logic)
@@ -113,15 +131,24 @@ function SearchResults() {
     );
   }
 
+  if (error) {
+    return (
+      <Container maxWidth="lg" sx={{ mt: 4 }}>
+        <Typography color="error" variant="h6">
+          Error: {error}
+        </Typography>
+      </Container>
+    );
+  }
+
   if (universities.length === 0) {
-    // Redirect to no results page if no universities found
-    navigate('/no-results', { 
-      state: { 
-        query: getDisplayCountryName(),
-        type: searchType 
-      } 
-    });
-    return null;
+    return (
+      <Container maxWidth="lg" sx={{ mt: 4 }}>
+        <Typography variant="h6">
+          No universities found for "{getDisplayCountryName()}"
+        </Typography>
+      </Container>
+    );
   }
 
   return (
