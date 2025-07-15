@@ -11,6 +11,8 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignupPage';
 import ProfilePage from './pages/ProfilePage';
+import UniversityProfile from './pages/UniversityProfile';
+
 
 // Create MUI theme
 const theme = createTheme({
@@ -33,6 +35,9 @@ function App() {
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/search" element={<SearchResults />} />
+            <Route path="/search/:countryName" element={<SearchResults />} />
+            <Route path="/university/:universitySlug" element={<UniversityProfile />} />
+
           </Routes>
         </div>
       </Router>

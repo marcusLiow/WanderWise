@@ -1,235 +1,234 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 
-// Supabase client setup - using the same credentials as SearchResults.js
-const SUPABASE_URL = 'https://pevsocbbbuksmuxabogz.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBldnNvY2JiYnVrc211eGFib2d6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1NjMyMDksImV4cCI6MjA2ODEzOTIwOX0.2o3w-XAPhFdv5cISUWWTClMN04fMybqjkNQ1NMkjEDU';
+// Supabase clients
+const universitiesClient = createClient(
+  'https://pevsocbbbuksmuxabogz.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBldnNvY2JiYnVrc211eGFib2d6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1NjMyMDksImV4cCI6MjA2ODEzOTIwOX0.2o3w-XAPhFdv5cISUWWTClMN04fMybqjkNQ1NMkjEDU'
+);
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const reviewsClient = createClient(
+  'https://aojighzqmzouwhxyndbs.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvamlnaHpxbXpvdXdoeHluZGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MDgyNTMsImV4cCI6MjA2Nzk4NDI1M30.1f2HHXbYxP8KaABhv4uw151Xj1mRDWxd63pHYgKIXnQ'
+);
 
 const UniversityProfile = () => {
-  const { universitySlug } = useParams();
+  const { universitySlug } = useParams(); // Get slug from URL
   const location = useLocation();
-  const navigate = useNavigate();
-  
   const [university, setUniversity] = useState(null);
+  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Mock data for sections that will be populated from other tables later
+  // Get university ID from navigation state if available
+  const universityId = location.state?.universityId;
+
+  // Helper function to convert slug back to name
+  const slugToName = (slug) => {
+    return slug.split('-').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+  };
+
+  // Mock data for demonstration
+  const mockUniversity = {
+    id: '1',
+    name: "King's College London",
+    description: "King's College London, established in 1829, is one of the top-ranked universities in the UK. Located in the heart of London, it offers a wide range of disciplines and fosters an intellectually vibrant and diverse student community from around the globe.",
+    country: "United Kingdom",
+    flag: "https://flagcdn.com/w40/gb.png",
+    rating: 4.2
+  };
+
   const mockReviews = [
     {
       id: 1,
-      name: "Janelle",
-      age: 21,
-      homeUniversity: "Columbia University, USA",
-      avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-      review: "I really learned more independence and trust in myself that I knew what I want and what I am doing in my life. Also learned a lot more British slang than I expected to!",
-      rating: 4
+      review_text: "I really learned more independence and trust in myself that I knew what I want and what I am doing in my life. Also learned a lot more British slang than I expected to!",
+      overall_rating: 4,
+      user_email: "janelle@columbia.edu",
+      course_studied: "International Relations",
+      expense_rental: 1200,
+      expense_food: 400,
+      expense_public_transport: 150,
+      created_at: new Date().toISOString()
     },
     {
       id: 2,
-      name: "Julia",
-      age: 24,
-      homeUniversity: "Washington State University, USA",
-      avatar: "https://randomuser.me/api/portraits/women/65.jpg",
-      review: "Amazing experience! The academic environment was challenging but rewarding. Would definitely recommend to anyone considering studying abroad.",
-      rating: 5
+      review_text: "London is amazing, but wow it's expensive. Still, the academic experience at King's made every penny worth it.",
+      overall_rating: 3,
+      user_email: "julia@wsu.edu",
+      course_studied: "Business Studies",
+      expense_rental: 1400,
+      expense_food: 450,
+      expense_public_transport: 160,
+      created_at: new Date().toISOString()
     }
   ];
 
-  const mockExpenses = {
-    rent: 85,
-    food: 65,
-    transport: 50
-  };
-
-  const mockPhotos = [
-    "https://source.unsplash.com/200x200/?campus,university",
-    "https://source.unsplash.com/200x200/?library,study",
-    "https://source.unsplash.com/200x200/?students,graduation",
-    "https://source.unsplash.com/200x200/?architecture,building"
-  ];
-
-  const mockTopCountries = ["France", "Netherlands", "Italy"];
-
-  // Helper function to convert slug back to university name for search
-  const slugToUniversityName = (slug) => {
-    return slug
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
-
-  // Fetch university data
   useEffect(() => {
-    const fetchUniversity = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+    fetchUniversityData();
+  }, [universitySlug, universityId]);
+
+  const fetchUniversityData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch university data
+      let universityData;
+      
+      // Try to fetch by ID first (from navigation state)
+      if (universityId) {
+        const { data: uniData, error: uniError } = await universitiesClient
+          .from('universities')
+          .select('*')
+          .eq('id', universityId)
+          .single();
         
-        console.log('=== UNIVERSITY PROFILE FETCH ===');
-        console.log('University slug from URL:', universitySlug);
-        console.log('Location state:', location.state);
-
-        let universityData = null;
-
-        // Method 1: Try to get university ID from navigation state (most reliable)
-        if (location.state?.universityId) {
-          console.log('Fetching by ID from state:', location.state.universityId);
-          
-          const { data, error } = await supabase
-            .from('universities')
-            .select('*')
-            .eq('id', location.state.universityId)
-            .single();
-
-          if (error) {
-            console.error('Error fetching by ID:', error);
-          } else if (data) {
-            console.log('✅ University found by ID:', data.name);
-            universityData = data;
-          }
-        }
-
-        // Method 2: If no ID in state or ID fetch failed, try name-based search
-        if (!universityData && universitySlug) {
-          const searchName = slugToUniversityName(universitySlug);
-          console.log('Fetching by name:', searchName);
-
-          // Try exact match first
-          let { data, error } = await supabase
-            .from('universities')
-            .select('*')
-            .ilike('name', searchName)
-            .single();
-
-          if (error || !data) {
-            console.log('Exact match failed, trying partial match...');
-            
-            // Try partial match
-            const partialResult = await supabase
-              .from('universities')
-              .select('*')
-              .ilike('name', `%${searchName}%`)
-              .order('name');
-
-            if (partialResult.data && partialResult.data.length > 0) {
-              // Look for best match
-              const exactMatch = partialResult.data.find(uni => 
-                uni.name.toLowerCase() === searchName.toLowerCase()
-              );
-              
-              universityData = exactMatch || partialResult.data[0];
-              console.log('✅ University found by partial match:', universityData.name);
-            }
-          } else {
-            console.log('✅ University found by exact name match:', data.name);
-            universityData = data;
-          }
-        }
-
-        if (universityData) {
-          setUniversity(universityData);
+        if (uniError) {
+          console.warn('University not found by ID, trying by name');
+          universityData = null;
         } else {
-          setError(`University not found. Please check the URL or search again.`);
-          console.log('❌ No university found');
+          universityData = uniData;
         }
-
-      } catch (err) {
-        console.error('Error fetching university:', err);
-        setError(`Error loading university: ${err.message}`);
-      } finally {
-        setLoading(false);
       }
-    };
+      
+      // If no ID or ID didn't work, try by name from slug
+      if (!universityData && universitySlug) {
+        const searchName = slugToName(universitySlug);
+        const { data: uniData, error: uniError } = await universitiesClient
+          .from('universities')
+          .select('*')
+          .ilike('name', `%${searchName}%`)
+          .single();
+        
+        if (uniError) {
+          console.warn('University not found by name, using mock data');
+          universityData = { ...mockUniversity, name: searchName };
+        } else {
+          universityData = uniData;
+        }
+      }
+      
+      // Final fallback to mock data
+      if (!universityData) {
+        universityData = mockUniversity;
+      }
 
-    if (universitySlug) {
-      fetchUniversity();
-    } else {
-      setError('No university specified in URL');
+      // Fetch reviews data
+      const { data: reviewsData, error: reviewsError } = await reviewsClient
+        .from('reviews')
+        .select('*')
+        .eq('university', universityData.name)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (reviewsError) {
+        console.warn('Reviews not found, using mock data');
+        setReviews(mockReviews);
+      } else {
+        setReviews(reviewsData || mockReviews);
+      }
+
+      setUniversity(universityData);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError(err.message);
+      // Use mock data as fallback
+      setUniversity(mockUniversity);
+      setReviews(mockReviews);
+    } finally {
       setLoading(false);
     }
-  }, [universitySlug, location.state]);
+  };
+
+  const getAverageExpenses = () => {
+    if (reviews.length === 0) return { rental: 0, food: 0, transport: 0 };
+    
+    const totals = reviews.reduce((acc, review) => {
+      acc.rental += review.expense_rental || 0;
+      acc.food += review.expense_food || 0;
+      acc.transport += review.expense_public_transport || 0;
+      return acc;
+    }, { rental: 0, food: 0, transport: 0 });
+
+    const count = reviews.length;
+    return {
+      rental: totals.rental / count,
+      food: totals.food / count,
+      transport: totals.transport / count
+    };
+  };
 
   const renderStars = (rating) => {
     const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 !== 0;
-
-    for (let i = 0; i < fullStars; i++) {
-      stars.push(<span key={i}>⭐</span>);
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <span key={i} className={i <= rating ? 'text-yellow-400' : 'text-gray-300'}>
+          ★
+        </span>
+      );
     }
-    
-    if (hasHalfStar) {
-      stars.push(<span key="half">⭐</span>);
-    }
-
-    const emptyStars = 5 - Math.ceil(rating);
-    for (let i = 0; i < emptyStars; i++) {
-      stars.push(<span key={`empty-${i}`} className="text-gray-300">☆</span>);
-    }
-
     return stars;
   };
 
-  // Loading state
+  const getProfileImage = (email) => {
+    const seed = email ? email.split('@')[0] : Math.random().toString();
+    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
+  };
+
+  const getUniversityName = (email) => {
+    if (!email) return 'Unknown University';
+    const domain = email.split('@')[1];
+    if (domain === 'columbia.edu') return 'Columbia University, USA';
+    if (domain === 'wsu.edu') return 'Washington State University, USA';
+    return domain;
+  };
+
+  const getUserName = (email) => {
+    if (!email) return 'Anonymous';
+    return email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading university information...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading university data...</p>
         </div>
       </div>
     );
   }
 
-  // Error state
-  if (error) {
+  if (error && !university) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-6">
-          <div className="text-6xl mb-4">😔</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">University Not Found</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
-          <div className="space-y-3">
-            <button 
-              onClick={() => navigate('/search')} 
-              className="w-full bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
-            >
-              🔍 Search Universities
-            </button>
-            <button 
-              onClick={() => window.history.back()} 
-              className="w-full bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors"
-            >
-              ← Go Back
-            </button>
-          </div>
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Error loading university data: {error}</p>
+          <button 
+            onClick={fetchUniversityData}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
   }
 
-  // Main render
+  const averageExpenses = getAverageExpenses();
+  const maxExpense = Math.max(averageExpenses.rental, averageExpenses.food, averageExpenses.transport);
+
   return (
     <div className="bg-gray-50 text-black font-sans min-h-screen">
       {/* HEADER */}
       <header className="bg-white shadow px-6 py-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-blue-500">
+        <h1 className="text-2xl font-bold text-blue-600">
           Wander<span className="text-black">Wise</span>
         </h1>
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={() => navigate('/search')} 
-            className="text-sm text-gray-600 hover:text-blue-500 transition-colors"
-          >
-            🔍 Search Universities
-          </button>
-          <div className="text-sm text-gray-500">Welcome, Jinhong!</div>
-        </div>
+        <div className="text-sm text-gray-500"></div>
       </header>
 
       {/* MAIN CONTAINER */}
@@ -237,188 +236,151 @@ const UniversityProfile = () => {
         
         {/* LEFT SECTION */}
         <div className="flex-[2] space-y-6">
-
           {/* UNIVERSITY INFO CARD */}
           <div className="bg-white p-8 rounded-xl shadow">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between">
               <div>
                 <h2 className="text-3xl font-bold">{university.name}</h2>
                 <div className="flex items-center gap-2 mt-2">
-                  {university.flag ? (
-                    <img 
-                      src={university.flag} 
-                      alt={`${university.country} Flag`} 
-                      className="w-6 h-4"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                      }}
-                    />
-                  ) : (
-                    <span className="text-gray-400">🏴</span>
-                  )}
-                  <span className="text-lg text-gray-600">{university.country || 'Unknown Country'}</span>
+                  <img src={university.flag} alt={`${university.country} Flag`} className="w-6 h-4" />
+                  <span className="text-lg text-gray-600">{university.country}</span>
                 </div>
               </div>
               <div className="text-yellow-400 text-xl mt-4 sm:mt-0">
-                {university.rating ? (
-                  <>
-                    {renderStars(university.rating)} {university.rating}/5
-                  </>
-                ) : (
-                  <span className="text-gray-400">No rating yet</span>
-                )}
+                {renderStars(Math.round(university.rating))} {university.rating}/5
               </div>
             </div>
 
             <p className="mt-4 text-gray-700 leading-relaxed text-lg">
-              {university.description || `${university.name} is a prestigious educational institution offering world-class academic programs and research opportunities.`}
+              {university.description}
             </p>
-
-            {/* University Logo */}
-            {university.logo && (
-              <div className="mt-4">
-                <img 
-                  src={university.logo} 
-                  alt={`${university.name} Logo`}
-                  className="h-16 w-auto"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                  }}
-                />
-              </div>
-            )}
           </div>
 
           {/* REVIEWS SECTION */}
           <section>
-            <h3 className="text-2xl font-semibold mb-4">Student Reviews</h3>
-            <div className="space-y-4">
-              {mockReviews.map((review) => (
-                <div key={review.id} className="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
-                  <div className="flex gap-4 items-center">
-                    <img 
-                      src={review.avatar} 
-                      alt="Student Avatar" 
-                      className="w-12 h-12 rounded-full" 
-                    />
-                    <div>
-                      <p className="font-semibold">{review.name}, {review.age}</p>
-                      <p className="text-sm text-gray-500">{review.homeUniversity}</p>
+            <h3 className="text-2xl font-semibold mb-4">Featured Reviews</h3>
+            
+            {reviews.length === 0 ? (
+              <div className="bg-white p-8 rounded-xl shadow text-center text-gray-500">
+                No reviews available yet. Be the first to share your experience!
+              </div>
+            ) : (
+              <div className="space-y-5">
+                {reviews.slice(0, 3).map((review) => (
+                  <div key={review.id} className="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
+                    <div className="flex gap-4 items-center">
+                      <img 
+                        src={getProfileImage(review.user_email)} 
+                        alt="Avatar" 
+                        className="w-12 h-12 rounded-full"
+                      />
+                      <div>
+                        <p className="font-semibold">
+                          {getUserName(review.user_email)}, {review.course_studied}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {getUniversityName(review.user_email)}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="mt-3 text-gray-700">{review.review_text}</p>
+                    <div className="text-yellow-400 mt-2 text-lg">
+                      {renderStars(review.overall_rating || 0)}
                     </div>
                   </div>
-                  <p className="mt-3 text-gray-700">{review.review}</p>
-                  <div className="text-yellow-400 mt-2 text-lg">
-                    {renderStars(review.rating)}
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-700">
-                💡 <strong>Note:</strong> Review system coming soon! These are sample reviews to demonstrate the interface.
-              </p>
-            </div>
+                ))}
+              </div>
+            )}
           </section>
         </div>
 
         {/* RIGHT SIDEBAR */}
         <aside className="w-full lg:w-80 space-y-6">
           
-          {/* Card: Average Expenses */}
+          {/* Average Expenses Card */}
           <div className="bg-white p-5 rounded-xl shadow">
-            <h4 className="font-semibold mb-3 text-lg">Average Expenses</h4>
+            <h4 className="font-semibold mb-4 text-lg">Average Expenses</h4>
             <div className="space-y-3">
               <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-700">Rent</span>
-                  <span className="text-gray-500">{mockExpenses.rent}%</span>
+                <div className="flex justify-between text-sm text-gray-700 mb-1">
+                  <span>Rent</span>
+                  <span>${averageExpenses.rental.toFixed(0)}</span>
                 </div>
                 <div className="h-3 bg-gray-200 rounded">
                   <div 
-                    className="h-3 bg-blue-500 rounded transition-all duration-500" 
-                    style={{ width: `${mockExpenses.rent}%` }}
+                    className="h-3 bg-blue-400 rounded" 
+                    style={{ width: `${(averageExpenses.rental / maxExpense) * 100}%` }}
                   ></div>
                 </div>
               </div>
+              
               <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-700">Food & Groceries</span>
-                  <span className="text-gray-500">{mockExpenses.food}%</span>
+                <div className="flex justify-between text-sm text-gray-700 mb-1">
+                  <span>Food & Groceries</span>
+                  <span>${averageExpenses.food.toFixed(0)}</span>
                 </div>
                 <div className="h-3 bg-gray-200 rounded">
                   <div 
-                    className="h-3 bg-blue-500 rounded transition-all duration-500" 
-                    style={{ width: `${mockExpenses.food}%` }}
+                    className="h-3 bg-blue-400 rounded" 
+                    style={{ width: `${(averageExpenses.food / maxExpense) * 100}%` }}
                   ></div>
                 </div>
               </div>
+              
               <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-700">Transport</span>
-                  <span className="text-gray-500">{mockExpenses.transport}%</span>
+                <div className="flex justify-between text-sm text-gray-700 mb-1">
+                  <span>Transport</span>
+                  <span>${averageExpenses.transport.toFixed(0)}</span>
                 </div>
                 <div className="h-3 bg-gray-200 rounded">
                   <div 
-                    className="h-3 bg-blue-500 rounded transition-all duration-500" 
-                    style={{ width: `${mockExpenses.transport}%` }}
+                    className="h-3 bg-blue-400 rounded" 
+                    style={{ width: `${(averageExpenses.transport / maxExpense) * 100}%` }}
                   ></div>
                 </div>
               </div>
-            </div>
-            <div className="mt-3 p-2 bg-yellow-50 rounded text-xs text-yellow-700">
-              💡 Expense data coming soon!
             </div>
           </div>
 
-          {/* Card: Photo Highlights */}
+          {/* Photo Highlights Card */}
           <div className="bg-white p-5 rounded-xl shadow">
-            <h4 className="font-semibold mb-3 text-lg">Photo Highlights</h4>
+            <h4 className="font-semibold mb-4 text-lg">Photo Highlights</h4>
             <div className="grid grid-cols-2 gap-2">
-              {mockPhotos.map((photo, index) => (
-                <img 
-                  key={index}
-                  src={photo} 
-                  alt={`Campus highlight ${index + 1}`}
-                  className="rounded-md w-full h-20 object-cover hover:opacity-80 transition-opacity cursor-pointer" 
-                />
-              ))}
-            </div>
-            <div className="mt-3 p-2 bg-yellow-50 rounded text-xs text-yellow-700">
-              💡 Real campus photos coming soon!
+              <img 
+                src={`https://source.unsplash.com/200x200/?${university.name.toLowerCase().replace(/\s+/g, '-')}`} 
+                className="rounded-md w-full h-20 object-cover" 
+                alt="University highlight"
+              />
+              <img 
+                src={`https://source.unsplash.com/200x200/?${university.country.toLowerCase().replace(/\s+/g, '-')}-university`} 
+                className="rounded-md w-full h-20 object-cover" 
+                alt="Country highlight"
+              />
+              <img 
+                src={`https://source.unsplash.com/200x200/?${university.country.toLowerCase().replace(/\s+/g, '-')}-city`} 
+                className="rounded-md w-full h-20 object-cover" 
+                alt="City highlight"
+              />
+              <img 
+                src={`https://source.unsplash.com/200x200/?study-abroad`} 
+                className="rounded-md w-full h-20 object-cover" 
+                alt="Study abroad"
+              />
             </div>
           </div>
 
-          {/* Card: Top Countries */}
+          {/* Top Countries Card */}
           <div className="bg-white p-5 rounded-xl shadow">
-            <h4 className="font-semibold mb-3 text-lg">Top 3 Countries Travelled To</h4>
-            <ul className="space-y-2">
-              {mockTopCountries.map((country, index) => (
-                <li key={index} className="flex items-center text-sm text-gray-700">
-                  <span className="w-6 h-4 bg-gray-200 rounded mr-3 flex items-center justify-center text-xs">
-                    {index + 1}
-                  </span>
-                  {country}
-                </li>
-              ))}
+            <h4 className="font-semibold mb-4 text-lg">Top 3 Countries Travelled To</h4>
+            <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+              <li>France</li>
+              <li>Netherlands</li>
+              <li>Italy</li>
             </ul>
-            <div className="mt-3 p-2 bg-yellow-50 rounded text-xs text-yellow-700">
-              💡 Travel data coming soon!
-            </div>
           </div>
 
         </aside>
       </div>
-
-      {/* Debug info (remove in production) */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="fixed bottom-4 right-4 bg-black text-white p-2 rounded text-xs max-w-sm">
-          <strong>Debug:</strong><br />
-          Slug: {universitySlug}<br />
-          ID: {location.state?.universityId || 'N/A'}<br />
-          Name: {university?.name || 'N/A'}
-        </div>
-      )}
     </div>
   );
 };
