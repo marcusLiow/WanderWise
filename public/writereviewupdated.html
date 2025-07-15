@@ -22,6 +22,9 @@
     .star-button.filled {
       color: #fbbf24;
     }
+    .star-button:hover:not(:disabled) {
+      color: #f59e0b;
+    }
     .star-button:disabled {
       cursor: default;
     }
@@ -61,6 +64,45 @@
     const { createClient } = supabase;
     const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
+    // StarRating component - Moved outside to prevent re-creation
+    const StarRating = ({ rating, setRating, label, readOnly = false, comment, setComment, placeholder }) => (
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          {label} *
+          {readOnly && <span className="text-sm text-gray-500 ml-2">(Auto-calculated)</span>}
+        </label>
+        <div className="flex gap-1 mb-3">
+          {[1, 2, 3, 4, 5].map(star => (
+            <button
+              key={star}
+              type="button"
+              onClick={() => !readOnly && setRating(star)}
+              className={`star-button ${star <= rating ? 'filled' : ''}`}
+              disabled={readOnly}
+              aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
+            >
+              ★
+            </button>
+          ))}
+        </div>
+        {!readOnly && setComment && (
+          <div>
+            <textarea
+              value={comment || ''}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder={placeholder}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
+              rows="3"
+              minLength="50"
+            />
+            <div className="text-xs text-gray-500 mt-1">
+              {comment ? comment.trim().length : 0}/50 characters minimum
+            </div>
+          </div>
+        )}
+      </div>
+    );
+
     function WriteReview() {
       // State hooks
       const [selectedCountry, setSelectedCountry] = useState('');
@@ -93,9 +135,40 @@
         miscellaneous: ''
       });
 
-      // Helper functions now inside component:
-      const handleNext = () => setCurrentStep(2);
+      // Helper functions
+      const handleNext = () => {
+        // Basic validation before proceeding
+        if (!selectedCountry || !selectedUniversity || !courseStudied || !gpa || 
+            academicRating === 0 || cultureRating === 0 || foodRating === 0 || 
+            accommodationRating === 0 || safetyRating === 0 || selectedTags.length === 0 || 
+            !reviewText.trim()) {
+          setSubmitMessage('Please fill in all required fields before proceeding.');
+          return;
+        }
+
+        // Check minimum character requirements
+        const textFields = [
+          { value: academicComment, name: 'Academic Experience comment' },
+          { value: cultureComment, name: 'Cultural Experience comment' },
+          { value: foodComment, name: 'Food comment' },
+          { value: accommodationComment, name: 'Accommodation comment' },
+          { value: safetyComment, name: 'Safety comment' },
+          { value: reviewText, name: 'Overall exchange experience' }
+        ];
+
+        for (const field of textFields) {
+          if (!field.value || field.value.trim().length < 50) {
+            setSubmitMessage(`${field.name} must be at least 50 characters long.`);
+            return;
+          }
+        }
+
+        setSubmitMessage('');
+        setCurrentStep(2);
+      };
+
       const handleBack = () => setCurrentStep(1);
+
       const handleExpenseChange = (category, value) => {
         setExpenses(prev => ({ ...prev, [category]: value }));
       };
@@ -155,38 +228,10 @@
         'DKK - Danish Krone'
       ];
 
-      // StarRating sub-component
-      const StarRating = ({ rating, setRating, label, readOnly=false, comment, setComment, placeholder }) => (
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {label} *
-            {readOnly && <span className="text-sm text-gray-500 ml-2">(Auto-calculated)</span>}
-          </label>
-          <div className="flex gap-1 mb-3">
-            {[1,2,3,4,5].map(star => (
-              <button
-                key={star}
-                type="button"
-                onClick={() => !readOnly && setRating(star)}
-                className={`star-button ${star <= rating ? 'filled' : ''}`}
-                disabled={readOnly}
-              >★</button>
-            ))}
-          </div>
-          {!readOnly && (
-            <textarea
-              value={comment}
-              onChange={e => setComment(e.target.value)}
-              placeholder={placeholder}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
-              rows="3"
-            />
-          )}
-        </div>
-      );
+
 
       // Tag click handler
-      const handleTagClick = tag => {
+      const handleTagClick = (tag) => {
         setSelectedTags(prev =>
           prev.includes(tag)
             ? prev.filter(t => t !== tag)
@@ -196,6 +241,11 @@
 
       // Submit handler
       const handleSubmit = async () => {
+        if (!currency) {
+          setSubmitMessage('Please select a currency before submitting.');
+          return;
+        }
+
         setIsSubmitting(true);
         setSubmitMessage('');
         try {
@@ -226,39 +276,57 @@
             expense_travel: parseFloat(expenses.travel) || 0,
             expense_miscellaneous: parseFloat(expenses.miscellaneous) || 0
           };
+
           const { data, error } = await supabaseClient.from('reviews').insert([reviewData]);
           if (error) throw error;
+
           setSubmitMessage('Review submitted successfully! Thank you for sharing your experience.');
-          // reset form...
-          setCurrentStep(1);
-          setSelectedCountry('');
-          setSelectedUniversity('');
-          setCourseStudied('');
-          setGpa('');
-          setAcademicRating(0);
-          setAcademicComment('');
-          setCultureRating(0);
-          setCultureComment('');
-          setFoodRating(0);
-          setFoodComment('');
-          setAccommodationRating(0);
-          setAccommodationComment('');
-          setSafetyRating(0);
-          setSafetyComment('');
-          setSelectedTags([]);
-          setReviewText('');
-          setTipsText('');
-          setCurrency('');
-          setExpenses({ food:'', shopping:'', rental:'', public_transport:'', travel:'', miscellaneous:'' });
+          
+          // Reset form
+          setTimeout(() => {
+            setCurrentStep(1);
+            setSelectedCountry('');
+            setSelectedUniversity('');
+            setCourseStudied('');
+            setGpa('');
+            setAcademicRating(0);
+            setAcademicComment('');
+            setCultureRating(0);
+            setCultureComment('');
+            setFoodRating(0);
+            setFoodComment('');
+            setAccommodationRating(0);
+            setAccommodationComment('');
+            setSafetyRating(0);
+            setSafetyComment('');
+            setSelectedTags([]);
+            setReviewText('');
+            setTipsText('');
+            setCurrency('');
+            setExpenses({ food: '', shopping: '', rental: '', public_transport: '', travel: '', miscellaneous: '' });
+            setSubmitMessage('');
+          }, 2000);
         } catch (err) {
-          console.error(err);
+          console.error('Submission error:', err);
           setSubmitMessage('Error submitting review. Please try again.');
         } finally {
           setIsSubmitting(false);
         }
       };
 
-      // Render UI...
+      // Calculate total expenses
+      const totalExpenses = useMemo(() => {
+        return (
+          parseFloat(expenses.food || 0) +
+          parseFloat(expenses.shopping || 0) +
+          parseFloat(expenses.rental || 0) +
+          parseFloat(expenses.public_transport || 0) +
+          parseFloat(expenses.travel || 0) +
+          parseFloat(expenses.miscellaneous || 0)
+        ).toFixed(2);
+      }, [expenses]);
+
+      // Render UI
       return (
         <div className="min-h-screen bg-gray-50 py-8">
           <div className="max-w-2xl mx-auto px-4">
@@ -284,12 +352,17 @@
                     </label>
                     <select
                       value={selectedCountry}
-                      onChange={e => { setSelectedCountry(e.target.value); setSelectedUniversity(''); }}
+                      onChange={(e) => { 
+                        setSelectedCountry(e.target.value); 
+                        setSelectedUniversity(''); 
+                      }}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       required
                     >
                       <option value="">Select a Country</option>
-                      {countries.map(c => <option key={c} value={c}>{c}</option>)}
+                      {countries.map(country => (
+                        <option key={country} value={country}>{country}</option>
+                      ))}
                     </select>
                   </div>
 
@@ -301,12 +374,14 @@
                       </label>
                       <select
                         value={selectedUniversity}
-                        onChange={e => setSelectedUniversity(e.target.value)}
+                        onChange={(e) => setSelectedUniversity(e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         required
                       >
                         <option value="">Select a University</option>
-                        {universities[selectedCountry].map(u => <option key={u} value={u}>{u}</option>)}
+                        {universities[selectedCountry]?.map(university => (
+                          <option key={university} value={university}>{university}</option>
+                        ))}
                       </select>
                     </div>
                   )}
@@ -317,20 +392,23 @@
                     <input
                       type="text"
                       value={courseStudied}
-                      onChange={e => setCourseStudied(e.target.value)}
+                      onChange={(e) => setCourseStudied(e.target.value)}
                       placeholder="e.g., Business Administration"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       required
                     />
                   </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">GPA *</label>
                     <input
                       type="number"
                       value={gpa}
-                      onChange={e => setGpa(e.target.value)}
+                      onChange={(e) => setGpa(e.target.value)}
                       placeholder="e.g., 3.5"
-                      min="0" max="4" step="0.01"
+                      min="0"
+                      max="4"
+                      step="0.01"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       required
                     />
@@ -339,22 +417,57 @@
                   <div className="border-t border-gray-200 my-6" />
 
                   {/* Ratings */}
-                  <StarRating rating={computedOverallRating} setRating={()=>{}} label="Overall Rating" readOnly />
-                  <StarRating rating={academicRating} setRating={setAcademicRating} label="Academic Experience"
-                    comment={academicComment} setComment={setAcademicComment}
-                    placeholder="Courses, professors, workload..." />
-                  <StarRating rating={cultureRating} setRating={setCultureRating} label="Cultural Experience"
-                    comment={cultureComment} setComment={setCultureComment}
-                    placeholder="Local customs, social interactions..." />
-                  <StarRating rating={foodRating} setRating={setFoodRating} label="Food"
-                    comment={foodComment} setComment={setFoodComment}
-                    placeholder="Local cuisine, quality..." />
-                  <StarRating rating={accommodationRating} setRating={setAccommodationRating} label="Accommodation"
-                    comment={accommodationComment} setComment={setAccommodationComment}
-                    placeholder="Housing quality, facilities..." />
-                  <StarRating rating={safetyRating} setRating={setSafetyRating} label="Safety"
-                    comment={safetyComment} setComment={setSafetyComment}
-                    placeholder="Personal, campus, neighborhood safety..." />
+                  <StarRating 
+                    rating={computedOverallRating} 
+                    setRating={() => {}} 
+                    label="Overall Rating" 
+                    readOnly={true}
+                  />
+
+                  <StarRating 
+                    rating={academicRating} 
+                    setRating={setAcademicRating} 
+                    label="Academic Experience"
+                    comment={academicComment} 
+                    setComment={setAcademicComment}
+                    placeholder="Courses, professors, workload..." 
+                  />
+
+                  <StarRating 
+                    rating={cultureRating} 
+                    setRating={setCultureRating} 
+                    label="Cultural Experience"
+                    comment={cultureComment} 
+                    setComment={setCultureComment}
+                    placeholder="Local customs, social interactions..." 
+                  />
+
+                  <StarRating 
+                    rating={foodRating} 
+                    setRating={setFoodRating} 
+                    label="Food"
+                    comment={foodComment} 
+                    setComment={setFoodComment}
+                    placeholder="Local cuisine, quality..." 
+                  />
+
+                  <StarRating 
+                    rating={accommodationRating} 
+                    setRating={setAccommodationRating} 
+                    label="Accommodation"
+                    comment={accommodationComment} 
+                    setComment={setAccommodationComment}
+                    placeholder="Housing quality, facilities..." 
+                  />
+
+                  <StarRating 
+                    rating={safetyRating} 
+                    setRating={setSafetyRating} 
+                    label="Safety"
+                    comment={safetyComment} 
+                    setComment={setSafetyComment}
+                    placeholder="Personal, campus, neighborhood safety..." 
+                  />
 
                   {/* Tags */}
                   <div>
@@ -386,21 +499,26 @@
                     </label>
                     <textarea
                       value={reviewText}
-                      onChange={e => setReviewText(e.target.value)}
-                      placeholder="Your key highlights..."
+                      onChange={(e) => setReviewText(e.target.value)}
+                      placeholder="Share your key highlights and experiences..."
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
                       rows="6"
+                      minLength="50"
                       required
                     />
+                    <div className="text-xs text-gray-500 mt-1">
+                      {reviewText ? reviewText.trim().length : 0}/50 characters minimum
+                    </div>
                   </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Tips for future exchange students
                     </label>
                     <textarea
                       value={tipsText}
-                      onChange={e => setTipsText(e.target.value)}
-                      placeholder="Your advice..."
+                      onChange={(e) => setTipsText(e.target.value)}
+                      placeholder="Share your advice and recommendations..."
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
                       rows="4"
                     />
@@ -410,7 +528,7 @@
                   <div className="flex justify-end pt-6">
                     {submitMessage && (
                       <div className={`mr-4 p-3 rounded-lg text-sm ${
-                        submitMessage.includes('Error')
+                        submitMessage.includes('Error') || submitMessage.includes('Please fill')
                           ? 'bg-red-100 text-red-700'
                           : 'bg-green-100 text-green-700'
                       }`}>
@@ -435,28 +553,38 @@
                     </label>
                     <select
                       value={currency}
-                      onChange={e => setCurrency(e.target.value)}
+                      onChange={(e) => setCurrency(e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       required
                     >
                       <option value="">Select Currency</option>
-                      {currencies.map(c => <option key={c} value={c}>{c}</option>)}
+                      {currencies.map(curr => (
+                        <option key={curr} value={curr}>{curr}</option>
+                      ))}
                     </select>
                   </div>
 
                   {/* Expenses */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {['food','shopping','rental','public_transport','travel','miscellaneous'].map(cat => (
-                      <div key={cat}>
+                    {[
+                      { key: 'food', label: 'Food' },
+                      { key: 'shopping', label: 'Shopping' },
+                      { key: 'rental', label: 'Rental' },
+                      { key: 'public_transport', label: 'Public Transport' },
+                      { key: 'travel', label: 'Travel' },
+                      { key: 'miscellaneous', label: 'Miscellaneous' }
+                    ].map(({ key, label }) => (
+                      <div key={key}>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          {cat.replace('_',' ').replace(/\b\w/g,l=>l.toUpperCase())}
+                          {label}
                         </label>
                         <input
                           type="number"
-                          value={expenses[cat]}
-                          onChange={e => handleExpenseChange(cat, e.target.value)}
+                          value={expenses[key]}
+                          onChange={(e) => handleExpenseChange(key, e.target.value)}
                           placeholder="0.00"
-                          min="0" step="0.01"
+                          min="0"
+                          step="0.01"
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
@@ -468,15 +596,7 @@
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-medium text-gray-700">Total Expenses:</span>
                       <span className="text-xl font-bold text-blue-600">
-                        {currency ? currency.split(' - ')[0] : ''}{' '}
-                        {(
-                          parseFloat(expenses.food||0) +
-                          parseFloat(expenses.shopping||0) +
-                          parseFloat(expenses.rental||0) +
-                          parseFloat(expenses.public_transport||0) +
-                          parseFloat(expenses.travel||0) +
-                          parseFloat(expenses.miscellaneous||0)
-                        ).toFixed(2)}
+                        {currency ? currency.split(' - ')[0] : ''} {totalExpenses}
                       </span>
                     </div>
                   </div>
@@ -493,7 +613,7 @@
                     <div className="flex items-center">
                       {submitMessage && (
                         <div className={`mr-4 p-3 rounded-lg text-sm ${
-                          submitMessage.includes('Error')
+                          submitMessage.includes('Error') || submitMessage.includes('Please select')
                             ? 'bg-red-100 text-red-700'
                             : 'bg-green-100 text-green-700'
                         }`}>
