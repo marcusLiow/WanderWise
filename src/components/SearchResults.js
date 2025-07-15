@@ -166,8 +166,19 @@ function SearchResults() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
 
+  // Helper function to create URL-friendly slugs
+  const createSlug = (str) => {
+    return str.toLowerCase().replace(/\s+/g, '-');
+  };
+
+  // Helper function to get search query from URL
+  const getSearchQueryFromUrl = () => {
+    const urlParams = new URLSearchParams(location.search);
+    return urlParams.get('q') || '';
+  };
+
   // UPDATED: Main search logic that handles both URL and manual searches
-  const performSearch = async (searchQuery) => {
+  const performSearch = async (searchQuery, updateUrl = false) => {
     if (!searchQuery || searchQuery.trim().length < 2) {
       setError('Please enter at least 2 characters to search');
       return;
@@ -180,6 +191,12 @@ function SearchResults() {
       const trimmedSearch = searchQuery.trim();
       console.log('=== PERFORMING SEARCH ===');
       console.log('Search query:', trimmedSearch);
+
+      // UPDATE URL if this is a manual search
+      if (updateUrl) {
+        const searchSlug = createSlug(trimmedSearch);
+        navigate(`/search?q=${encodeURIComponent(searchSlug)}`, { replace: true });
+      }
 
       // Step 1: Check if it's a university name
       console.log('Step 1: Checking for university match...');
@@ -227,14 +244,25 @@ function SearchResults() {
       console.log('=== COMPONENT INITIALIZATION ===');
       console.log('countryName from URL:', countryName);
       console.log('Current location:', location.pathname);
+      console.log('Search params:', location.search);
 
-      if (countryName) {
-        // URL-based search - could be country OR university
-        const decodedSearch = decodeURIComponent(countryName).replace(/-/g, ' ');
-        console.log('Decoded search term from URL:', decodedSearch);
+      // Check for search query in URL params first
+      const searchQuery = getSearchQueryFromUrl();
+      
+      if (searchQuery) {
+        // URL-based search from query parameter
+        const decodedSearch = decodeURIComponent(searchQuery).replace(/-/g, ' ');
+        console.log('Decoded search term from URL query:', decodedSearch);
         
-        // Perform the same search logic as manual search
-        await performSearch(decodedSearch);
+        // Perform the search logic without updating URL (already in URL)
+        await performSearch(decodedSearch, false);
+      } else if (countryName) {
+        // Legacy URL-based search from path parameter
+        const decodedSearch = decodeURIComponent(countryName).replace(/-/g, ' ');
+        console.log('Decoded search term from URL path:', decodedSearch);
+        
+        // Perform the search logic and update URL to new format
+        await performSearch(decodedSearch, true);
       } else {
         // No URL parameter - load all universities for browsing
         setLoading(true);
@@ -251,7 +279,7 @@ function SearchResults() {
     };
 
     initializeData();
-  }, [countryName, location.pathname]);
+  }, [countryName, location.search]); // Added location.search to dependencies
 
   // UPDATED: Manual search function (for search button/enter key)
   const handleSearch = async () => {
@@ -261,7 +289,7 @@ function SearchResults() {
     }
 
     setIsSearching(true);
-    await performSearch(searchTerm);
+    await performSearch(searchTerm, true); // Pass true to update URL
     setIsSearching(false);
     setSearchTerm(''); // Clear search after performing search
   };
@@ -272,9 +300,13 @@ function SearchResults() {
     }
   };
 
+  // UPDATED: Clear search function to remove URL params
   const handleClearSearch = async () => {
     setSearchTerm('');
     setError(null);
+    
+    // Update URL to remove search parameters
+    navigate('/search', { replace: true });
     
     // Reset to browse all universities
     setLoading(true);
@@ -289,10 +321,6 @@ function SearchResults() {
   const handleUniversityClick = (university) => {
     const universitySlug = createSlug(university.name);
     navigate(`/university/${universitySlug}`, { state: { universityId: university.id } });
-  };
-
-  const createSlug = (str) => {
-    return str.toLowerCase().replace(/\s+/g, '-');
   };
 
   const getResultsTitle = () => {
