@@ -18,6 +18,14 @@ const HomePage = () => {
     }
   };
 
+  // Add this function to your HomePage.js component, right after the existing handleKeyPress function
+
+  const handleDestinationClick = (destinationName) => {
+    // Navigate to search results page with the destination name as query parameter
+    navigate(`/search?q=${encodeURIComponent(destinationName)}`);
+  };
+
+
   // University carousel data
   const universitySlides = [
     {
@@ -558,7 +566,12 @@ const HomePage = () => {
 
           <div style={styles.grid}>
             {popularDestinations.map((destination, index) => (
-              <div key={index} className="hover-lift" style={styles.destinationCard}>
+              <div 
+                key={index} 
+                className="hover-lift" 
+                style={styles.destinationCard}
+                onClick={() => handleDestinationClick(destination.name)}
+              >
                 <div style={{
                   ...styles.destinationImage,
                   backgroundImage: `url(${destination.image})`
