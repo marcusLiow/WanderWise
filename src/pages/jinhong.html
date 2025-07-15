@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>King's College London – WanderWise</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            wanderBlue: '#3B82F6',
+            softGray: '#f9fafb',
+          },
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-softGray text-black font-sans">
+
+  <!-- HEADER -->
+  <header class="bg-white shadow px-6 py-4 flex justify-between items-center">
+    <h1 class="text-2xl font-bold text-wanderBlue">Wander<span class="text-black">Wise</span></h1>
+    <div class="text-sm text-gray-500">Welcome, Jinhong!</div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <div class="max-w-6xl mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8">
+    
+    <!-- LEFT SECTION -->
+    <div class="flex-[2] space-y-6">
+
+      <!-- UNIVERSITY INFO CARD (larger emphasis) -->
+      <div class="bg-white p-8 rounded-xl shadow">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between">
+          <div>
+            <h2 class="text-3xl font-bold">King's College London</h2>
+            <div class="flex items-center gap-2 mt-2">
+              <img src="https://flagcdn.com/w40/gb.png" alt="UK Flag" class="w-6 h-4">
+              <span class="text-lg text-gray-600">United Kingdom</span>
+            </div>
+          </div>
+          <div class="text-yellow-400 text-xl mt-4 sm:mt-0">★★★★☆ 4.2/5</div>
+        </div>
+
+        <p class="mt-4 text-gray-700 leading-relaxed text-lg">
+          King’s College London, established in 1829, is one of the top-ranked universities in the UK.
+          Located in the heart of London, it offers a wide range of disciplines and fosters an intellectually
+          vibrant and diverse student community from around the globe.
+        </p>
+      </div>
+
+      <!-- REVIEWS SECTION -->
+      <section>
+        <h3 class="text-2xl font-semibold mb-4">Reviews</h3>
+
+        <!-- Review 1 -->
+        <div class="bg-white p-5 rounded-xl shadow hover:shadow-lg transition mb-5">
+          <div class="flex gap-4 items-center">
+            <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Avatar" class="w-12 h-12 rounded-full" />
+            <div>
+              <p class="font-semibold">Janelle, 21</p>
+              <p class="text-sm text-gray-500">Columbia University, USA</p>
+            </div>
+          </div>
+          <p class="mt-3 text-gray-700">
+            I really learned more independence and trust in myself that I knew what I want and what I am doing in my life.
+            Also learned a lot more British slang than I expected to!
+          </p>
+          <div class="text-yellow-400 mt-2 text-lg">⭐⭐⭐⭐☆</div>
+        </div>
+
+        <!-- Review 2 -->
+        <div class="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
+          <div class="flex gap-4 items-center">
+            <img src="https://randomuser.me/api/portraits/women/65.jpg" alt="Avatar" class="w-12 h-12 rounded-full" />
+            <div>
+              <p class="font-semibold">Julia, 24</p>
+              <p class="text-sm text-gray-500">Washington State University, USA</p>
+            </div>
+          </div>
+          <p class="mt-3 text-gray-700">
+            London is amazing, but wow it's expensive. Still, the academic experience at King’s made every penny worth it.
+          </p>
+          <div class="text-yellow-400 mt-2 text-lg">⭐⭐⭐☆☆</div>
+        </div>
+      </section>
+    </div>
+
+    <!-- RIGHT SIDEBAR (3 separate cards) -->
+    <aside class="w-full lg:w-80 space-y-6">
+      
+      <!-- Card: Average Expenses -->
+      <div class="bg-white p-5 rounded-xl shadow">
+        <h4 class="font-semibold mb-2 text-lg">Average Expenses</h4>
+        <p class="text-sm text-gray-700">Rent</p>
+        <div class="h-3 bg-blue-300 rounded w-5/6 mb-2"></div>
+        <p class="text-sm text-gray-700">Food & Groceries</p>
+        <div class="h-3 bg-blue-300 rounded w-2/3 mb-2"></div>
+        <p class="text-sm text-gray-700">Transport</p>
+        <div class="h-3 bg-blue-300 rounded w-1/2"></div>
+      </div>
+
+      <!-- Card: Photo Highlights -->
+      <div class="bg-white p-5 rounded-xl shadow">
+        <h4 class="font-semibold mb-2 text-lg">Photo Highlights</h4>
+        <div class="grid grid-cols-2 gap-2">
+          <img src="https://source.unsplash.com/100x100/?london" class="rounded-md w-full h-auto object-cover" />
+          <img src="https://source.unsplash.com/100x100/?uk-university" class="rounded-md w-full h-auto object-cover" />
+          <img src="https://source.unsplash.com/100x100/?thames" class="rounded-md w-full h-auto object-cover" />
+          <img src="https://source.unsplash.com/100x100/?tower-bridge" class="rounded-md w-full h-auto object-cover" />
+        </div>
+      </div>
+
+      <!-- Card: Top Countries -->
+      <div class="bg-white p-5 rounded-xl shadow">
+        <h4 class="font-semibold mb-2 text-lg">Top 3 Countries Travelled To</h4>
+        <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+          <li>France</li>
+          <li>Netherlands</li>
+          <li>Italy</li>
+        </ul>
+      </div>
+
+    </aside>
+  </div>
+
+</body>
+</html>
