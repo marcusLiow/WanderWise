@@ -46,7 +46,7 @@ function Navbar() {
   };
 
   const handleWriteReviewClick = () => {
-    window.location.href = '/writereviewupdated.html';
+  navigate('/write-review');
   };
 
   const handleProfileClick = (event) => {

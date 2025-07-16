@@ -28,6 +28,54 @@
     .star-button:disabled {
       cursor: default;
     }
+    .image-preview {
+      position: relative;
+      overflow: hidden;
+      border-radius: 8px;
+      background: #f3f4f6;
+    }
+    .image-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .remove-image {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+    }
+    .remove-image:hover {
+      background: rgba(0, 0, 0, 0.9);
+    }
+    .upload-area {
+      border: 2px dashed #d1d5db;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      background: #f9fafb;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .upload-area:hover {
+      border-color: #3b82f6;
+      background: #eff6ff;
+    }
+    .upload-area.dragover {
+      border-color: #3b82f6;
+      background: #dbeafe;
+    }
   </style>
 </head>
 <body>
@@ -56,13 +104,127 @@
       throw new Error('Supabase not loaded');
     }
 
-    const { useState, useMemo } = React;
+    const { useState, useMemo, useRef } = React;
 
     // Initialize Supabase
     const supabaseUrl = 'https://aojighzqmzouwhxyndbs.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvamlnaHpxbXpvdXdoeHluZGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MDgyNTMsImV4cCI6MjA2Nzk4NDI1M30.1f2HHXbYxP8KaABhv4uw151Xj1mRDWxd63pHYgKIXnQ';
     const { createClient } = supabase;
     const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+    // Image Upload Component
+    const ImageUpload = ({ images, setImages }) => {
+      const fileInputRef = useRef(null);
+      const [isDragging, setIsDragging] = useState(false);
+
+      const handleFileSelect = (files) => {
+        const fileArray = Array.from(files);
+        const validFiles = fileArray.filter(file => {
+          const isImage = file.type.startsWith('image/');
+          return isImage;
+        });
+
+        validFiles.forEach(file => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const newImage = {
+              id: Date.now() + Math.random(),
+              file: file,
+              preview: e.target.result,
+              name: file.name,
+              size: file.size
+            };
+            setImages(prev => [...prev, newImage]);
+          };
+          reader.readAsDataURL(file);
+        });
+      };
+
+      const handleDrop = (e) => {
+        e.preventDefault();
+        setIsDragging(false);
+        handleFileSelect(e.dataTransfer.files);
+      };
+
+      const handleDragOver = (e) => {
+        e.preventDefault();
+        setIsDragging(true);
+      };
+
+      const handleDragLeave = (e) => {
+        e.preventDefault();
+        setIsDragging(false);
+      };
+
+      const removeImage = (imageId) => {
+        setImages(prev => prev.filter(img => img.id !== imageId));
+      };
+
+      return (
+        <div className="space-y-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Share Photos from Your Exchange
+          </label>
+          <p className="text-sm text-gray-500 mb-4">
+            Upload as many images as you'd like! Show off your campus, city, food, or memorable moments!
+          </p>
+          
+          {/* Upload Area */}
+          <div
+            className={`upload-area ${isDragging ? 'dragover' : ''}`}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <div className="text-center">
+              <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <p className="text-sm text-gray-600">
+                <span className="font-medium text-blue-600">Click to upload</span> or drag and drop
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                PNG, JPG, JPEG supported
+              </p>
+            </div>
+          </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={(e) => handleFileSelect(e.target.files)}
+            className="hidden"
+          />
+
+          {/* Image Previews */}
+          {images.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {images.map(image => (
+                <div key={image.id} className="image-preview aspect-square">
+                  <img src={image.preview} alt={image.name} />
+                  <button
+                    onClick={() => removeImage(image.id)}
+                    className="remove-image"
+                    title="Remove image"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {images.length > 0 && (
+            <p className="text-sm text-gray-500">
+              {images.length} image{images.length !== 1 ? 's' : ''} selected
+            </p>
+          )}
+        </div>
+      );
+    };
 
     // StarRating component - Moved outside to prevent re-creation
     const StarRating = ({ rating, setRating, label, readOnly = false, comment, setComment, placeholder }) => (
@@ -122,6 +284,7 @@
       const [selectedTags, setSelectedTags] = useState([]);
       const [reviewText, setReviewText] = useState('');
       const [tipsText, setTipsText] = useState('');
+      const [images, setImages] = useState([]);
       const [isSubmitting, setIsSubmitting] = useState(false);
       const [submitMessage, setSubmitMessage] = useState('');
       const [currentStep, setCurrentStep] = useState(1);
@@ -182,6 +345,43 @@
         return Math.round(average);
       }, [academicRating, cultureRating, foodRating, accommodationRating, safetyRating]);
 
+      // Convert images to base64 for storage
+      const uploadImagesToSupabase = async () => {
+        if (images.length === 0) return [];
+        
+        const imageUrls = [];
+        
+        for (const image of images) {
+          try {
+            // Generate unique filename
+            const fileExt = image.file.name.split('.').pop();
+            const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+            const filePath = `reviews/${fileName}`;
+            
+            // Upload to Supabase Storage
+            const { data, error } = await supabaseClient.storage
+              .from('review-images')
+              .upload(filePath, image.file);
+            
+            if (error) {
+              console.error('Upload error:', error);
+              continue; // Skip this image but continue with others
+            }
+            
+            // Get public URL
+            const { data: { publicUrl } } = supabaseClient.storage
+              .from('review-images')
+              .getPublicUrl(filePath);
+            
+            imageUrls.push(publicUrl);
+          } catch (error) {
+            console.error('Error uploading image:', error);
+          }
+        }
+        
+        return imageUrls;
+      };
+
       // Static data
       const experienceTags = [
         'Friendly Locals', 'Beautiful Campus',
@@ -228,8 +428,6 @@
         'DKK - Danish Krone'
       ];
 
-
-
       // Tag click handler
       const handleTagClick = (tag) => {
         setSelectedTags(prev =>
@@ -249,6 +447,9 @@
         setIsSubmitting(true);
         setSubmitMessage('');
         try {
+          // Upload images to Supabase Storage
+          const imageUrls = await uploadImagesToSupabase();
+
           const reviewData = {
             country: selectedCountry,
             university: selectedUniversity,
@@ -268,6 +469,7 @@
             tags: selectedTags,
             review_text: reviewText,
             tips_text: tipsText,
+            image_urls: imageUrls, // Store array of URLs
             currency: currency,
             expense_food: parseFloat(expenses.food) || 0,
             expense_shopping: parseFloat(expenses.shopping) || 0,
@@ -302,6 +504,7 @@
             setSelectedTags([]);
             setReviewText('');
             setTipsText('');
+            setImages([]);
             setCurrency('');
             setExpenses({ food: '', shopping: '', rental: '', public_transport: '', travel: '', miscellaneous: '' });
             setSubmitMessage('');
@@ -523,6 +726,10 @@
                       rows="4"
                     />
                   </div>
+
+                  {/* Image Upload */}
+                  <div className="border-t border-gray-200 my-6" />
+                  <ImageUpload images={images} setImages={setImages} />
 
                   {/* Next button */}
                   <div className="flex justify-end pt-6">
