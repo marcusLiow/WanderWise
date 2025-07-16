@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 const HomePage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentSlide, setCurrentSlide] = useState(0);
-  const navigate = useNavigate();
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      // Navigate to search results
+      console.log('Searching for:', searchQuery.trim());
     }
   };
 
@@ -357,6 +356,14 @@ const HomePage = () => {
       display: 'inline-flex',
       alignItems: 'center',
       gap: '8px'
+    },
+    footer: {
+      backgroundColor: '#fef7ed',
+      color: '#1a365d',
+      textAlign: 'center',
+      padding: '0.5px 20px',
+      fontSize: '0.8rem',
+      width: '100%'
     }
   };
 
@@ -646,11 +653,16 @@ const HomePage = () => {
         </p>
         <button 
           style={styles.ctaButton}
-          onClick={() => navigate('/login')}
+          onClick={() => console.log('Login clicked')}
         >
           Login to Share Review →
         </button>
       </section>
+
+      {/* Footer */}
+      <footer style={styles.footer}>
+        <p>Copyright © 2025 WanderWise</p>
+      </footer>
     </div>
   );
 };
