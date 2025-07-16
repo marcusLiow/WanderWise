@@ -384,7 +384,7 @@ function WriteReview() {
       
       // Redirect to the newly created review
       setTimeout(() => {
-        navigate(`/review/${data[0].id}`);
+        navigate(`/review/1?id=${data[0].id}`);
       }, 1500);
     } catch (err) {
       console.error('Submission error:', err);
