@@ -290,7 +290,7 @@ const HomePage = () => {
     // UPDATED: Popular Destinations section styles
     graySection: {
       backgroundColor: '#fef7ed', // Changed from '#f8f9fa' to '#fef7ed'
-      padding: '80px 20px'
+      padding: '2px 20px'
     },
     // UPDATED: Section title and subtitle colors for Popular Destinations
     destinationSectionTitle: {
