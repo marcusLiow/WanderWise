@@ -287,23 +287,23 @@ const HomePage = () => {
       color: '#666',
       lineHeight: 1.6
     },
-    // UPDATED: Popular Destinations section styles
+    // Popular Destinations section styles
     graySection: {
-      backgroundColor: '#fef7ed', // Changed from '#f8f9fa' to '#fef7ed'
+      backgroundColor: '#fef7ed', 
       padding: '2px 20px'
     },
-    // UPDATED: Section title and subtitle colors for Popular Destinations
+    // Section title and subtitle colors for Popular Destinations
     destinationSectionTitle: {
       fontSize: 'clamp(2rem, 4vw, 2.5rem)',
       fontWeight: 'bold',
       textAlign: 'center',
       marginBottom: '16px',
-      color: '#1a365d' // Changed from '#333' to '#1a365d'
+      color: '#1a365d' 
     },
     destinationSectionSubtitle: {
       fontSize: '1.25rem',
       textAlign: 'center',
-      color: '#1a365d', // Changed from '#666' to '#1a365d'
+      color: '#1a365d', 
       marginBottom: '48px',
       maxWidth: '600px',
       margin: '0 auto 48px'
@@ -582,7 +582,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* UPDATED: Popular Destinations Section */}
+      {/* Popular Destinations Section */}
       <section style={styles.graySection}>
         <div style={styles.section}>
           <h2 style={styles.destinationSectionTitle}>Popular Destinations</h2>
