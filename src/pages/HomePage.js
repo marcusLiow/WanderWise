@@ -90,10 +90,13 @@ const HomePage = () => {
   ];
 
   const popularDestinations = [
-    { name: 'France', count: '120+ universities', image: 'https://images.unsplash.com/photo-1502602898536-47ad22581b52?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80' },
+    { name: 'France', count: '120+ universities', image: 'https://images.unsplash.com/photo-1549144511-f099e773c147?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80'  },
     { name: 'Germany', count: '85+ universities', image: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80' },
     { name: 'Australia', count: '95+ universities', image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80' },
-    { name: 'Canada', count: '75+ universities', image: 'https://images.unsplash.com/photo-1503614472-8c93d56cd61b?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80' }
+    { name: 'Canada', count: '75+ universities', image: 'https://images.unsplash.com/photo-1517935706615-2717063c2225?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80' }  ,
+    { name: 'South Korea', count: '60+ universities', image: 'https://images.unsplash.com/photo-1517154421773-0529f29ea451?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80' },
+    { name: 'Italy', count: '90+ universities', image: 'https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80' }
+    
   ];
 
   const styles = {
