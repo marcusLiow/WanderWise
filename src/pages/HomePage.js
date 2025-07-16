@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // Add this import
 
 const HomePage = () => {
+  const navigate = useNavigate(); // Add this hook
   const [searchQuery, setSearchQuery] = useState('');
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -15,6 +17,12 @@ const HomePage = () => {
     if (e.key === 'Enter') {
       handleSearch();
     }
+  };
+
+  // Add this function to handle country clicks
+  const handleCountryClick = (countryName) => {
+    const searchSlug = countryName.toLowerCase().replace(/\s+/g, '-');
+    navigate(`/search?q=${encodeURIComponent(searchSlug)}`);
   };
 
   // University carousel data
@@ -96,7 +104,6 @@ const HomePage = () => {
     { name: 'Canada', count: '75+ universities', image: 'https://images.unsplash.com/photo-1517935706615-2717063c2225?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80' }  ,
     { name: 'South Korea', count: '60+ universities', image: 'https://images.unsplash.com/photo-1517154421773-0529f29ea451?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80' },
     { name: 'Italy', count: '90+ universities', image: 'https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80' }
-    
   ];
 
   const styles = {
@@ -280,9 +287,26 @@ const HomePage = () => {
       color: '#666',
       lineHeight: 1.6
     },
+    // UPDATED: Popular Destinations section styles
     graySection: {
-      backgroundColor: '#f8f9fa',
+      backgroundColor: '#fef7ed', // Changed from '#f8f9fa' to '#fef7ed'
       padding: '80px 20px'
+    },
+    // UPDATED: Section title and subtitle colors for Popular Destinations
+    destinationSectionTitle: {
+      fontSize: 'clamp(2rem, 4vw, 2.5rem)',
+      fontWeight: 'bold',
+      textAlign: 'center',
+      marginBottom: '16px',
+      color: '#1a365d' // Changed from '#333' to '#1a365d'
+    },
+    destinationSectionSubtitle: {
+      fontSize: '1.25rem',
+      textAlign: 'center',
+      color: '#1a365d', // Changed from '#666' to '#1a365d'
+      marginBottom: '48px',
+      maxWidth: '600px',
+      margin: '0 auto 48px'
     },
     destinationCard: {
       background: 'white',
@@ -558,17 +582,22 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Popular Destinations */}
+      {/* UPDATED: Popular Destinations Section */}
       <section style={styles.graySection}>
         <div style={styles.section}>
-          <h2 style={styles.sectionTitle}>Popular Destinations</h2>
-          <p style={styles.sectionSubtitle}>
+          <h2 style={styles.destinationSectionTitle}>Popular Destinations</h2>
+          <p style={styles.destinationSectionSubtitle}>
             Explore top-rated universities in these amazing countries
           </p>
 
           <div style={styles.grid}>
             {popularDestinations.map((destination, index) => (
-              <div key={index} className="hover-lift" style={styles.destinationCard}>
+              <div 
+                key={index} 
+                className="hover-lift" 
+                style={styles.destinationCard}
+                onClick={() => handleCountryClick(destination.name)} // Add click handler
+              >
                 <div style={{
                   ...styles.destinationImage,
                   backgroundImage: `url(${destination.image})`
