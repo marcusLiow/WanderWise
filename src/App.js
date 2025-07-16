@@ -13,6 +13,8 @@ import SignUpPage from './pages/SignupPage';
 import ProfilePage from './pages/ProfilePage';
 import UniListPage from './pages/UniListPage';
 import CountryListPage from './pages/CountryListPage';
+import ReviewDisplay from './pages/ReviewDisplay';
+import WriteReview from './pages/WriteReview';
 
 // Create MUI theme
 const theme = createTheme({
@@ -37,6 +39,8 @@ function App() {
             <Route path="/search" element={<SearchResults />} />
             <Route path="/universities" element={<UniListPage />} />
             <Route path="/countries" element={<CountryListPage />} />
+            <Route path="/review/:id" element={<ReviewDisplay />} />
+            <Route path="/write-review" element={<WriteReview />} />
           </Routes>
         </div>
       </Router>
