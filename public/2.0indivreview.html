@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Exchange Review Details</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .star-display { color: #fbbf24; font-size: 20px; }
+    .star-empty   { color: #d1d5db; }
+    .expense-bar  { transition: all 0.3s ease; cursor: pointer; }
+    .expense-bar:hover { opacity: 0.8; transform: scaleY(1.05); }
+    .tooltip {
+      position: absolute; background: #1f2937; color: white;
+      padding: 6px 10px; border-radius: 4px;
+      font-size: 12px; font-weight: 500;
+      pointer-events: none; z-index: 1000;
+      opacity: 0; transition: opacity 0.2s ease;
+    }
+    .tooltip.show { opacity: 1; }
+    .tooltip::after {
+      content: '';
+      position: absolute; top: 100%; left: 50%;
+      margin-left: -4px; border-width: 4px; border-style: solid;
+      border-color: #1f2937 transparent transparent transparent;
+    }
+    .image-gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .gallery-image {
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .gallery-image:hover {
+      transform: scale(1.05);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .modal-overlay.show {
+      opacity: 1;
+    }
+    .modal-image {
+      max-width: 90vw;
+      max-height: 90vh;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .modal-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.9);
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .modal-nav.prev {
+      left: 20px;
+    }
+    .modal-nav.next {
+      right: 20px;
+    }
+    .modal-nav:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div style="padding:20px; text-align:center;">
+      <p>Loading review…</p>
+    </div>
+  </div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    const supabaseUrl = 'https://aojighzqmzouwhxyndbs.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvamlnaHpxbXpvdXdoeHluZGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MDgyNTMsImV4cCI6MjA2Nzk4NDI1M30.1f2HHXbYxP8KaABhv4uw151Xj1mRDWxd63pHYgKIXnQ';
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+    // Image Gallery Component
+    const ImageGallery = ({ imageUrls }) => {
+      const [modalOpen, setModalOpen] = useState(false);
+      const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+      if (!imageUrls || imageUrls.length === 0) return null;
+
+      const openModal = (index) => {
+        setCurrentImageIndex(index);
+        setModalOpen(true);
+        document.body.style.overflow = 'hidden';
+      };
+
+      const closeModal = () => {
+        setModalOpen(false);
+        document.body.style.overflow = 'auto';
+      };
+
+      const nextImage = () => {
+        setCurrentImageIndex((prev) => 
+          prev < imageUrls.length - 1 ? prev + 1 : prev
+        );
+      };
+
+      const prevImage = () => {
+        setCurrentImageIndex((prev) => prev > 0 ? prev - 1 : prev);
+      };
+
+      const handleKeyDown = (e) => {
+        if (e.key === 'Escape') closeModal();
+        if (e.key === 'ArrowRight') nextImage();
+        if (e.key === 'ArrowLeft') prevImage();
+      };
+
+      useEffect(() => {
+        if (modalOpen) {
+          document.addEventListener('keydown', handleKeyDown);
+          return () => document.removeEventListener('keydown', handleKeyDown);
+        }
+      }, [modalOpen]);
+
+      return (
+        <>
+          <div className="bg-white rounded-lg shadow-sm p-8 mt-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-6">
+              📸 Exchange Photos ({imageUrls.length})
+            </h2>
+            <div className="image-gallery-grid">
+              {imageUrls.map((url, index) => (
+                <img
+                  key={index}
+                  src={url}
+                  alt={`Exchange photo ${index + 1}`}
+                  className="gallery-image"
+                  onClick={() => openModal(index)}
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    console.error('Failed to load image:', url);
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Modal */}
+          {modalOpen && (
+            <div 
+              className={`modal-overlay ${modalOpen ? 'show' : ''}`}
+              onClick={closeModal}
+            >
+              <button className="modal-close" onClick={closeModal}>
+                ×
+              </button>
+              
+              {imageUrls.length > 1 && (
+                <>
+                  <button 
+                    className="modal-nav prev"
+                    onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                    disabled={currentImageIndex === 0}
+                  >
+                    ‹
+                  </button>
+                  <button 
+                    className="modal-nav next"
+                    onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                    disabled={currentImageIndex === imageUrls.length - 1}
+                  >
+                    ›
+                  </button>
+                </>
+              )}
+
+              <img
+                src={imageUrls[currentImageIndex]}
+                alt={`Exchange photo ${currentImageIndex + 1}`}
+                className="modal-image"
+                onClick={(e) => e.stopPropagation()}
+              />
+
+              {imageUrls.length > 1 && (
+                <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2">
+                  <div className="bg-white bg-opacity-90 px-3 py-1 rounded-full text-sm font-medium">
+                    {currentImageIndex + 1} of {imageUrls.length}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      );
+    };
+
+    // Star Rating Component
+    const StarRating = ({ rating, label }) => (
+      <div className="flex items-center gap-3">
+        <span className="text-sm font-medium text-gray-700 w-32">{label}:</span>
+        <div className="flex">
+          {[1,2,3,4,5].map(star => (
+            <span key={star}
+                  className={`star-display ${star <= rating ? '' : 'star-empty'}`}>
+              ★
+            </span>
+          ))}
+        </div>
+        <span className="text-sm text-gray-500">({rating}/5)</span>
+      </div>
+    );
+
+    // ExpenseChart — shrink-to-fit, descending, compact labels
+    const ExpenseChart = ({ expenses, currency }) => {
+      const expenseData = [
+        { label: 'Accom.', full: 'Accommodation', amount: expenses.expense_rental || 0,          color: '#eab308' },
+        { label: 'Travel', full: 'Travel',         amount: expenses.expense_travel || 0,         color: '#3b82f6' },
+        { label: 'Food',   full: 'Food',           amount: expenses.expense_food || 0,           color: '#ef4444' },
+        { label: 'Shop.',  full: 'Shopping',       amount: expenses.expense_shopping || 0,       color: '#f97316' },
+        { label: 'Misc.',  full: 'Miscellaneous',  amount: expenses.expense_miscellaneous || 0,  color: '#8b5cf6' },
+        { label: 'Trans.', full: 'Transport',      amount: expenses.expense_public_transport || 0, color: '#22c55e' }
+      ]
+      .filter(i => i.amount > 0)
+      .sort((a,b) => b.amount - a.amount);
+
+      if (!expenseData.length) return null;
+      const maxAmt = Math.max(...expenseData.map(i => i.amount));
+      const [tooltip, setTooltip] = useState({ show: false, x:0, y:0, content: '' });
+
+      const handleEnter = (e, item) => {
+        const { left, width, top } = e.target.getBoundingClientRect();
+        setTooltip({
+          show: true,
+          x: left + width/2,
+          y: top - 6,
+          content: `${item.full}: ${currency} ${item.amount.toFixed(2)}`
+        });
+      };
+      const handleLeave = () => setTooltip({ show:false, x:0, y:0, content: '' });
+
+      return (
+        <div className="relative">
+          <div className="bg-gray-50 p-6 rounded-lg mb-4">
+            <div className="flex items-end justify-between h-64 gap-4">
+              {expenseData.map(item => {
+                const pct = (item.amount / maxAmt)*100;
+                const h = Math.max(pct, 8);
+                return (
+                  <div key={item.label} className="flex flex-col items-center flex-1 min-w-0">
+                    <div className="flex flex-col justify-end h-64 w-full">
+                      <div
+                        className="expense-bar w-full rounded-t-lg"
+                        style={{ height: `${h}%`, backgroundColor: item.color }}
+                        onMouseEnter={e => handleEnter(e, item)}
+                        onMouseLeave={handleLeave}
+                      />
+                    </div>
+                    <div className="text-[10px] text-gray-700 mt-2 text-center font-medium">
+                      {item.label}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            {expenseData.map(item => (
+              <div key={item.label} className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded" style={{ backgroundColor: item.color }} />
+                <span className="text-[10px] text-gray-700">{item.label}:</span>
+                <span className="text-[10px] font-medium ml-auto">
+                  {currency} {item.amount.toFixed(2)}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {tooltip.show && (
+            <div
+              className="tooltip show"
+              style={{
+                left: tooltip.x,
+                top: tooltip.y,
+                transform: 'translateX(-50%) translateY(-100%)'
+              }}
+            >
+              {tooltip.content}
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    // Main Review Display
+    const ReviewDisplay = () => {
+      const [review, setReview] = useState(null);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState(null);
+
+      useEffect(() => {
+        const p = new URLSearchParams(window.location.search);
+        if (p.get('demo') === 'true') {
+          loadSample();
+        } else {
+          const id = p.get('id');
+          if (id) fetchReview(id);
+          else {
+            setError('No review ID – add ?demo=true');
+            setLoading(false);
+          }
+        }
+      }, []);
+
+      const loadSample = () => {
+        const sample = {
+          id:1, created_at:'2024-01-15T10:30:00Z',
+          country:'United States', university:'Stanford University',
+          course_studied:'Computer Science', gpa:3.85,
+          overall_rating:5,
+          academic_rating:5, academic_comment:'World-class CS program with cutting-edge research opportunities and incredible faculty mentorship that pushed me to excel beyond my expectations.',
+          culture_rating:4, culture_comment:'Entrepreneurial mindset is contagious here. The innovation ecosystem and networking opportunities are unparalleled, though the competitive atmosphere can be intense.',
+          food_rating:4, food_comment:'Great dining options on campus and amazing food trucks. Palo Alto has excellent restaurants, though they can be quite expensive for students.',
+          accommodation_rating:4, accommodation_comment:'Comfortable housing with great facilities. The dorms foster community well, though some buildings are older. Campus is beautiful year-round.',
+          safety_rating:5, safety_comment:'Very safe campus with excellent security. Never felt unsafe walking around at night. The surrounding area is also very secure and well-maintained.',
+          tags:['Life-changing','Rigorous','Career Boost','Diverse'],
+          review_text:'My semester at Stanford was truly transformative. The academic rigor pushed me to new heights, while the entrepreneurial ecosystem opened doors I never knew existed. The connections I made and the mindset I developed will benefit me for years to come.',
+          tips_text:'Network early and often! Attend startup events in the valley, join student organizations, and don\'t be afraid to reach out to professors. The weather is perfect for exploring San Francisco on weekends.',
+          currency:'USD - US Dollar',
+          expense_food:1200, expense_shopping:800, expense_rental:2500,
+          expense_public_transport:300, expense_travel:1500, expense_miscellaneous:400,
+          image_urls: [
+            'https://images.unsplash.com/photo-1606103819203-2ea3e5c9c7ee?w=500',
+            'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=500',
+            'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=500',
+            'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=500'
+          ]
+        };
+        setReview(sample);
+        setLoading(false);
+      };
+
+      const fetchReview = async (id) => {
+        try {
+          const { data, error } = await supabaseClient
+            .from('reviews').select('*').eq('id', id).single();
+          if (error) throw error;
+          setReview(data);
+        } catch {
+          setError('Failed to load review');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      if (loading) return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"/>
+            <p className="text-gray-600">Loading…</p>
+          </div>
+        </div>
+      );
+      if (error) return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <p className="text-red-600">{error}</p>
+        </div>
+      );
+      if (!review) return null;
+
+      const total = [
+        review.expense_food, review.expense_shopping, review.expense_rental,
+        review.expense_public_transport, review.expense_travel, review.expense_miscellaneous
+      ].reduce((s,x)=>s+(x||0), 0);
+      const code = review.currency.split(' - ')[0];
+
+      return (
+        <div className="min-h-screen bg-gray-50 py-8">
+          <div className="max-w-4xl mx-auto px-4">
+            {/* Header */}
+            <div className="bg-white rounded-lg shadow-sm p-8 mb-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">SMU</span>
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Exchange Review</h1>
+                    <p className="text-gray-600">{review.university}, {review.country}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold text-blue-600">{review.overall_rating}</span>
+                    <div className="flex">
+                      {[1,2,3,4,5].map(star => (
+                        <span key={star}
+                              className={`star-display ${star <= review.overall_rating ? '' : 'star-empty'}`}>
+                          ★
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-500">Overall Rating</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-gray-700 mb-2">Course</h3>
+                  <p className="text-gray-900">{review.course_studied}</p>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-gray-700 mb-2">GPA</h3>
+                  <p className="text-gray-900">{review.gpa}</p>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-gray-700 mb-2">Date</h3>
+                  <p className="text-gray-900">
+                    {new Date(review.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+
+              {review.tags?.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-700 mb-3">Highlights</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {review.tags.map((t,i) => (
+                      <span key={i}
+                            className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Image Gallery */}
+            <ImageGallery imageUrls={review.image_urls} />
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+              {/* Ratings */}
+              <div className="bg-white rounded-lg shadow-sm p-8">
+                <h2 className="text-xl font-bold text-gray-900 mb-6">Detailed Ratings</h2>
+                <div className="space-y-4">
+                  <StarRating rating={review.academic_rating}   label="Academic" />
+                  <StarRating rating={review.culture_rating}    label="Cultural" />
+                  <StarRating rating={review.food_rating}       label="Food" />
+                  <StarRating rating={review.accommodation_rating} label="Accommodation" />
+                  <StarRating rating={review.safety_rating}     label="Safety" />
+                </div>
+              </div>
+
+              {/* Expenses */}
+              {total > 0 && (
+                <div className="bg-white rounded-lg shadow-sm p-8">
+                  <h2 className="text-xl font-bold text-gray-900 mb-6">
+                    Expenses Breakdown
+                  </h2>
+                  <ExpenseChart expenses={review} currency={code} />
+                  <div className="border-t-2 border-gray-300 mt-6 pt-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-bold text-gray-900">
+                        Total Expenses:
+                      </span>
+                      <span className="text-xl font-bold text-blue-600">
+                        {code} {total.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Comments & Tips */}
+            <div className="bg-white rounded-lg shadow-sm p-8 mt-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">
+                Detailed Reviews
+              </h2>
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                  Overall Experience
+                </h3>
+                <p className="text-gray-700 leading-relaxed">
+                  {review.review_text}
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {review.academic_comment && (
+                  <div>
+                    <h4 className="font-semibold text-gray-800 mb-2">
+                      Academic Experience
+                    </h4>
+                    <p className="text-gray-700 text-sm leading-relaxed">
+                      {review.academic_comment}
+                    </p>
+                  </div>
+                )}
+                {review.culture_comment && (
+                  <div>
+                    <h4 className="font-semibold text-gray-800 mb-2">
+                      Cultural Experience
+                    </h4>
+                    <p className="text-gray-700 text-sm leading-relaxed">
+                      {review.culture_comment}
+                    </p>
+                  </div>
+                )}
+                {review.food_comment && (
+                  <div>
+                    <h4 className="font-semibold text-gray-800 mb-2">Food</h4>
+                    <p className="text-gray-700 text-sm leading-relaxed">
+                      {review.food_comment}
+                    </p>
+                  </div>
+                )}
+                {review.accommodation_comment && (
+                  <div>
+                    <h4 className="font-semibold text-gray-800 mb-2">
+                      Accommodation
+                    </h4>
+                    <p className="text-gray-700 text-sm leading-relaxed">
+                      {review.accommodation_comment}
+                    </p>
+                  </div>
+                )}
+                {review.safety_comment && (
+                  <div>
+                    <h4 className="font-semibold text-gray-800 mb-2">Safety</h4>
+                    <p className="text-gray-700 text-sm leading-relaxed">
+                      {review.safety_comment}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {review.tips_text && (
+                <div className="mt-8 bg-blue-50 p-6 rounded-lg">
+                  <h3 className="text-lg font-semibold text-blue-900 mb-3">
+                    💡 Tips for Future Students
+                  </h3>
+                  <p className="text-blue-800 leading-relaxed">
+                    {review.tips_text}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Navigation */}
+            <div className="mt-8 text-center">
+              <button
+                onClick={() => window.history.back()}
+                className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                ← Back
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    ReactDOM.render(<ReviewDisplay />, document.getElementById('root'));
+  </script>
+</body>
+</html>
