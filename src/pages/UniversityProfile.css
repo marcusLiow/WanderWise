@@ -1,6 +1,6 @@
 .university-profile {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #fdf4f0 0%, #fff8f5 50%, #fef7f0 100%);
   padding: 20px;
   font-family: 'Arial', sans-serif;
 }
@@ -22,7 +22,7 @@
 }
 
 .brand-accent {
-  color: #667eea;
+  color: #d84315;
 }
 
 .user-info {
@@ -65,14 +65,21 @@
 
 /* University Header */
 .university-header {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 15px;
-  padding: 30px;
-  margin-bottom: 30px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(216, 67, 21, 0.08);
   display: flex;
   align-items: flex-start;
-  gap: 20px;
+  gap: 24px;
+  border: 1px solid rgba(216, 67, 21, 0.1);
+  transition: all 0.3s ease;
+}
+
+.university-header:hover {
+  box-shadow: 0 8px 30px rgba(216, 67, 21, 0.12);
+  transform: translateY(-2px);
 }
 
 .university-logo {
@@ -85,6 +92,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 3px solid #ffccbc;
+  box-shadow: 0 4px 12px rgba(216, 67, 21, 0.15);
 }
 
 .university-logo img {
@@ -95,85 +104,104 @@
 
 .university-info h1 {
   font-size: 28px;
-  margin: 0 0 10px 0;
-  color: #333;
+  margin: 0 0 12px 0;
+  color: #2c2c2c;
+  font-weight: 700;
 }
 
 .country-info {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .country-flag {
   width: 24px;
   height: 16px;
   object-fit: cover;
+  border-radius: 2px;
 }
 
 .rating {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 15px;
+  margin-bottom: 16px;
 }
 
 .star {
   font-size: 20px;
-  color: #ddd;
+  color: #e0e0e0;
 }
 
 .star.filled {
-  color: #ffd700;
+  color: #ff8a65;
 }
 
 .star.half {
-  color: #ffd700;
+  color: #ff8a65;
 }
 
 .rating-number {
   font-size: 18px;
-  font-weight: bold;
-  color: #333;
+  font-weight: 600;
+  color: #d84315;
 }
 
 .description {
   color: #666;
-  line-height: 1.6;
+  line-height: 1.7;
   margin: 0;
+  font-size: 16px;
 }
 
 /* Featured Reviews */
 .featured-reviews {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 15px;
-  padding: 30px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(216, 67, 21, 0.08);
+  border: 1px solid rgba(216, 67, 21, 0.1);
+  transition: all 0.3s ease;
+}
+
+.featured-reviews:hover {
+  box-shadow: 0 8px 30px rgba(216, 67, 21, 0.12);
+  transform: translateY(-2px);
 }
 
 .featured-reviews h2 {
-  margin: 0 0 20px 0;
-  color: #333;
+  margin: 0 0 24px 0;
+  color: #2c2c2c;
   font-size: 24px;
+  font-weight: 700;
 }
 
 .review-card {
-  background: #f8f9fa;
-  border-radius: 10px;
-  padding: 20px;
-  margin-bottom: 15px;
-  border-left: 4px solid #667eea;
+  background: #fafafa;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 16px;
+  border-left: 4px solid #ff8a65;
+  transition: all 0.3s ease;
+  border: 1px solid #f5f5f5;
+}
+
+.review-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(216, 67, 21, 0.1);
+  background: #fff;
 }
 
 .review-header {
-  margin-bottom: 15px;
+  margin-bottom: 16px;
 }
 
 .reviewer-info {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 16px;
 }
 
 .reviewer-avatar {
@@ -181,6 +209,7 @@
   height: 50px;
   border-radius: 50%;
   overflow: hidden;
+  border: 2px solid #ffccbc;
 }
 
 .reviewer-avatar img {
@@ -190,17 +219,18 @@
 }
 
 .reviewer-details h4 {
-  margin: 0 0 5px 0;
-  color: #333;
+  margin: 0 0 6px 0;
+  color: #2c2c2c;
+  font-weight: 600;
 }
 
 .reviewer-location {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   font-size: 14px;
   color: #666;
-  margin-bottom: 3px;
+  margin-bottom: 4px;
 }
 
 .mini-flag {
@@ -215,9 +245,10 @@
 }
 
 .review-content p {
-  margin: 0 0 10px 0;
-  color: #333;
-  line-height: 1.5;
+  margin: 0 0 12px 0;
+  color: #444;
+  line-height: 1.6;
+  font-size: 15px;
 }
 
 .review-rating {
@@ -232,87 +263,172 @@
 .no-reviews {
   text-align: center;
   color: #666;
-  padding: 40px 20px;
+  padding: 48px 24px;
+  background: linear-gradient(135deg, #fef7f0, #fff8f5);
+  border-radius: 12px;
+  border: 2px dashed #ffccbc;
+}
+
+.no-reviews p {
+  margin: 0;
+  font-size: 16px;
+  color: #777;
 }
 
 /* Right Section Styles */
 .expenses-section,
 .photo-highlights,
 .top-countries {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 15px;
-  padding: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(216, 67, 21, 0.08);
+  border: 1px solid rgba(216, 67, 21, 0.1);
+  transition: all 0.3s ease;
+}
+
+.expenses-section:hover,
+.photo-highlights:hover,
+.top-countries:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(216, 67, 21, 0.12);
 }
 
 .expenses-section h3,
 .photo-highlights h3,
 .top-countries h3 {
-  margin: 0 0 15px 0;
-  color: #333;
+  margin: 0 0 20px 0;
+  color: #2c2c2c;
   font-size: 18px;
+  font-weight: 700;
 }
 
 /* Expenses Chart */
 .expenses-chart {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 18px;
 }
 
 .expense-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .expense-label {
   font-size: 14px;
   color: #666;
   min-width: 80px;
+  font-weight: 500;
 }
 
 .expense-bar {
   flex: 1;
-  height: 20px;
-  background: #e9ecef;
-  border-radius: 10px;
+  height: 12px;
+  background: #f5f5f5;
+  border-radius: 6px;
   overflow: hidden;
   position: relative;
+  border: 1px solid #eeeeee;
 }
 
 .expense-fill {
   height: 100%;
-  background: linear-gradient(90deg, #667eea, #764ba2);
-  border-radius: 10px;
-  transition: width 0.3s ease;
+  background: linear-gradient(90deg, #ff8a65, #ffab91);
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.expense-fill:hover {
+  background: linear-gradient(90deg, #ff7043, #ff8a65);
+  transform: scaleY(1.2);
 }
 
 .expense-amount {
   font-size: 14px;
-  color: #333;
-  font-weight: bold;
+  color: #d84315;
+  font-weight: 600;
   min-width: 80px;
   text-align: right;
+}
+
+.no-expense-data {
+  text-align: center;
+  color: #666;
+  padding: 24px;
+  background: linear-gradient(135deg, #fef7f0, #fff8f5);
+  border-radius: 8px;
+  border: 2px dashed #ffccbc;
+}
+
+.no-expense-data p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Expense tooltip styles */
+.expense-tooltip {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2c2c2c;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.expense-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -4px;
+  border-width: 4px;
+  border-style: solid;
+  border-color: #2c2c2c transparent transparent transparent;
 }
 
 /* Photo Grid */
 .photo-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 12px;
 }
 
 .photo-item {
   aspect-ratio: 1;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
+  border: 2px solid #ffccbc;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.photo-item:hover {
+  transform: scale(1.05);
+  border-color: #ff8a65;
+  box-shadow: 0 8px 20px rgba(216, 67, 21, 0.2);
 }
 
 .photo-item img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.photo-item:hover img {
+  transform: scale(1.1);
 }
 
 .no-photos {
@@ -325,21 +441,33 @@
 .countries-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .country-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 0;
+  gap: 12px;
+  padding: 12px 16px;
   font-size: 14px;
-  color: #333;
+  color: #444;
+  background: linear-gradient(135deg, #fef7f0, #fff8f5);
+  border-radius: 10px;
+  border-left: 3px solid #ff8a65;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(216, 67, 21, 0.1);
+}
+
+.country-item:hover {
+  background: linear-gradient(135deg, #fff, #fef7f0);
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(216, 67, 21, 0.1);
 }
 
 .country-item .country-flag {
   width: 20px;
   height: 14px;
+  border-radius: 2px;
 }
 
 .visit-count {
@@ -352,17 +480,30 @@
 .loading,
 .error {
   text-align: center;
-  padding: 100px 20px;
+  padding: 60px 40px;
   font-size: 18px;
-  color: #666;
+  background: white;
+  border-radius: 16px;
+  margin: 50px auto;
+  max-width: 400px;
+  box-shadow: 0 4px 20px rgba(216, 67, 21, 0.1);
 }
 
 .error {
-  color: #dc3545;
+  color: #d32f2f;
+  border: 2px solid #ffcdd2;
+}
+
+.loading {
+  color: #666;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .university-profile {
+    padding: 16px;
+  }
+  
   .main-content {
     flex-direction: column;
     gap: 20px;
@@ -371,6 +512,7 @@
   .university-header {
     flex-direction: column;
     text-align: center;
+    padding: 24px;
   }
   
   .university-logo {
@@ -385,13 +527,14 @@
   .photo-grid {
     grid-template-columns: 1fr;
   }
-}
-
-.expense-fill {
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-}
-
-.expense-fill:hover {
-  opacity: 0.8;
+  
+  .expense-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .expense-bar {
+    width: 100%;
+  }
 }

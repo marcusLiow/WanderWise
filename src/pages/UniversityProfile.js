@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
+import './UniversityProfile.css';
 
 // Supabase clients
 const universitiesClient = createClient(
@@ -14,57 +15,32 @@ const reviewsClient = createClient(
 );
 
 const UniversityProfile = () => {
-  const { universitySlug } = useParams(); // Get slug from URL
+  const { universitySlug } = useParams();
   const location = useLocation();
   const [university, setUniversity] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [hoveredExpense, setHoveredExpense] = useState(null);
 
-  // Get university ID from navigation state if available
   const universityId = location.state?.universityId;
 
-  // Helper function to convert slug back to name
   const slugToName = (slug) => {
+    if (!slug) return "IE University";
     return slug.split('-').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
   };
 
-  // Mock data for demonstration
   const mockUniversity = {
     id: '1',
-    name: "King's College London",
-    description: "King's College London, established in 1829, is one of the top-ranked universities in the UK. Located in the heart of London, it offers a wide range of disciplines and fosters an intellectually vibrant and diverse student community from around the globe.",
-    country: "United Kingdom",
-    flag: "https://flagcdn.com/w40/gb.png",
-    rating: 4.2
+    name: universitySlug ? slugToName(universitySlug) : "IE University",
+    description: "IE University is a private university with innovative programs. Known for its entrepreneurship focus and international perspective.",
+    country: "Spain",
+    flag: "https://flagcdn.com/w40/es.png",
+    rating: 4.4,
+    logo: "https://images.unsplash.com/photo-1562774053-701939374585?w=100&h=100&fit=crop&crop=center"
   };
-
-  const mockReviews = [
-    {
-      id: 1,
-      review_text: "I really learned more independence and trust in myself that I knew what I want and what I am doing in my life. Also learned a lot more British slang than I expected to!",
-      overall_rating: 4,
-      user_email: "janelle@columbia.edu",
-      course_studied: "International Relations",
-      expense_rental: 1200,
-      expense_food: 400,
-      expense_public_transport: 150,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 2,
-      review_text: "London is amazing, but wow it's expensive. Still, the academic experience at King's made every penny worth it.",
-      overall_rating: 3,
-      user_email: "julia@wsu.edu",
-      course_studied: "Business Studies",
-      expense_rental: 1400,
-      expense_food: 450,
-      expense_public_transport: 160,
-      created_at: new Date().toISOString()
-    }
-  ];
 
   useEffect(() => {
     fetchUniversityData();
@@ -75,69 +51,81 @@ const UniversityProfile = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch university data
+      await new Promise(resolve => setTimeout(resolve, 800));
+
       let universityData;
       
-      // Try to fetch by ID first (from navigation state)
       if (universityId) {
-        const { data: uniData, error: uniError } = await universitiesClient
-          .from('universities')
-          .select('*')
-          .eq('id', universityId)
-          .single();
-        
-        if (uniError) {
-          console.warn('University not found by ID, trying by name');
+        try {
+          const { data: uniData, error: uniError } = await universitiesClient
+            .from('universities')
+            .select('*')
+            .eq('id', universityId)
+            .single();
+          
+          if (uniError) {
+            console.warn('University not found by ID, trying by name');
+            universityData = null;
+          } else {
+            universityData = uniData;
+          }
+        } catch (err) {
+          console.warn('Supabase connection failed, using mock data');
           universityData = null;
-        } else {
-          universityData = uniData;
         }
       }
       
-      // If no ID or ID didn't work, try by name from slug
       if (!universityData && universitySlug) {
-        const searchName = slugToName(universitySlug);
-        const { data: uniData, error: uniError } = await universitiesClient
-          .from('universities')
-          .select('*')
-          .ilike('name', `%${searchName}%`)
-          .single();
-        
-        if (uniError) {
-          console.warn('University not found by name, using mock data');
-          universityData = { ...mockUniversity, name: searchName };
-        } else {
-          universityData = uniData;
+        try {
+          const searchName = slugToName(universitySlug);
+          const { data: uniData, error: uniError } = await universitiesClient
+            .from('universities')
+            .select('*')
+            .ilike('name', `%${searchName}%`)
+            .single();
+          
+          if (uniError) {
+            console.warn('University not found by name, using mock data');
+            universityData = { ...mockUniversity, name: searchName };
+          } else {
+            universityData = uniData;
+          }
+        } catch (err) {
+          console.warn('Supabase connection failed, using mock data');
+          universityData = { ...mockUniversity, name: slugToName(universitySlug) };
         }
       }
       
-      // Final fallback to mock data
       if (!universityData) {
         universityData = mockUniversity;
       }
 
-      // Fetch reviews data
-      const { data: reviewsData, error: reviewsError } = await reviewsClient
-        .from('reviews')
-        .select('*')
-        .eq('university', universityData.name)
-        .order('created_at', { ascending: false })
-        .limit(10);
+      // Fetch REAL reviews from Supabase - no more mock data
+      try {
+        const { data: reviewsData, error: reviewsError } = await reviewsClient
+          .from('reviews')
+          .select('*')
+          .eq('university', universityData.name)
+          .order('created_at', { ascending: false })
+          .limit(10);
 
-      if (reviewsError) {
-        console.warn('Reviews not found, using mock data');
-        setReviews(mockReviews);
-      } else {
-        setReviews(reviewsData || mockReviews);
+        if (reviewsError) {
+          console.warn('Error fetching reviews:', reviewsError);
+          setReviews([]); // Set empty array instead of mock data
+        } else {
+          setReviews(reviewsData || []); // Use real data or empty array
+        }
+      } catch (err) {
+        console.warn('Reviews fetch failed:', err);
+        setReviews([]); // Set empty array instead of mock data
       }
 
       setUniversity(universityData);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err.message);
-      // Use mock data as fallback
       setUniversity(mockUniversity);
-      setReviews(mockReviews);
+      setReviews([]); // Set empty array instead of mock data
     } finally {
       setLoading(false);
     }
@@ -165,7 +153,7 @@ const UniversityProfile = () => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
       stars.push(
-        <span key={i} className={i <= rating ? 'text-yellow-400' : 'text-gray-300'}>
+        <span key={i} className={`star ${i <= rating ? 'filled' : ''}`}>
           ★
         </span>
       );
@@ -181,8 +169,11 @@ const UniversityProfile = () => {
   const getUniversityName = (email) => {
     if (!email) return 'Unknown University';
     const domain = email.split('@')[1];
+    if (domain === 'stanford.edu') return 'Stanford University, USA';
+    if (domain === 'mit.edu') return 'MIT, USA';
+    if (domain === 'harvard.edu') return 'Harvard University, USA';
     if (domain === 'columbia.edu') return 'Columbia University, USA';
-    if (domain === 'wsu.edu') return 'Washington State University, USA';
+    if (domain === 'berkeley.edu') return 'UC Berkeley, USA';
     return domain;
   };
 
@@ -193,27 +184,17 @@ const UniversityProfile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading university data...</p>
-        </div>
+      <div className="loading">
+        <div>Loading university data...</div>
       </div>
     );
   }
 
   if (error && !university) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">Error loading university data: {error}</p>
-          <button 
-            onClick={fetchUniversityData}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Retry
-          </button>
-        </div>
+      <div className="error">
+        <p>Error loading university data: {error}</p>
+        <button onClick={fetchUniversityData}>Retry</button>
       </div>
     );
   }
@@ -222,164 +203,173 @@ const UniversityProfile = () => {
   const maxExpense = Math.max(averageExpenses.rental, averageExpenses.food, averageExpenses.transport);
 
   return (
-    <div className="bg-gray-50 text-black font-sans min-h-screen">
-      {/* HEADER */}
-      <header className="bg-white shadow px-6 py-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-blue-600">
-          Wander<span className="text-black">Wise</span>
-        </h1>
-        <div className="text-sm text-gray-500"></div>
-      </header>
-
-      {/* MAIN CONTAINER */}
-      <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8">
-        
-        {/* LEFT SECTION */}
-        <div className="flex-[2] space-y-6">
-          {/* UNIVERSITY INFO CARD */}
-          <div className="bg-white p-8 rounded-xl shadow">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between">
-              <div>
-                <h2 className="text-3xl font-bold">{university.name}</h2>
-                <div className="flex items-center gap-2 mt-2">
-                  <img src={university.flag} alt={`${university.country} Flag`} className="w-6 h-4" />
-                  <span className="text-lg text-gray-600">{university.country}</span>
-                </div>
-              </div>
-              <div className="text-yellow-400 text-xl mt-4 sm:mt-0">
-                {renderStars(Math.round(university.rating))} {university.rating}/5
-              </div>
+    <div className="university-profile">
+      <div className="main-content">
+        <div className="left-section">
+          {/* University Header */}
+          <div className="university-header">
+            <div className="university-logo">
+              <img src={university.logo || mockUniversity.logo} alt={`${university.name} Logo`} />
             </div>
-
-            <p className="mt-4 text-gray-700 leading-relaxed text-lg">
-              {university.description}
-            </p>
+            <div className="university-info">
+              <h1>{university.name}</h1>
+              <div className="country-info">
+                <img src={university.flag} alt={`${university.country} Flag`} className="country-flag" />
+                <span>{university.country}</span>
+              </div>
+              <div className="rating">
+                {renderStars(Math.round(university.rating))}
+                <span className="rating-number">{university.rating}/5</span>
+              </div>
+              <p className="description">{university.description}</p>
+            </div>
           </div>
 
-          {/* REVIEWS SECTION */}
-          <section>
-            <h3 className="text-2xl font-semibold mb-4">Reviews</h3>
-            
+          {/* Featured Reviews */}
+          <div className="featured-reviews">
+            <h2>Reviews</h2>
             {reviews.length === 0 ? (
-              <div className="bg-white p-8 rounded-xl shadow text-center text-gray-500">
-                No reviews available yet. Be the first to share your experience!
+              <div className="no-reviews">
+                <p>No reviews available yet. Be the first to share your experience!</p>
               </div>
             ) : (
-              <div className="space-y-5">
+              <div>
                 {reviews.slice(0, 3).map((review) => (
-                  <div key={review.id} className="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
-                    <div className="flex gap-4 items-center">
-                      <img 
-                        src={getProfileImage(review.user_email)} 
-                        alt="Avatar" 
-                        className="w-12 h-12 rounded-full"
-                      />
-                      <div>
-                        <p className="font-semibold">
-                          {getUserName(review.user_email)}, {review.course_studied}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {getUniversityName(review.user_email)}
-                        </p>
+                  <div key={review.id} className="review-card">
+                    <div className="review-header">
+                      <div className="reviewer-info">
+                        <div className="reviewer-avatar">
+                          <img src={getProfileImage(review.user_email)} alt="Reviewer Avatar" />
+                        </div>
+                        <div className="reviewer-details">
+                          <h4>{getUserName(review.user_email)}, {review.course_studied}</h4>
+                          <div className="reviewer-location">
+                            <span>{getUniversityName(review.user_email)}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <p className="mt-3 text-gray-700">{review.review_text}</p>
-                    <div className="text-yellow-400 mt-2 text-lg">
-                      {renderStars(review.overall_rating || 0)}
+                    <div className="review-content">
+                      <p>{review.review_text}</p>
+                      <div className="review-rating">
+                        {renderStars(review.overall_rating || 0)}
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             )}
-          </section>
+          </div>
         </div>
 
-        {/* RIGHT SIDEBAR */}
-        <aside className="w-full lg:w-80 space-y-6">
-          
-          {/* Average Expenses Card */}
-          <div className="bg-white p-5 rounded-xl shadow">
-            <h4 className="font-semibold mb-4 text-lg">Average Expenses</h4>
-            <div className="space-y-3">
-              <div>
-                <div className="flex justify-between text-sm text-gray-700 mb-1">
-                  <span>Rent</span>
-                  <span>${averageExpenses.rental.toFixed(0)}</span>
+        <div className="right-section">
+          {/* Average Expenses */}
+          <div className="expenses-section">
+            <h3>Average Expenses</h3>
+            {reviews.length === 0 ? (
+              <div className="no-expense-data">
+                <p>No expense data available yet.</p>
+              </div>
+            ) : (
+              <div className="expenses-chart">
+                <div className="expense-item">
+                  <div className="expense-label">Rent</div>
+                  <div className="expense-bar">
+                    <div 
+                      className="expense-fill"
+                      style={{ width: maxExpense > 0 ? `${(averageExpenses.rental / maxExpense) * 100}%` : '0%' }}
+                      onMouseEnter={() => setHoveredExpense({ type: 'rental', amount: averageExpenses.rental })}
+                      onMouseLeave={() => setHoveredExpense(null)}
+                      title={`$${averageExpenses.rental.toFixed(0)}`}
+                    />
+                    {hoveredExpense && hoveredExpense.type === 'rental' && (
+                      <div className="expense-tooltip">
+                        ${hoveredExpense.amount.toFixed(0)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="expense-amount">${averageExpenses.rental.toFixed(0)}</div>
                 </div>
-                <div className="h-3 bg-gray-200 rounded">
-                  <div 
-                    className="h-3 bg-blue-400 rounded" 
-                    style={{ width: `${(averageExpenses.rental / maxExpense) * 100}%` }}
-                  ></div>
+                
+                <div className="expense-item">
+                  <div className="expense-label">Food</div>
+                  <div className="expense-bar">
+                    <div 
+                      className="expense-fill"
+                      style={{ width: maxExpense > 0 ? `${(averageExpenses.food / maxExpense) * 100}%` : '0%' }}
+                      onMouseEnter={() => setHoveredExpense({ type: 'food', amount: averageExpenses.food })}
+                      onMouseLeave={() => setHoveredExpense(null)}
+                      title={`$${averageExpenses.food.toFixed(0)}`}
+                    />
+                    {hoveredExpense && hoveredExpense.type === 'food' && (
+                      <div className="expense-tooltip">
+                        ${hoveredExpense.amount.toFixed(0)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="expense-amount">${averageExpenses.food.toFixed(0)}</div>
+                </div>
+                
+                <div className="expense-item">
+                  <div className="expense-label">Transport</div>
+                  <div className="expense-bar">
+                    <div 
+                      className="expense-fill"
+                      style={{ width: maxExpense > 0 ? `${(averageExpenses.transport / maxExpense) * 100}%` : '0%' }}
+                      onMouseEnter={() => setHoveredExpense({ type: 'transport', amount: averageExpenses.transport })}
+                      onMouseLeave={() => setHoveredExpense(null)}
+                      title={`$${averageExpenses.transport.toFixed(0)}`}
+                    />
+                    {hoveredExpense && hoveredExpense.type === 'transport' && (
+                      <div className="expense-tooltip">
+                        ${hoveredExpense.amount.toFixed(0)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="expense-amount">${averageExpenses.transport.toFixed(0)}</div>
                 </div>
               </div>
-              
-              <div>
-                <div className="flex justify-between text-sm text-gray-700 mb-1">
-                  <span>Food & Groceries</span>
-                  <span>${averageExpenses.food.toFixed(0)}</span>
-                </div>
-                <div className="h-3 bg-gray-200 rounded">
-                  <div 
-                    className="h-3 bg-blue-400 rounded" 
-                    style={{ width: `${(averageExpenses.food / maxExpense) * 100}%` }}
-                  ></div>
-                </div>
+            )}
+          </div>
+
+          {/* Photo Highlights */}
+          <div className="photo-highlights">
+            <h3>Photo Highlights</h3>
+            <div className="photo-grid">
+              <div className="photo-item">
+                <img src="https://images.unsplash.com/photo-1562774053-701939374585?w=200&h=200&fit=crop" alt="University" />
               </div>
-              
-              <div>
-                <div className="flex justify-between text-sm text-gray-700 mb-1">
-                  <span>Transport</span>
-                  <span>${averageExpenses.transport.toFixed(0)}</span>
-                </div>
-                <div className="h-3 bg-gray-200 rounded">
-                  <div 
-                    className="h-3 bg-blue-400 rounded" 
-                    style={{ width: `${(averageExpenses.transport / maxExpense) * 100}%` }}
-                  ></div>
-                </div>
+              <div className="photo-item">
+                <img src="https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=200&h=200&fit=crop" alt="Spain" />
+              </div>
+              <div className="photo-item">
+                <img src="https://images.unsplash.com/photo-1543785734-4b6e564642f8?w=200&h=200&fit=crop" alt="Madrid" />
+              </div>
+              <div className="photo-item">
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop" alt="Study abroad" />
               </div>
             </div>
           </div>
 
-          {/* Photo Highlights Card */}
-          <div className="bg-white p-5 rounded-xl shadow">
-            <h4 className="font-semibold mb-4 text-lg">Photo Highlights</h4>
-            <div className="grid grid-cols-2 gap-2">
-              <img 
-                src={`https://source.unsplash.com/200x200/?${university.name.toLowerCase().replace(/\s+/g, '-')}`} 
-                className="rounded-md w-full h-20 object-cover" 
-                alt="University highlight"
-              />
-              <img 
-                src={`https://source.unsplash.com/200x200/?${university.country.toLowerCase().replace(/\s+/g, '-')}-university`} 
-                className="rounded-md w-full h-20 object-cover" 
-                alt="Country highlight"
-              />
-              <img 
-                src={`https://source.unsplash.com/200x200/?${university.country.toLowerCase().replace(/\s+/g, '-')}-city`} 
-                className="rounded-md w-full h-20 object-cover" 
-                alt="City highlight"
-              />
-              <img 
-                src={`https://source.unsplash.com/200x200/?study-abroad`} 
-                className="rounded-md w-full h-20 object-cover" 
-                alt="Study abroad"
-              />
+          {/* Top Countries */}
+          <div className="top-countries">
+            <h3>Top 3 Countries Travelled To</h3>
+            <div className="countries-list">
+              <div className="country-item">
+                <img src="https://flagcdn.com/w40/fr.png" alt="France" className="country-flag" />
+                <span>France</span>
+              </div>
+              <div className="country-item">
+                <img src="https://flagcdn.com/w40/nl.png" alt="Netherlands" className="country-flag" />
+                <span>Netherlands</span>
+              </div>
+              <div className="country-item">
+                <img src="https://flagcdn.com/w40/it.png" alt="Italy" className="country-flag" />
+                <span>Italy</span>
+              </div>
             </div>
           </div>
-
-          {/* Top Countries Card */}
-          <div className="bg-white p-5 rounded-xl shadow">
-            <h4 className="font-semibold mb-4 text-lg">Top 3 Countries Travelled To</h4>
-            <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-              <li>France</li>
-              <li>Netherlands</li>
-              <li>Italy</li>
-            </ul>
-          </div>
-
-        </aside>
+        </div>
       </div>
     </div>
   );
