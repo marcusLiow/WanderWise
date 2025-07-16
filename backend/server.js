@@ -1,86 +1,31 @@
-// Enhanced country search route with better debugging
-app.get('/api/countries/search', (req, res) => {
-  const { name } = req.query;
-  
-  if (!name) {
-    return res.status(400).json({ error: 'Name parameter is required' });
-  }
-
-  const searchTerm = name.trim();
-  console.log('=== COUNTRY SEARCH DEBUG ===');
-  console.log('Original search term:', name);
-  console.log('Trimmed search term:', searchTerm);
-  console.log('Search term length:', searchTerm.length);
-
-  // First, let's see all countries in the database
-  db.query('SELECT * FROM countries', (err, allResults) => {
-    if (err) {
-      console.error('Error fetching all countries:', err);
-    } else {
-      console.log('All countries in database:');
-      allResults.forEach(country => {
-        console.log(`- ID: ${country.id}, Name: "${country.name}" (length: ${country.name.length})`);
-      });
-    }
-  });
-
-  // Now do the actual search
-  db.query(
-    'SELECT * FROM countries WHERE LOWER(name) = LOWER(?)',
-    [searchTerm],
-    (err, results) => {
-      if (err) {
-        console.error('Error searching countries:', err);
-        return res.status(500).json({ error: 'Internal server error' });
-      }
-      
-      console.log('Search results count:', results.length);
-      if (results.length > 0) {
-        console.log('Found countries:', results);
-      } else {
-        console.log('No exact match found, trying partial match...');
-        
-        // Try a partial match as fallback
-        db.query(
-          'SELECT * FROM countries WHERE LOWER(name) LIKE LOWER(?)',
-          [`%${searchTerm}%`],
-          (err, partialResults) => {
-            if (err) {
-              console.error('Error in partial search:', err);
-              return res.status(500).json({ error: 'Internal server error' });
-            }
-            
-            console.log('Partial search results:', partialResults);
-            if (partialResults.length > 0) {
-              console.log('Found partial matches, returning first one');
-              return res.json([partialResults[0]]);
-            } else {
-              console.log('No partial matches found either');
-              return res.json([]);
-            }
-          }
-        );
-        return; // Don't continue to the normal response
-      }
-      
-      console.log('=== END DEBUG ===');
-      res.json(results);
-    }
-  );
-});
-
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 
+// Check if Supabase is installed
+let supabase;
+try {
+  const { createClient } = require('@supabase/supabase-js');
+  
+  // Supabase connection (Updated with your credentials)
+  const supabaseUrl = 'https://jjcobexdfpcrbswgkcas.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpqY29iZXhkZnBjcmJzd2drY2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1NjYyNjAsImV4cCI6MjA2ODE0MjI2MH0.IPUMt-oAFZ_jQP5NMh51P6EI2vU-V8Y_lx1Yz5788rU';
+  supabase = createClient(supabaseUrl, supabaseKey);
+  console.log('✅ Supabase client created successfully');
+} catch (error) {
+  console.log('❌ Failed to load Supabase:', error.message);
+  console.log('📦 Run: npm install @supabase/supabase-js');
+  process.exit(1);
+}
+
 const app = express();
 
 app.use(cors());
-app.use(express.json({ limit: '10mb' })); // Increase payload size limit
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-// Connect to database
+// MySQL connection (keep for universities/search for now)
 const db = mysql.createConnection({
   host: 'localhost',
   user: 'root',
@@ -88,16 +33,32 @@ const db = mysql.createConnection({
   database: 'wanderwise'
 });
 
-// Test database connection
+// Test connections
 db.connect((err) => {
   if (err) {
-    console.log('Database connection failed:', err);
+    console.log('❌ MySQL connection failed:', err);
   } else {
-    console.log('Connected to database!');
+    console.log('✅ Connected to MySQL (for universities)!');
   }
 });
 
-// Helper function to extract university from email domain
+async function testSupabase() {
+  try {
+    console.log('🔍 Testing Supabase connection...');
+    const { data, error } = await supabase.from('users').select('count').limit(1);
+    if (error) {
+      console.log('❌ Supabase test failed:', error);
+      console.log('💡 Make sure you created the users table in Supabase dashboard');
+    } else {
+      console.log('✅ Connected to Supabase (for users)!');
+    }
+  } catch (error) {
+    console.log('❌ Supabase connection error:', error.message);
+  }
+}
+testSupabase();
+
+// Helper functions (keep existing)
 function extractUniversityFromDomain(domain) {
   const universityMapping = [
     { pattern: 'nus.edu.sg', name: 'National University of Singapore' },
@@ -111,224 +72,219 @@ function extractUniversityFromDomain(domain) {
     { pattern: 'nafa.edu.sg', name: 'Nanyang Academy of Fine Arts' }
   ];
   
-  // Check if domain contains any of the university patterns
   for (const university of universityMapping) {
     if (domain.includes(university.pattern)) {
       return university.name;
     }
   }
-  
   return 'Unknown University';
 }
 
-// Helper function to validate Singapore university email
 function isValidSingaporeUniversityEmail(email) {
   const validDomains = [
-    'nus.edu.sg',
-    'ntu.edu.sg', 
-    'smu.edu.sg',
-    'sutd.edu.sg',
-    'singaporetech.edu.sg',
-    'suss.edu.sg',
-    'uas.edu.sg',
-    'lasalle.edu.sg',
-    'nafa.edu.sg'
+    'nus.edu.sg', 'ntu.edu.sg', 'smu.edu.sg', 'sutd.edu.sg',
+    'singaporetech.edu.sg', 'suss.edu.sg', 'uas.edu.sg',
+    'lasalle.edu.sg', 'nafa.edu.sg'
   ];
   
   const domain = email.split('@')[1];
   return validDomains.some(validDomain => domain && domain.includes(validDomain));
 }
 
-// ==================== EXISTING ROUTES ====================
+// ===========================================
+// USER ENDPOINTS (Now using Supabase)
+// ===========================================
 
-// Get all names (keep your existing endpoint)
-app.get('/api/names', (req, res) => {
-  db.query('SELECT * FROM names', (err, results) => {
-    res.json(results);
-  });
-});
-
-// Login endpoint
-app.post('/api/login', async (req, res) => {
-  console.log('Login request received:', req.body);
-  
-  const { email, password } = req.body;
-  
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password required' });
-  }
-  
-  // SELECT ALL COLUMNS from users table - this is key!
-  db.query('SELECT * FROM users WHERE email = ?', [email], async (err, results) => {
-    if (err) {
-      console.log('Database error:', err);
-      return res.status(500).json({ error: 'Database error' });
-    }
-    
-    // No user found with that email
-    if (results.length === 0) {
-      return res.status(401).json({ error: 'Invalid email or password' });
-    }
-    
-    const user = results[0];
-    console.log('Found user in database:', {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      nationality: user.nationality,
-      university: user.university,
-      hasProfileImage: !!user.profileImage
-    });
-    
-    try {
-      // Compare the plain text password with the hashed password using bcrypt
-      const passwordMatch = await bcrypt.compare(password, user.password);
-      
-      if (!passwordMatch) {
-        console.log('Password mismatch for:', email);
-        return res.status(401).json({ error: 'Invalid email or password' });
-      }
-      
-      // Login successful - RETURN ALL USER DATA FROM DATABASE
-      console.log('Login successful for:', email);
-
-      const responseData = { 
-        message: 'Login successful',
-        userId: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        name: user.firstName + ' ' + user.lastName,
-        nationality: user.nationality,
-        dateOfBirth: user.dateOfBirth,
-        university: user.university,
-        profileImage: user.profileImage
-      };
-
-      console.log('Sending login response:', {
-        ...responseData,
-        profileImage: responseData.profileImage ? 'INCLUDED' : 'NULL'
-      });
-
-      res.status(200).json(responseData);
-      
-    } catch (bcryptError) {
-      console.error('Bcrypt error:', bcryptError);
-      return res.status(500).json({ error: 'Login error' });
-    }
-  });
-});
-
-// Add a name (keep your existing endpoint)
-app.post('/api/names', (req, res) => {
-  const { name } = req.body;
-  db.query('INSERT INTO names (name) VALUES (?)', [name], (err, result) => {
-    res.json({ message: 'Added!' });
-  });
-});
-
-// User registration endpoint
+// REGISTER - Now using Supabase with detailed logging
 app.post('/api/register', async (req, res) => {
-  console.log('Registration request received:', req.body);
+  console.log('\n🚀 Registration request received:', req.body);
   
   const { email, firstName, lastName, nationality, dateOfBirth, password } = req.body;
   
-  // Validate all required fields (dateOfBirth is optional)
+  // Step 1: Validate required fields
   if (!email || !firstName || !lastName || !nationality || !password) {
+    console.log('❌ Missing required fields');
     return res.status(400).json({ 
       error: 'All fields are required: email, firstName, lastName, nationality, password' 
     });
   }
+  console.log('✅ All required fields present');
 
-  // Validate email format
+  // Step 2: Validate email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
+    console.log('❌ Invalid email format:', email);
     return res.status(400).json({ error: 'Invalid email format' });
   }
+  console.log('✅ Email format valid');
 
-  // Validate Singapore university email
+  // Step 3: Validate Singapore university email
   if (!isValidSingaporeUniversityEmail(email)) {
+    console.log('❌ Not a Singapore university email:', email);
     return res.status(400).json({ 
       error: 'Please use a valid Singapore university email address' 
     });
   }
+  console.log('✅ Singapore university email valid');
 
-  // Validate password strength
+  // Step 4: Validate password
   if (password.length < 8) {
+    console.log('❌ Password too short');
     return res.status(400).json({ 
       error: 'Password must be at least 8 characters long' 
     });
   }
+  console.log('✅ Password length valid');
 
-  // Extract university from email domain
   const domain = email.split('@')[1];
   const university = extractUniversityFromDomain(domain);
+  console.log('🏫 Extracted university:', university);
 
   try {
-    // Check if user already exists
-    const checkUserQuery = 'SELECT * FROM users WHERE email = ?';
-    db.query(checkUserQuery, [email], async (err, results) => {
-      if (err) {
-        console.log('Database error:', err);
-        return res.status(500).json({ error: 'Database error' });
+    // Step 5: Check if user already exists in Supabase
+    console.log('🔍 Checking if user exists in Supabase...');
+    const { data: existingUsers, error: checkError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .limit(1);
+
+    if (checkError) {
+      console.log('❌ Supabase check error:', checkError);
+      return res.status(500).json({ error: 'Database error during user check: ' + checkError.message });
+    }
+    
+    if (existingUsers && existingUsers.length > 0) {
+      console.log('❌ User already exists');
+      return res.status(400).json({ error: 'User with this email already exists' });
+    }
+    console.log('✅ User does not exist, proceeding with registration');
+    
+    // Step 6: Hash the password
+    console.log('🔐 Hashing password...');
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    console.log('✅ Password hashed successfully');
+    
+    // Step 7: Insert new user into Supabase
+    console.log('💾 Inserting user into Supabase...');
+    const userData = {
+      firstName,
+      lastName,
+      email,
+      password: hashedPassword,
+      nationality,
+      dateOfBirth,
+      university
+    };
+    console.log('📝 User data to insert:', { ...userData, password: '[HASHED]' });
+
+    const { data: newUser, error: insertError } = await supabase
+      .from('users')
+      .insert([userData])
+      .select()
+      .single();
+
+    if (insertError) {
+      console.log('❌ Supabase insert error:', insertError);
+      if (insertError.code === '23505') { // Unique constraint violation
+        return res.status(400).json({ error: 'Email already exists' });
       }
-      
-      if (results.length > 0) {
-        return res.status(400).json({ error: 'User with this email already exists' });
-      }
-      
-      try {
-        // Hash the password
-        const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(password, saltRounds);
-        
-        // Insert new user into database (including dateOfBirth)
-        const insertQuery = `
-          INSERT INTO users (firstName, lastName, email, password, nationality, dateOfBirth, university, created_at) 
-          VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
-        `;
-        
-        db.query(insertQuery, [firstName, lastName, email, hashedPassword, nationality, dateOfBirth, university], (err, result) => {
-          if (err) {
-            console.log('Insert error:', err);
-            if (err.code === 'ER_DUP_ENTRY') {
-              return res.status(400).json({ error: 'Email already exists' });
-            }
-            return res.status(500).json({ error: 'Failed to create user account' });
-          }
-          
-          console.log('User created successfully!');
-          res.status(201).json({ 
-            message: 'User registered successfully!',
-            userId: result.insertId,
-            user: {
-              id: result.insertId,
-              firstName,
-              lastName,
-              email,
-              nationality,
-              dateOfBirth,
-              university
-            }
-          });
-        });
-        
-      } catch (hashError) {
-        console.error('Password hashing error:', hashError);
-        return res.status(500).json({ error: 'Registration failed' });
+      return res.status(500).json({ error: 'Failed to create user account: ' + insertError.message });
+    }
+    
+    console.log('✅ User created successfully in Supabase!');
+    console.log('👤 New user ID:', newUser.id);
+    
+    res.status(201).json({ 
+      message: 'User registered successfully!',
+      userId: newUser.id,
+      user: {
+        id: newUser.id,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        email: newUser.email,
+        nationality: newUser.nationality,
+        dateOfBirth: newUser.dateOfBirth,
+        university: newUser.university
       }
     });
     
   } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ error: 'Registration failed' });
+    console.log('❌ Unexpected registration error:', error);
+    console.log('📋 Error stack:', error.stack);
+    res.status(500).json({ error: 'Registration failed: ' + error.message });
   }
 });
 
-// Profile update endpoint
+// LOGIN - Now using Supabase with detailed logging
+app.post('/api/login', async (req, res) => {
+  console.log('\n🔐 Login request received for:', req.body.email);
+  
+  const { email, password } = req.body;
+  
+  if (!email || !password) {
+    console.log('❌ Missing email or password');
+    return res.status(400).json({ error: 'Email and password required' });
+  }
+  
+  try {
+    // Get user from Supabase
+    console.log('🔍 Looking up user in Supabase...');
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .limit(1);
+
+    if (error) {
+      console.log('❌ Supabase error:', error);
+      return res.status(500).json({ error: 'Database error: ' + error.message });
+    }
+    
+    if (!users || users.length === 0) {
+      console.log('❌ User not found');
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    
+    const user = users[0];
+    console.log('✅ Found user:', user.email);
+    
+    // Compare password
+    console.log('🔐 Comparing password...');
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    
+    if (!passwordMatch) {
+      console.log('❌ Password mismatch');
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    
+    console.log('✅ Login successful');
+
+    const responseData = { 
+      message: 'Login successful',
+      userId: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      name: user.firstName + ' ' + user.lastName,
+      nationality: user.nationality,
+      dateOfBirth: user.dateOfBirth,
+      university: user.university,
+      profileImage: user.profileImage
+    };
+
+    res.status(200).json(responseData);
+    
+  } catch (error) {
+    console.log('❌ Login error:', error);
+    return res.status(500).json({ error: 'Login error: ' + error.message });
+  }
+});
+
+// PROFILE UPDATE - Now using Supabase
 app.put('/api/profile', async (req, res) => {
-  console.log('Profile update request received:', req.body);
+  console.log('\n✏️ Profile update request received for user:', req.body.userId);
   
   const { userId, firstName, lastName, nationality, dateOfBirth, profileImage } = req.body;
   
@@ -341,159 +297,137 @@ app.put('/api/profile', async (req, res) => {
   }
   
   try {
-    // Check if user exists
-    db.query('SELECT * FROM users WHERE id = ?', [userId], (err, results) => {
-      if (err) {
-        console.log('Database error:', err);
-        return res.status(500).json({ error: 'Database error' });
-      }
-      
-      if (results.length === 0) {
+    // Check if user exists in Supabase
+    console.log('🔍 Checking if user exists...');
+    const { data: existingUser, error: checkError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (checkError) {
+      if (checkError.code === 'PGRST116') {
+        console.log('❌ User not found');
         return res.status(404).json({ error: 'User not found' });
       }
-      
-      const currentUser = results[0];
-      
-      // Update user profile (including dateOfBirth)
-      const updateQuery = `
-        UPDATE users 
-        SET firstName = ?, lastName = ?, nationality = ?, dateOfBirth = ?, profileImage = ?, updated_at = NOW()
-        WHERE id = ?
-      `;
-      
-      db.query(updateQuery, [firstName, lastName, nationality, dateOfBirth, profileImage, userId], (err, result) => {
-        if (err) {
-          console.log('Update error:', err);
-          return res.status(500).json({ error: 'Failed to update profile' });
-        }
-        
-        // Return updated user data
-        db.query('SELECT * FROM users WHERE id = ?', [userId], (err, updatedResults) => {
-          if (err) {
-            console.log('Fetch updated user error:', err);
-            return res.status(500).json({ error: 'Profile updated but failed to fetch updated data' });
-          }
-          
-          const updatedUser = updatedResults[0];
-          
-          console.log('Profile updated successfully for user:', userId);
-          res.status(200).json({
-            message: 'Profile updated successfully',
-            user: {
-              id: updatedUser.id,
-              firstName: updatedUser.firstName,
-              lastName: updatedUser.lastName,
-              email: updatedUser.email,
-              nationality: updatedUser.nationality,
-              dateOfBirth: updatedUser.dateOfBirth,
-              university: updatedUser.university,
-              profileImage: updatedUser.profileImage
-            }
-          });
-        });
-      });
+      console.log('❌ Supabase check error:', checkError);
+      return res.status(500).json({ error: 'Database error: ' + checkError.message });
+    }
+    
+    console.log('✅ User found, updating profile...');
+    
+    // Update user profile in Supabase
+    const { data: updatedUser, error: updateError } = await supabase
+      .from('users')
+      .update({
+        firstName,
+        lastName,
+        nationality,
+        dateOfBirth,
+        profileImage,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.log('❌ Supabase update error:', updateError);
+      return res.status(500).json({ error: 'Failed to update profile: ' + updateError.message });
+    }
+    
+    console.log('✅ Profile updated successfully');
+    res.status(200).json({
+      message: 'Profile updated successfully',
+      user: {
+        id: updatedUser.id,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        email: updatedUser.email,
+        nationality: updatedUser.nationality,
+        dateOfBirth: updatedUser.dateOfBirth,
+        university: updatedUser.university,
+        profileImage: updatedUser.profileImage
+      }
     });
     
   } catch (error) {
-    console.error('Profile update error:', error);
-    res.status(500).json({ error: 'Profile update failed' });
+    console.log('❌ Profile update error:', error);
+    res.status(500).json({ error: 'Profile update failed: ' + error.message });
   }
 });
 
-// ==================== MISSING ROUTES - ADD THESE ====================
+// ===========================================
+// EXISTING ENDPOINTS (Still using MySQL)
+// ===========================================
 
-// Search universities by name
-app.get('/api/universities/search', (req, res) => {
-  const { name } = req.query;
+app.get('/api/names', (req, res) => {
+  db.query('SELECT * FROM names', (err, results) => {
+    res.json(results);
+  });
+});
+
+app.post('/api/names', (req, res) => {
+  const { name } = req.body;
+  db.query('INSERT INTO names (name) VALUES (?)', [name], (err, result) => {
+    res.json({ message: 'Added!' });
+  });
+});
+
+app.get('/api/search', (req, res) => {
+  const { q } = req.query;
   
-  if (!name) {
-    return res.status(400).json({ error: 'Name parameter is required' });
+  if (!q || q.trim() === '') {
+    return res.status(400).json({ 
+      error: 'Search query is required',
+      universities: []
+    });
   }
-
+  
+  const searchTerm = `%${q.trim()}%`;
+  
+  const searchQuery = `
+    SELECT id, name, description, country, rating, logo, flag, created_at
+    FROM universities 
+    WHERE name LIKE ? 
+       OR country LIKE ? 
+       OR description LIKE ?
+    ORDER BY 
+      CASE 
+        WHEN name LIKE ? THEN 1
+        WHEN country LIKE ? THEN 2
+        ELSE 3
+      END,
+      rating DESC,
+      name ASC
+    LIMIT 50
+  `;
+  
   db.query(
-    'SELECT * FROM universities WHERE LOWER(name) LIKE LOWER(?)',
-    [`%${name.trim()}%`],
+    searchQuery, 
+    [searchTerm, searchTerm, searchTerm, searchTerm, searchTerm], 
     (err, results) => {
       if (err) {
-        console.error('Error searching universities:', err);
-        return res.status(500).json({ error: 'Internal server error' });
+        console.error('Database search error:', err);
+        return res.status(500).json({ 
+          error: 'Database error occurred during search',
+          universities: []
+        });
       }
       
-      res.json(results);
+      res.json({
+        success: true,
+        query: q,
+        count: results.length,
+        universities: results
+      });
     }
   );
 });
 
-// Get universities by country - THIS IS THE MISSING ROUTE!
-app.get('/api/universities/by-country', (req, res) => {
-  const { country } = req.query;
-  
-  if (!country) {
-    return res.status(400).json({ error: 'Country parameter is required' });
-  }
-
-  console.log('Searching for universities in country:', country);
-
-  db.query(
-    'SELECT * FROM universities WHERE LOWER(country) = LOWER(?) ORDER BY name',
-    [country.trim()],
-    (err, results) => {
-      if (err) {
-        console.error('Error fetching universities by country:', err);
-        return res.status(500).json({ error: 'Internal server error' });
-      }
-      
-      console.log('Found universities:', results.length);
-      res.json(results);
-    }
-  );
+app.listen(5000, () => {
+  console.log('\n🚀 Server running on port 5000');
+  console.log('📊 Using Supabase for: Users, Authentication, Profiles');
+  console.log('🗄️  Using MySQL for: Universities, Search');
+  console.log('🔗 Ready to accept connections...\n');
 });
-
-// Search countries by name - THIS IS THE OTHER MISSING ROUTE!
-app.get('/api/countries/search', (req, res) => {
-  const { name } = req.query;
-  
-  if (!name) {
-    return res.status(400).json({ error: 'Name parameter is required' });
-  }
-
-  console.log('Searching for country:', name);
-
-  db.query(
-    'SELECT * FROM countries WHERE LOWER(name) = LOWER(?)',
-    [name.trim()],
-    (err, results) => {
-      if (err) {
-        console.error('Error searching countries:', err);
-        return res.status(500).json({ error: 'Internal server error' });
-      }
-      
-      console.log('Found countries:', results.length);
-      res.json(results);
-    }
-  );
-});
-
-// Get university by ID (for the university profile page)
-app.get('/api/universities/:id', (req, res) => {
-  const { id } = req.params;
-  
-  db.query(
-    'SELECT * FROM universities WHERE id = ?',
-    [id],
-    (err, results) => {
-      if (err) {
-        console.error('Error fetching university:', err);
-        return res.status(500).json({ error: 'Internal server error' });
-      }
-      
-      if (results.length === 0) {
-        return res.status(404).json({ error: 'University not found' });
-      }
-      
-      res.json(results[0]);
-    }
-  );
-});
-
-app.listen(5000, () => console.log('Server running on port 5000'));

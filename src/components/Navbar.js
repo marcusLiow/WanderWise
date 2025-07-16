@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 
 function Navbar() {
   const navigate = useNavigate();
-  const location = useLocation(); // Add this to detect navigation changes
+  const location = useLocation();
   const [user, setUser] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -17,7 +17,7 @@ function Navbar() {
     } else {
       setUser(null);
     }
-  }, [location]); // Add location as dependency so it re-runs on navigation
+  }, [location]);
 
   // Listen for profile updates
   useEffect(() => {
@@ -30,10 +30,8 @@ function Navbar() {
       }
     };
 
-    // Listen for custom event when profile is updated
     window.addEventListener('userDataUpdated', handleUserDataUpdate);
     
-    // Cleanup event listener
     return () => {
       window.removeEventListener('userDataUpdated', handleUserDataUpdate);
     };
@@ -45,6 +43,10 @@ function Navbar() {
 
   const handleHomeClick = () => {
     navigate('/');
+  };
+
+  const handleWriteReviewClick = () => {
+    window.location.href = '/writereviewupdated.html';
   };
 
   const handleProfileClick = (event) => {
@@ -89,7 +91,26 @@ function Navbar() {
           <Button color="inherit">Countries</Button>
           <Button color="inherit">Universities</Button>
           
-          {/* Simple check: if user exists, show profile, otherwise show login */}
+          {/* Write Review button - only show when logged in */}
+          {user && (
+            <Button 
+              color="inherit" 
+              onClick={handleWriteReviewClick}
+              sx={{ 
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                },
+                borderRadius: 2,
+                px: 2,
+                fontWeight: 'bold'
+              }}
+            >
+              Write Review
+            </Button>
+          )}
+          
+          {/* User profile or login button */}
           {user ? (
             <>
               <Button 
