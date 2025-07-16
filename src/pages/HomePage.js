@@ -8,8 +8,7 @@ const HomePage = () => {
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
-      // Navigate to search results
-      console.log('Searching for:', searchQuery.trim());
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
@@ -685,7 +684,7 @@ const HomePage = () => {
         </p>
         <button 
           style={styles.ctaButton}
-          onClick={() => console.log('Login clicked')}
+          onClick={() => navigate('/login')}
         >
           Login to Share Review →
         </button>
