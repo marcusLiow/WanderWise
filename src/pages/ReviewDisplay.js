@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay, EffectCoverflow } from 'swiper/modules';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { useNavigate } from 'react-router-dom';
 
 // Import Swiper styles
 import 'swiper/css';
@@ -10,14 +11,14 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/effect-coverflow';
 
-import './ReviewDisplay.css'; // Import your existing CSS file
+import './ReviewDisplay.css';
 
 // Initialize Supabase
 const supabaseUrl = 'https://aojighzqmzouwhxyndbs.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvamlnaHpxbXpvdXdoeHluZGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MDgyNTMsImV4cCI6MjA2Nzk4NDI1M30.1f2HHXbYxP8KaABhv4uw151Xj1mRDWxd63pHYgKIXnQ';
-const supabaseClient = createClient(supabaseUrl, supabaseKey);
+const supabaseClient = createClient(supabaseUrl, supabaseKey); 
 
-// Image Gallery Component with Swiper Coverflow
+// Image Gallery Component
 const ImageGallery = ({ imageUrls }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -64,11 +65,8 @@ const ImageGallery = ({ imageUrls }) => {
   }, [modalOpen]);
 
   if (!imageUrls || imageUrls.length === 0) {
-    console.log('ImageGallery: No image URLs provided', imageUrls);
     return null;
   }
-
-  console.log('ImageGallery: Received imageUrls:', imageUrls);
 
   return (
     <>
@@ -77,7 +75,6 @@ const ImageGallery = ({ imageUrls }) => {
           📸 Exchange Photos ({imageUrls.length})
         </h2>
         
-        {/* Swiper Coverflow Carousel */}
         <div style={{ 
           display: 'flex',
           justifyContent: 'center',
@@ -117,8 +114,8 @@ const ImageGallery = ({ imageUrls }) => {
               }}
               loop={imageUrls.length > 1}
               style={{
-                '--swiper-navigation-color': '#FEC89A',
-                '--swiper-pagination-color': '#FEC89A',
+                '--swiper-navigation-color': '#FF5722',
+                '--swiper-pagination-color': '#FF5722',
                 '--swiper-navigation-size': '20px',
                 padding: '40px 60px 60px 60px'
               }}
@@ -154,7 +151,7 @@ const ImageGallery = ({ imageUrls }) => {
                         objectFit: 'cover',
                         transition: 'opacity 0.2s ease'
                       }}
-                      onLoad={(e) => {
+                      onLoad={() => {
                         console.log('Image loaded successfully:', url);
                       }}
                       onError={(e) => {
@@ -163,7 +160,6 @@ const ImageGallery = ({ imageUrls }) => {
                       }}
                     />
                     
-                    {/* Elegant overlay */}
                     <div
                       style={{
                         position: 'absolute',
@@ -171,7 +167,7 @@ const ImageGallery = ({ imageUrls }) => {
                         left: 0,
                         right: 0,
                         bottom: 0,
-                        background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.8), rgba(59, 130, 246, 0.6))',
+                        background: 'linear-gradient(135deg, rgba(255, 87, 34, 0.8), rgba(255, 112, 67, 0.6))',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -196,7 +192,6 @@ const ImageGallery = ({ imageUrls }) => {
               ))}
             </Swiper>
 
-            {/* Custom Navigation Buttons - Positioned for coverflow */}
             {imageUrls.length > 1 && (
               <>
                 <div 
@@ -219,18 +214,8 @@ const ImageGallery = ({ imageUrls }) => {
                     boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
                     transition: 'all 0.3s ease',
                     fontSize: '20px',
-                    color: '#2563eb',
+                    color: '#FF5722',
                     backdropFilter: 'blur(10px)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 1)';
-                    e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
-                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.15)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.95)';
-                    e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
-                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
                   }}
                 >
                   ‹
@@ -255,18 +240,8 @@ const ImageGallery = ({ imageUrls }) => {
                     boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
                     transition: 'all 0.3s ease',
                     fontSize: '20px',
-                    color: '#2563eb',
+                    color: '#FF5722',
                     backdropFilter: 'blur(10px)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 1)';
-                    e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
-                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.15)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.95)';
-                    e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
-                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
                   }}
                 >
                   ›
@@ -277,7 +252,6 @@ const ImageGallery = ({ imageUrls }) => {
         </div>
       </div>
 
-      {/* Enhanced Modal (keeping your existing modal code) */}
       {modalOpen && (
         <div 
           style={{
@@ -295,7 +269,6 @@ const ImageGallery = ({ imageUrls }) => {
           }}
           onClick={closeModal}
         >
-          {/* Close button */}
           <button 
             style={{
               position: 'absolute',
@@ -317,19 +290,10 @@ const ImageGallery = ({ imageUrls }) => {
               zIndex: 1001
             }}
             onClick={closeModal}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-              e.currentTarget.style.transform = 'scale(1.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
           >
             ×
           </button>
           
-          {/* Navigation arrows */}
           {imageUrls.length > 1 && (
             <>
               <button
@@ -356,16 +320,6 @@ const ImageGallery = ({ imageUrls }) => {
                 }}
                 onClick={(e) => { e.stopPropagation(); prevImage(); }}
                 disabled={currentImageIndex === 0}
-                onMouseEnter={(e) => {
-                  if (currentImageIndex > 0) {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-                    e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                  e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
-                }}
               >
                 ‹
               </button>
@@ -393,23 +347,12 @@ const ImageGallery = ({ imageUrls }) => {
                 }}
                 onClick={(e) => { e.stopPropagation(); nextImage(); }}
                 disabled={currentImageIndex === imageUrls.length - 1}
-                onMouseEnter={(e) => {
-                  if (currentImageIndex < imageUrls.length - 1) {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-                    e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                  e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
-                }}
               >
                 ›
               </button>
             </>
           )}
 
-          {/* Main image with loading state */}
           <div style={{ position: 'relative', maxWidth: '90vw', maxHeight: '90vh' }}>
             {imageLoading && (
               <div style={{
@@ -437,14 +380,13 @@ const ImageGallery = ({ imageUrls }) => {
               }}
               onClick={(e) => e.stopPropagation()}
               onLoad={() => setImageLoading(false)}
-              onError={(e) => {
+              onError={() => {
                 console.error('Modal image failed to load:', imageUrls[currentImageIndex]);
                 setImageLoading(false);
               }}
             />
           </div>
 
-          {/* Image counter */}
           {imageUrls.length > 1 && (
             <div style={{
               position: 'absolute',
@@ -463,7 +405,6 @@ const ImageGallery = ({ imageUrls }) => {
             </div>
           )}
 
-          {/* Thumbnail strip for multiple images */}
           {imageUrls.length > 1 && (
             <div style={{
               position: 'absolute',
@@ -512,7 +453,6 @@ const ImageGallery = ({ imageUrls }) => {
         </div>
       )}
 
-      {/* Add fade-in animation and Swiper custom styles */}
       <style jsx>{`
         @keyframes fadeIn {
           from { opacity: 0; }
@@ -520,7 +460,7 @@ const ImageGallery = ({ imageUrls }) => {
         }
         
         .swiper-pagination-bullet {
-          background: #2563eb !important;
+          background: #FF5722 !important;
           opacity: 0.5 !important;
         }
         
@@ -542,63 +482,83 @@ const ImageGallery = ({ imageUrls }) => {
 };
 
 // Star Rating Component
-const StarRating = ({ rating, label }) => (
-  <div className="review-rating-item">
-    <span className="review-rating-label">{label}:</span>
-    <div className="review-rating-stars">
-      {[1,2,3,4,5].map(star => (
-        <span key={star}
-              className={`star-display ${star <= rating ? '' : 'star-empty'}`}>
-          ★
-        </span>
-      ))}
+const StarRating = ({ rating, label }) => {
+  const validRating = rating && !isNaN(rating) ? Number(rating) : 0;
+  
+  return (
+    <div className="review-rating-item">
+      <span className="review-rating-label">{label}:</span>
+      <div className="review-rating-stars">
+        {[1,2,3,4,5].map(star => (
+          <span key={star}
+                className={`star-display ${star <= validRating ? '' : 'star-empty'}`}>
+            ★
+          </span>
+        ))}
+      </div>
+      <span className="review-rating-score">({validRating}/5)</span>
     </div>
-    <span className="review-rating-score">({rating}/5)</span>
-  </div>
-);
+  );
+};
 
-// ExpenseChart Component with Recharts Animation
+// ExpenseChart Component
 const ExpenseChart = ({ expenses, currency }) => {
-  const [animatedData, setAnimatedData] = useState([]);
-  const [animationStep, setAnimationStep] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
   
   const expenseData = [
-    { label: 'Accommodation', shortLabel: 'Accom.', amount: expenses.expenseRental || 0, color: '#eab308' },
-    { label: 'Travel', shortLabel: 'Travel', amount: expenses.expenseTravel || 0, color: '#3b82f6' },
-    { label: 'Food', shortLabel: 'Food', amount: expenses.expenseFood || 0, color: '#ef4444' },
-    { label: 'Shopping', shortLabel: 'Shop.', amount: expenses.expenseShopping || 0, color: '#f97316' },
-    { label: 'Miscellaneous', shortLabel: 'Misc.', amount: expenses.expenseMiscellaneous || 0, color: '#8b5cf6' },
-    { label: 'Transport', shortLabel: 'Trans.', amount: expenses.expensePublicTransport || 0, color: '#22c55e' }
+    { 
+      label: 'Accommodation', 
+      shortLabel: 'Accom.', 
+      amount: expenses.expenseRental || 0, 
+      color: '#FF5722' 
+    },
+    { 
+      label: 'Travel', 
+      shortLabel: 'Travel', 
+      amount: expenses.expenseTravel || 0, 
+      color: '#FF7043' 
+    },
+    { 
+      label: 'Food', 
+      shortLabel: 'Food', 
+      amount: expenses.expenseFood || 0, 
+      color: '#FF9800' 
+    },
+    { 
+      label: 'Shopping', 
+      shortLabel: 'Shopping', 
+      amount: expenses.expenseShopping || 0, 
+      color: '#E64A19' 
+    },
+    { 
+      label: 'Miscellaneous', 
+      shortLabel: 'Misc.', 
+      amount: expenses.expenseMiscellaneous || 0, 
+      color: '#BF360C' 
+    },
+    { 
+      label: 'Transport', 
+      shortLabel: 'Transport', 
+      amount: expenses.expensePublicTransport || 0, 
+      color: '#FF8A65' 
+    }
   ]
   .filter(item => item.amount > 0)
   .sort((a, b) => b.amount - a.amount);
 
-  // Clean bottom-to-top animation
   useEffect(() => {
-    setAnimatedData([]);
-    setAnimationStep(0);
+    if (!expenseData.length) return;
     
-    if (expenseData.length === 0) return;
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 300);
     
-    // Add bars one by one
-    expenseData.forEach((item, index) => {
-      setTimeout(() => {
-        setAnimatedData(prev => {
-          // Check if item already exists to prevent duplicates
-          const exists = prev.some(existing => existing.label === item.label);
-          if (exists) return prev;
-          
-          return [...prev, item];
-        });
-        setAnimationStep(index + 1);
-      }, index * 250); // 250ms delay between each bar
-    });
-  }, [JSON.stringify(expenseData)]);
+    return () => clearTimeout(timer);
+  }, [expenseData.length]);
 
   if (!expenseData.length) return null;
 
-  // Custom tooltip
-  const CustomTooltip = ({ active, payload, label }) => {
+  const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
@@ -612,8 +572,8 @@ const ExpenseChart = ({ expenses, currency }) => {
           boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
           border: 'none'
         }}>
-          <p style={{ margin: 0, fontWeight: '600' }}>{data.label}</p>
-          <p style={{ margin: '4px 0 0 0', color: '#fbbf24' }}>
+          <p style={{ margin: 0, fontWeight: '600', color: '#FFFffF' }}>{data.label}</p>
+          <p style={{ margin: '4px 0 0 0', color: '#FF9800' }}>
             {currency} {data.amount.toFixed(2)}
           </p>
         </div>
@@ -623,8 +583,12 @@ const ExpenseChart = ({ expenses, currency }) => {
   };
 
   return (
-    <div style={{ position: 'relative' }}>
-      {/* Bar Chart */}
+    <div style={{ 
+      position: 'relative',
+      opacity: isVisible ? 1 : 0,
+      transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
+      transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+    }}>
       <div style={{ 
         background: '#f9fafb', 
         padding: '24px', 
@@ -634,7 +598,7 @@ const ExpenseChart = ({ expenses, currency }) => {
       }}>
         <ResponsiveContainer width="100%" height={280}>
           <BarChart
-            data={animatedData}
+            data={expenseData}
             margin={{
               top: 20,
               right: 30,
@@ -666,16 +630,16 @@ const ExpenseChart = ({ expenses, currency }) => {
             />
             <Tooltip 
               content={<CustomTooltip />}
-              cursor={{ fill: 'rgba(59, 130, 246, 0.1)' }}
+              cursor={{ fill: 'rgba(255, 87, 34, 0.1)' }}
             />
             <Bar 
               dataKey="amount" 
-              animationDuration={800}
+              animationDuration={1200}
               animationEasing="ease-out"
-              animationBegin={0}
-              radius={[0, 0, 0, 0]}
+              animationBegin={200}
+              radius={[4, 4, 0, 0]}
             >
-              {animatedData.map((entry, index) => (
+              {expenseData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} />
               ))}
             </Bar>
@@ -683,76 +647,59 @@ const ExpenseChart = ({ expenses, currency }) => {
         </ResponsiveContainer>
       </div>
 
-      {/* Compact Legend */}
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', 
         gap: '8px', 
         fontSize: '12px' 
       }}>
-        {expenseData.map((item, index) => {
-          const isAnimated = animatedData.some(animItem => animItem.label === item.label);
-          
-          return (
-            <div 
-              key={item.label} 
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '6px',
-                padding: '6px 10px',
-                background: 'white',
-                borderRadius: '6px',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                border: `2px solid ${item.color}20`,
-                transition: 'all 0.3s ease',
-                cursor: 'default',
-                opacity: isAnimated ? 1 : 0.3,
-                transform: isAnimated ? 'translateY(0)' : 'translateY(10px)'
-              }}
-              onMouseEnter={(e) => {
-                if (isAnimated) {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (isAnimated) {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
-                }
-              }}
-            >
-              <div style={{ 
-                width: '12px', 
-                height: '12px', 
-                borderRadius: '3px', 
-                backgroundColor: item.color,
-                boxShadow: `0 1px 3px ${item.color}40`,
-                flexShrink: 0
-              }} />
-              <span style={{ 
-                fontSize: '11px', 
-                color: '#374151',
-                fontWeight: '500',
-                flex: 1,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis'
-              }}>
-                {item.shortLabel}:
-              </span>
-              <span style={{ 
-                fontSize: '11px', 
-                fontWeight: '600',
-                color: '#111827',
-                flexShrink: 0
-              }}>
-                {currency} {item.amount.toFixed(0)}
-              </span>
-            </div>
-          );
-        })}
+        {expenseData.map((item, index) => (
+          <div 
+            key={item.label} 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px',
+              padding: '6px 10px',
+              background: 'white',
+              borderRadius: '6px',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+              border: `2px solid ${item.color}20`,
+              cursor: 'default',
+              opacity: isVisible ? 1 : 0,
+              transform: isVisible ? 'translateY(0)' : 'translateY(15px)',
+              transition: `all 0.6s cubic-bezier(0.4, 0, 0.2, 1) ${(index * 100) + 400}ms`
+            }}
+          >
+            <div style={{ 
+              width: '12px', 
+              height: '12px', 
+              borderRadius: '3px', 
+              backgroundColor: item.color,
+              boxShadow: `0 1px 3px ${item.color}40`,
+              flexShrink: 0
+            }} />
+            <span style={{ 
+              fontSize: '11px', 
+              color: '#374151',
+              fontWeight: '500',
+              flex: 1,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}>
+              {item.shortLabel}:
+            </span>
+            <span style={{ 
+              fontSize: '11px', 
+              fontWeight: '600',
+              color: '#111827',
+              flexShrink: 0
+            }}>
+              {currency} {item.amount.toFixed(0)}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -764,6 +711,7 @@ const ReviewDisplay = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
@@ -778,62 +726,67 @@ const ReviewDisplay = () => {
 
   const fetchReview = async (id) => {
     try {
-      // Use the review_details view instead of the raw reviews table
       const { data, error } = await supabaseClient
-        .from('review_details')
-        .select('*')
+        .from('reviews')
+        .select(`
+          *,
+          universities (
+            id,
+            name,
+            country_code,
+            countries (
+              name,
+              flag
+            )
+          ),
+          users (
+            firstName,
+            lastName
+          )
+        `)
         .eq('id', id)
         .single();
       
       if (error) throw error;
       
-      console.log('Raw data from review_details view:', data);
-      console.log('Raw imageUrls field:', data.imageUrls);
-      console.log('Type of imageUrls:', typeof data.imageUrls);
-      
-      // Handle imageUrls field - they should already be public URLs from storage
-      if (data.imageUrls) {
-        let imageUrls = data.imageUrls;
-        
-        // If it's stored as a string, try to parse it
-        if (typeof imageUrls === 'string') {
-          console.log('imageUrls is a string, attempting to parse:', imageUrls);
-          try {
-            // Try parsing as JSON first
-            imageUrls = JSON.parse(imageUrls);
-            console.log('Successfully parsed as JSON:', imageUrls);
-          } catch (parseError) {
-            console.log('JSON parse failed, trying comma split:', parseError);
-            // If not JSON, split by comma
-            imageUrls = imageUrls.split(',').map(url => url.trim()).filter(url => url);
-            console.log('Split by comma:', imageUrls);
+      // Handle imageUrls field
+      if (data.imageUrls && Array.isArray(data.imageUrls)) {
+        data.imageUrls = data.imageUrls.map(url => {
+          if (url.startsWith('http')) {
+            return url;
+          } else {
+            const { data: publicUrl } = supabaseClient.storage
+              .from('wanderwise')
+              .getPublicUrl(url);
+            return publicUrl.publicUrl;
           }
-        }
-        
-        // Ensure we have an array of URLs
-        if (Array.isArray(imageUrls)) {
-          console.log('ImageUrls is an array:', imageUrls);
-          data.imageUrls = imageUrls;
-        } else {
-          console.log('ImageUrls is not an array, setting to empty array');
-          data.imageUrls = [];
+        });
+      } else {
+        data.imageUrls = [];
+      }
+
+      // Handle visitedCountries field
+      console.log('Raw visitedCountries from database:', data.visitedCountries);
+      if (data.visitedCountries && Array.isArray(data.visitedCountries)) {
+        // Already an array, keep as is
+        console.log('Visited countries (array):', data.visitedCountries);
+        // Filter out any empty or null values
+        data.visitedCountries = data.visitedCountries.filter(country => country && country.trim());
+      } else if (data.visitedCountries && typeof data.visitedCountries === 'string') {
+        // Parse if it's a string
+        try {
+          data.visitedCountries = JSON.parse(data.visitedCountries);
+          console.log('Parsed visitedCountries:', data.visitedCountries);
+        } catch {
+          data.visitedCountries = data.visitedCountries.split(',').map(country => country.trim()).filter(country => country);
+          console.log('Split visitedCountries:', data.visitedCountries);
         }
       } else {
-        console.log('No imageUrls field found or it is null/undefined');
-        data.imageUrls = []; // Set empty array if no images
+        console.log('No visitedCountries data found, setting empty array');
+        data.visitedCountries = [];
       }
       
-      // Handle tags field similarly
-      if (data.tags && typeof data.tags === 'string') {
-        try {
-          data.tags = JSON.parse(data.tags);
-        } catch {
-          data.tags = data.tags.split(',').map(tag => tag.trim());
-        }
-      }
-      
-      console.log('Processed review data:', data);
-      console.log('Final image URLs:', data.imageUrls);
+      console.log('Final visitedCountries array:', data.visitedCountries);
       
       setReview(data);
     } catch (err) {
@@ -858,21 +811,35 @@ const ReviewDisplay = () => {
       <p>{error}</p>
     </div>
   );
+
+  // Gather your four detailed ratings
+  const detailRatings = [
+    review.academicRating,
+    review.cultureRating,
+    review.accommodationRating,
+    review.safetyRating
+  ]
+    // make sure they’re numbers
+    .map(r => Number(r) || 0);
+
+  // Compute an un‑rounded average
+  const rawAvg = detailRatings.reduce((sum, r) => sum + r, 0) / detailRatings.length;
+
+  // Round to 2 decimal places
+  const averageRating = Math.round(rawAvg * 100) / 100;
   
   if (!review) return null;
 
-  // Calculate total expenses using new schema field names
   const total = [
     review.expenseFood, review.expenseShopping, review.expenseRental,
     review.expensePublicTransport, review.expenseTravel, review.expenseMiscellaneous
   ].reduce((s,x)=>s+(x||0), 0);
   
-  const code = review.currency ? review.currency.split(' - ')[0] : 'USD';
+  const code = review.currency || 'USD';
 
   return (
     <div className="review-container">
       <div className="review-content">
-        {/* Header */}
         <div className="review-card">
           <div className="review-header">
             <div className="review-logo-section">
@@ -882,11 +849,11 @@ const ReviewDisplay = () => {
               <div className="review-title">
                 <h1>Exchange Review</h1>
                 <p>
-                  {review.university_name}, {review.country_name}
-                  {review.country_flag && (
+                  {review.universities?.name}, {review.universities?.countries?.name}
+                  {review.universities?.countries?.flag && (
                     <img 
-                      src={review.country_flag} 
-                      alt={review.country_name} 
+                      src={review.universities.countries.flag} 
+                      alt={review.universities.countries.name} 
                       style={{ width: '20px', height: '15px', marginLeft: '8px' }}
                     />
                   )}
@@ -895,11 +862,15 @@ const ReviewDisplay = () => {
             </div>
             <div className="review-rating-section">
               <div className="review-rating-display">
-                <span className="review-overall-rating">{review.overallRating}</span>
+                                <span className="review-overall-rating">
+                  {averageRating}
+                </span>
                 <div>
                   {[1,2,3,4,5].map(star => (
-                    <span key={star}
-                          className={`star-display ${star <= review.overallRating ? '' : 'star-empty'}`}>
+                    <span
+                      key={star}
+                      className={`star-display ${star <= Math.round(averageRating) ? '' : 'star-empty'}`}
+                     >
                       ★
                     </span>
                   ))}
@@ -918,14 +889,17 @@ const ReviewDisplay = () => {
               <h3>GPA</h3>
               <p>{review.gpa}</p>
             </div>
-            <div className="review-info-card">
-              <h3>Student</h3>
-              <p>{review.firstName} {review.lastName}</p>
-            </div>
+            {review.users && (
+              <div className="review-info-card">
+                <h3>Student</h3>
+                <p>{review.users.firstName} {review.users.lastName}</p>
+              </div>
+            )}
             <div className="review-info-card">
               <h3>Date</h3>
               <p>{new Date(review.created_at).toLocaleDateString()}</p>
             </div>
+
           </div>
 
           {review.tags?.length > 0 && (
@@ -942,34 +916,51 @@ const ReviewDisplay = () => {
           )}
         </div>
 
-        {/* Image Gallery */}
-        {console.log('About to render ImageGallery with:', review.imageUrls)}
         <ImageGallery imageUrls={review.imageUrls} />
 
+        {/* ── Main two‑column grid: left for Ratings+Visited, right for Expenses ── */}
         <div className="review-main-grid">
-          {/* Ratings */}
-          <div className="review-ratings-card">
-            <h2>Detailed Ratings</h2>
-            <div>
-              <StarRating rating={review.academicRating} label="Academic" />
-              <StarRating rating={review.cultureRating} label="Cultural" />
-              <StarRating rating={review.foodRating} label="Food" />
-              <StarRating rating={review.accommodationRating} label="Accommodation" />
-              <StarRating rating={review.safetyRating} label="Safety" />
+          {/* ── LEFT COLUMN ── */}
+          <div className="review-left-column">
+            {/* Detailed Ratings card */}
+            <div className="review-ratings-card">
+              <h2>Detailed Ratings</h2>
+              <div>
+                <StarRating rating={review.academicRating}      label="Academic"       />
+                <StarRating rating={review.cultureRating}       label="Cultural"        />
+                <StarRating rating={review.accommodationRating} label="Rental"  />
+                <StarRating rating={review.safetyRating}        label="Safety"          />
+              </div>
+            </div>
+
+            {/* Visited Countries card */}
+            <div className="review-visited-card">
+              <h2>Visited Countries</h2>
+              {review.visitedCountries && review.visitedCountries.length > 0 ? (
+                <div className="visited-list">
+                  {review.visitedCountries.map((country,i) => (
+                    <span key={i} className="visited-chip">
+                      {country}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p>None</p>
+              )}
             </div>
           </div>
 
-          {/* Expenses */}
+          {/* ── RIGHT COLUMN ── */}
           {total > 0 && (
             <div className="review-expenses-card">
               <h2>Expenses Breakdown</h2>
               <ExpenseChart expenses={review} currency={code} />
-              <div style={{ borderTop: '2px solid #d1d5db', marginTop: '24px', paddingTop: '16px' }}>
+              <div style={{ borderTop: '2px solid #d1d5db', marginTop: 24, paddingTop: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#111827' }}>
+                  <span style={{ fontSize: 18, fontWeight: 'bold', color: '#111827' }}>
                     Total Expenses:
                   </span>
-                  <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#2563eb' }}>
+                  <span style={{ fontSize: 20, fontWeight: 'bold', color: '#FF5722' }}>
                     {code} {total.toFixed(2)}
                   </span>
                 </div>
@@ -978,7 +969,6 @@ const ReviewDisplay = () => {
           )}
         </div>
 
-        {/* Comments & Tips with Custom Tabbed Interface */}
         <div className="review-comments-card">
           <h2>Detailed Reviews</h2>
           <div className="review-overall-experience">
@@ -986,38 +976,62 @@ const ReviewDisplay = () => {
             <p>{review.reviewText}</p>
           </div>
 
-          {/* Custom Tabbed Interface */}
           {(() => {
             const tabs = [];
             
             if (review.academicComment) {
-              tabs.push({ id: 'academic', label: 'Academic', content: review.academicComment, title: 'Academic Experience' });
+              tabs.push({ 
+                id: 'academic', 
+                label: 'Academic', 
+                content: review.academicComment, 
+                title: 'Academic Experience' 
+              });
             }
             if (review.cultureComment) {
-              tabs.push({ id: 'culture', label: 'Cultural', content: review.cultureComment, title: 'Cultural Experience' });
+              tabs.push({ 
+                id: 'culture', 
+                label: 'Cultural', 
+                content: review.cultureComment, 
+                title: 'Cultural Experience' 
+              });
             }
             if (review.foodComment) {
-              tabs.push({ id: 'food', label: 'Food', content: review.foodComment, title: 'Food' });
+              tabs.push({ 
+                id: 'food', 
+                label: 'Food', 
+                content: review.foodComment, 
+                title: 'Food' 
+              });
             }
             if (review.accommodationComment) {
-              tabs.push({ id: 'accommodation', label: 'Accommodation', content: review.accommodationComment, title: 'Accommodation' });
+              tabs.push({ 
+                id: 'accommodation', 
+                label: 'Accommodation', 
+                content: review.accommodationComment, 
+                title: 'Accommodation' 
+              });
             }
             if (review.safetyComment) {
-              tabs.push({ id: 'safety', label: 'Safety', content: review.safetyComment, title: 'Safety' });
+              tabs.push({ 
+                id: 'safety', 
+                label: 'Safety', 
+                content: review.safetyComment, 
+                title: 'Safety' 
+              });
             }
 
             if (tabs.length === 0) return null;
 
             return (
               <div style={{ marginTop: '24px' }}>
-                {/* Tab Navigation */}
                 <div style={{
                   display: 'flex',
                   gap: '4px',
-                  background: '#FEC89A',
-                  padding: '4px',
-                  borderRadius: '8px',
-                  marginBottom: '24px'
+                  background: 'linear-gradient(135deg, #FF5722, #FF7043)',
+                  padding: '6px',
+                  borderRadius: '12px',
+                  marginBottom: '24px',
+                  boxShadow: '0 4px 15px rgba(255, 87, 34, 0.2)'
                 }}>
                   {tabs.map((tab, index) => (
                     <button
@@ -1025,16 +1039,30 @@ const ReviewDisplay = () => {
                       onClick={() => setActiveTab(index)}
                       style={{
                         flex: 1,
-                        padding: '12px 16px',
+                        padding: '14px 20px',
                         fontSize: '14px',
-                        fontWeight: '500',
-                        borderRadius: '6px',
+                        fontWeight: '600',
+                        borderRadius: '8px',
                         border: 'none',
                         cursor: 'pointer',
-                        transition: 'all 0.2s ease',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                         background: activeTab === index ? 'white' : 'transparent',
-                        color: activeTab === index ? '#2563eb' : '#6b7280',
-                        boxShadow: activeTab === index ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none'
+                        color: activeTab === index ? '#FF5722' : 'rgba(255, 255, 255, 0.9)',
+                        boxShadow: activeTab === index ? '0 4px 12px rgba(0, 0, 0, 0.15)' : 'none',
+                        transform: activeTab === index ? 'translateY(-2px)' : 'translateY(0)',
+                        textShadow: activeTab === index ? 'none' : '0 1px 2px rgba(0, 0, 0, 0.2)'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (activeTab !== index) {
+                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                          e.currentTarget.style.transform = 'translateY(-1px)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (activeTab !== index) {
+                          e.currentTarget.style.background = 'transparent';
+                          e.currentTarget.style.transform = 'translateY(0)';
+                        }
                       }}
                     >
                       {tab.label}
@@ -1042,25 +1070,30 @@ const ReviewDisplay = () => {
                   ))}
                 </div>
 
-                {/* Tab Content */}
                 <div style={{
-                  padding: '20px',
-                  background: '#f9fafb',
-                  borderRadius: '8px'
+                  padding: '24px',
+                  background: 'linear-gradient(135deg, #FFF3E0, #FFEBE0)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255, 87, 34, 0.1)',
+                  boxShadow: '0 2px 8px rgba(255, 87, 34, 0.1)'
                 }}>
                   <h4 style={{ 
-                    margin: '0 0 12px 0', 
-                    fontSize: '16px', 
-                    fontWeight: '600', 
-                    color: '#1f2937' 
+                    margin: '0 0 16px 0', 
+                    fontSize: '18px', 
+                    fontWeight: '700', 
+                    color: '#E64A19',
+                    borderBottom: '2px solid #FF5722',
+                    paddingBottom: '8px',
+                    display: 'inline-block'
                   }}>
                     {tabs[activeTab]?.title}
                   </h4>
                   <p style={{ 
                     margin: 0, 
-                    color: '#374151', 
-                    lineHeight: '1.6',
-                    fontSize: '14px'
+                    color: '#5D4037', 
+                    lineHeight: '1.7',
+                    fontSize: '15px',
+                    letterSpacing: '0.2px'
                   }}>
                     {tabs[activeTab]?.content}
                   </p>
@@ -1070,17 +1103,41 @@ const ReviewDisplay = () => {
           })()}
 
           {review.tipsText && (
-            <div className="review-tips-section">
-              <h3>💡 Tips for Future Students</h3>
-              <p>{review.tipsText}</p>
+            <div className="review-tips-section" style={{
+              marginTop: '32px',
+              background: 'linear-gradient(135deg, #E8F5E8, #F1F8E9)',
+              padding: '24px',
+              borderRadius: '12px',
+              border: '1px solid rgba(76, 175, 80, 0.2)',
+              boxShadow: '0 2px 8px rgba(76, 175, 80, 0.1)'
+            }}>
+              <h3 style={{
+                fontSize: '18px',
+                fontWeight: '700',
+                color: '#2E7D32',
+                margin: '0 0 16px 0',
+                borderBottom: '2px solid #4CAF50',
+                paddingBottom: '8px',
+                display: 'inline-block'
+              }}>
+                💡 Tips for Future Students
+              </h3>
+              <p style={{
+                color: '#1B5E20',
+                lineHeight: '1.7',
+                margin: 0,
+                fontSize: '15px',
+                letterSpacing: '0.2px'
+              }}>
+                {review.tipsText}
+              </p>
             </div>
           )}
         </div>
 
-        {/* Navigation */}
         <div className="review-navigation">
           <button
-            onClick={() => window.history.back()}
+            onClick={() => navigate(`/universityprofile/${review.universities.id}`)}
             className="review-back-button"
           >
             ← Back
