@@ -462,7 +462,7 @@ function WriteReview() {
   };
 
   // Submit handler
-  const handleSubmit = async () => {
+    const handleSubmit = async () => {
     if (!currency) {
       setSubmitMessage('Please select a currency before submitting.');
       return;
@@ -472,6 +472,9 @@ function WriteReview() {
     setSubmitMessage('');
     
     try {
+      // Extract only the currency code (first 3 characters) from the full string
+      const currencyCode = currency.split(' - ')[0]; // Gets "USD" from "USD - US Dollar"
+      
       // Get the selected university ID
       const selectedUniversityObj = filteredUniversities.find(uni => uni.name === selectedUniversity);
       if (!selectedUniversityObj) {
@@ -479,7 +482,6 @@ function WriteReview() {
       }
 
       // For now, create a temporary user (in a real app, this would come from authentication)
-      // You'll need to replace this with actual user authentication
       const tempUser = {
         firstName: 'Anonymous',
         lastName: 'User',
@@ -519,14 +521,14 @@ function WriteReview() {
         reviewText: reviewText,
         tipsText: tipsText,
         imageUrls: imageUrls,
-        currency: currency,
+        currency: currencyCode, // ✅ Now using only the 3-character code
         expenseFood: parseFloat(expenses.food) || 0,
         expenseShopping: parseFloat(expenses.shopping) || 0,
         expenseRental: parseFloat(expenses.rental) || 0,
         expensePublicTransport: parseFloat(expenses.public_transport) || 0,
         expenseTravel: parseFloat(expenses.travel) || 0,
         expenseMiscellaneous: parseFloat(expenses.miscellaneous) || 0,
-        // New travel fields
+        // New travel fields (add these if they exist in your schema)
         didTravel: didTravel,
         visitedCountries: visitedCountries
       };
