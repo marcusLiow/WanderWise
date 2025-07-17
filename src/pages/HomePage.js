@@ -81,11 +81,11 @@ const HomePage = () => {
       text: 'The professors were incredibly knowledgeable and the international student community was so welcoming. Paris offered endless opportunities for cultural immersion!'
     },
     {
-      name: 'Barry Kim',
+      name: 'Marcus Williams',
       university: 'SMU → University of Melbourne, Australia',
-      avatar: 'MK',
+      avatar: 'MW',
       rating: 5,
-      text: 'Amazing campus facilities and the Australian laid-back culture really helped me grow personally. The business courses were top-notch and very practical.'
+      text: 'Melbourne\'s startup ecosystem is amazing! I got to intern at a tech company while studying. The business courses were top-notch and very practical.'
     },
     {
       name: 'Emma Johnson',
@@ -96,6 +96,7 @@ const HomePage = () => {
     }
   ];
 
+  // Updated Popular Destinations with working images and no university counts
   const popularDestinations = [
     { name: 'France', count: '120+ universities', image: 'https://images.unsplash.com/photo-1549144511-f099e773c147?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80'  },
     { name: 'Germany', count: '85+ universities', image: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80' },
@@ -167,36 +168,33 @@ const HomePage = () => {
       color: 'rgba(255, 255, 255, 0.9)',
       marginBottom: '32px',
       fontWeight: 300,
-      lineHeight: 1.4
+      lineHeight: 1.5
     },
     searchContainer: {
-      background: 'rgba(255, 255, 255, 0.95)',
-      borderRadius: '16px',
-      padding: '8px',
       display: 'flex',
+      maxWidth: '500px',
       marginBottom: '32px',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-      backdropFilter: 'blur(10px)'
+      boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+      borderRadius: '50px',
+      overflow: 'hidden'
     },
     searchInput: {
       flex: 1,
+      padding: '16px 24px',
+      fontSize: '1rem',
       border: 'none',
       outline: 'none',
-      fontSize: '1rem',
-      padding: '16px 20px',
-      background: 'transparent',
-      color: '#333'
+      backgroundColor: 'white'
     },
     searchButton: {
+      padding: '16px 32px',
       backgroundColor: '#FF3F00',
       color: 'white',
       border: 'none',
-      borderRadius: '12px',
-      padding: '16px 32px',
       fontSize: '1rem',
       fontWeight: 'bold',
       cursor: 'pointer',
-      transition: 'all 0.3s ease'
+      transition: 'background-color 0.3s ease'
     },
     heroButtons: {
       display: 'flex',
@@ -204,82 +202,85 @@ const HomePage = () => {
       flexWrap: 'wrap'
     },
     primaryButton: {
+      padding: '16px 32px',
       backgroundColor: '#FF3F00',
       color: 'white',
       border: 'none',
-      borderRadius: '12px',
-      padding: '16px 32px',
-      fontSize: '1.1rem',
+      borderRadius: '50px',
+      fontSize: '1rem',
       fontWeight: 'bold',
       cursor: 'pointer',
       transition: 'all 0.3s ease',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px'
+      boxShadow: '0 4px 15px rgba(255, 63, 0, 0.3)'
     },
     secondaryButton: {
+      padding: '16px 32px',
       backgroundColor: 'transparent',
       color: 'white',
       border: '2px solid white',
-      borderRadius: '12px',
-      padding: '16px 32px',
-      fontSize: '1.1rem',
+      borderRadius: '50px',
+      fontSize: '1rem',
       fontWeight: 'bold',
       cursor: 'pointer',
       transition: 'all 0.3s ease'
     },
     floatingCard: {
       position: 'absolute',
-      background: 'white',
-      borderRadius: '16px',
+      backgroundColor: 'white',
       padding: '20px',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-      animation: 'float 4s ease-in-out infinite',
-      backdropFilter: 'blur(10px)'
+      borderRadius: '15px',
+      boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+      animation: 'float 6s ease-in-out infinite',
+      maxWidth: '280px',
+      zIndex: 2
     },
     section: {
-      padding: '80px 20px',
       maxWidth: '1200px',
-      margin: '0 auto'
+      margin: '0 auto',
+      padding: '60px 20px'
+    },
+    graySection: {
+      backgroundColor: '#f8f9fa',
+      padding: '60px 0'
     },
     sectionTitle: {
-      fontSize: 'clamp(2rem, 4vw, 2.5rem)',
+      fontSize: '2.5rem',
       fontWeight: 'bold',
       textAlign: 'center',
-      marginBottom: '16px',
+      marginBottom: '1rem',
       color: '#333'
     },
     sectionSubtitle: {
-      fontSize: '1.25rem',
+      fontSize: '1.1rem',
       textAlign: 'center',
       color: '#666',
-      marginBottom: '48px',
+      marginBottom: '3rem',
       maxWidth: '600px',
-      margin: '0 auto 48px'
+      margin: '0 auto 3rem'
     },
     grid: {
       display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-      gap: '32px'
+      gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+      gap: '30px',
+      marginTop: '30px'
     },
     card: {
-      background: 'white',
-      borderRadius: '16px',
-      padding: '32px',
+      backgroundColor: 'white',
+      padding: '40px 30px',
+      borderRadius: '15px',
       textAlign: 'center',
-      boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
-      transition: 'transform 0.3s ease',
-      height: '100%'
+      boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
+      transition: 'all 0.3s ease'
     },
     cardIcon: {
       fontSize: '3rem',
-      marginBottom: '16px',
+      marginBottom: '20px',
       display: 'block'
     },
     cardTitle: {
       fontSize: '1.5rem',
       fontWeight: 'bold',
-      marginBottom: '16px',
+      marginBottom: '15px',
       color: '#333'
     },
     cardDescription: {
@@ -308,52 +309,53 @@ const HomePage = () => {
       margin: '0 auto 48px'
     },
     destinationCard: {
-      background: 'white',
-      borderRadius: '16px',
+      backgroundColor: 'white',
+      borderRadius: '15px',
       overflow: 'hidden',
-      cursor: 'pointer',
+      boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
       transition: 'all 0.3s ease',
-      height: '100%'
+      cursor: 'pointer',
+      position: 'relative',
+      aspectRatio: '1.6/1'
     },
     destinationImage: {
-      height: '160px',
+      width: '100%',
+      height: '100%',
       backgroundSize: 'cover',
       backgroundPosition: 'center',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: '3rem',
       position: 'relative'
     },
     destinationContent: {
       padding: '20px'
     },
-    testimonialCard: {
-      background: 'white',
-      borderRadius: '16px',
-      padding: '32px',
-      boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
-      height: '100%'
+    testimonialGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+      gap: '30px',
+      marginTop: '30px'
     },
-    stars: {
-      color: '#FFD700',
-      fontSize: '1.2rem',
-      marginBottom: '16px'
+    testimonialCard: {
+      backgroundColor: 'white',
+      padding: '30px',
+      borderRadius: '15px',
+      boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
+      position: 'relative'
     },
     testimonialText: {
-      fontStyle: 'italic',
-      marginBottom: '24px',
+      fontSize: '1.1rem',
       lineHeight: 1.6,
-      fontSize: '1rem'
+      color: '#666',
+      marginBottom: '20px',
+      fontStyle: 'italic'
     },
     testimonialAuthor: {
       display: 'flex',
       alignItems: 'center',
-      gap: '12px'
+      gap: '15px'
     },
-    avatar: {
-      width: '48px',
-      height: '48px',
+    testimonialAvatar: {
+      width: '50px',
+      height: '50px',
       borderRadius: '50%',
       backgroundColor: '#FF3F00',
       color: 'white',
@@ -361,20 +363,37 @@ const HomePage = () => {
       alignItems: 'center',
       justifyContent: 'center',
       fontWeight: 'bold',
+      fontSize: '1.2rem'
+    },
+    testimonialInfo: {
+      flex: 1
+    },
+    testimonialName: {
+      fontWeight: 'bold',
+      color: '#333',
+      marginBottom: '4px'
+    },
+    testimonialUniversity: {
+      color: '#666',
       fontSize: '0.9rem'
     },
+    stars: {
+      color: '#FFD700',
+      fontSize: '1.2rem',
+      marginTop: '4px'
+    },
     ctaSection: {
-      background: 'linear-gradient(135deg, #FF3F00 0%, #FF6B35 100%)',
+      backgroundColor: '#FF3F00',
       padding: '80px 20px',
-      color: 'white',
-      textAlign: 'center'
+      textAlign: 'center',
+      color: 'white'
     },
     ctaButton: {
+      padding: '16px 32px',
       backgroundColor: 'white',
       color: '#FF3F00',
       border: 'none',
-      borderRadius: '12px',
-      padding: '16px 32px',
+      borderRadius: '50px',
       fontSize: '1.1rem',
       fontWeight: 'bold',
       cursor: 'pointer',
@@ -393,48 +412,62 @@ const HomePage = () => {
     }
   };
 
+  // CSS for animations
+  const animationCSS = `
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+    }
+    
+    .hover-lift:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+    
+    .search-button:hover {
+      background-color: #E63900;
+    }
+    
+    .primary-button:hover {
+      background-color: #E63900;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 63, 0, 0.4);
+    }
+    
+    .secondary-button:hover {
+      background-color: white;
+      color: #333;
+    }
+    
+    .cta-button:hover {
+      background-color: #f8f9fa;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+    
+    @media (max-width: 768px) {
+      .hero-content {
+        grid-template-columns: 1fr;
+        gap: 30px;
+        text-align: center;
+      }
+      
+      .floating-cards {
+        display: none;
+      }
+      
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  `;
+
   return (
     <div style={styles.container}>
-      {/* CSS Animations */}
-      <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
-        }
-        
-        .hover-lift:hover {
-          transform: translateY(-8px);
-        }
-        
-        .hover-scale:hover {
-          transform: scale(1.02);
-        }
-        
-        button:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 12px 32px rgba(0,0,0,0.2);
-        }
-        
-        @media (max-width: 768px) {
-          .hero-content {
-            grid-template-columns: 1fr;
-            gap: 40px;
-            text-align: center;
-          }
-          
-          .hero-buttons {
-            justify-content: center;
-          }
-          
-          .floating-cards {
-            display: none;
-          }
-        }
-      `}</style>
-
+      <style>{animationCSS}</style>
+      
       {/* Hero Section */}
       <section style={styles.hero}>
-        {/* University Carousel Background */}
         <div 
           style={{
             ...styles.heroBackground,
@@ -443,44 +476,14 @@ const HomePage = () => {
         />
         <div style={styles.heroOverlay} />
         
-        {/* Carousel Indicators */}
-        <div style={{
-          position: 'absolute',
-          bottom: '20px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          display: 'flex',
-          gap: '10px',
-          zIndex: 3
-        }}>
-          {universitySlides.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentSlide(index)}
-              style={{
-                width: '12px',
-                height: '12px',
-                borderRadius: '50%',
-                border: 'none',
-                backgroundColor: currentSlide === index ? '#FF3F00' : 'rgba(255,255,255,0.5)',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease'
-              }}
-            />
-          ))}
-        </div>
-        
-        <div className="hero-content" style={styles.heroContent}>
+        <div style={styles.heroContent} className="hero-content">
           <div style={styles.heroLeft}>
             <h1 style={styles.heroTitle}>
-              Your Global Exchange
-              <span style={{ color: '#FFD700' }}> Adventure </span>
-              Starts Here
+              Find Your Perfect
+              <br />Exchange University
             </h1>
-            
             <p style={styles.heroSubtitle}>
-              Discover authentic student experiences, compare universities worldwide, 
-              and find your perfect study abroad destination with WanderWise.
+              Discover amazing universities worldwide through authentic student reviews and detailed expense insights. Your global education journey starts here.
             </p>
 
             {/* Search Bar */}
@@ -495,6 +498,7 @@ const HomePage = () => {
               />
               <button 
                 style={styles.searchButton}
+                className="search-button"
                 onClick={handleSearch}
               >
                 Search
@@ -502,10 +506,10 @@ const HomePage = () => {
             </div>
 
             <div className="hero-buttons" style={styles.heroButtons}>
-              <button style={styles.primaryButton}>
+              <button style={styles.primaryButton} className="primary-button">
                 Explore Universities →
               </button>
-              <button style={styles.secondaryButton}>
+              <button style={styles.secondaryButton} className="secondary-button">
                 Read Reviews
               </button>
             </div>
@@ -559,6 +563,20 @@ const HomePage = () => {
                 "Amazing experience in Copenhagen!"
               </div>
             </div>
+            
+            <div style={{
+              ...styles.floatingCard,
+              top: '100%',
+              right: '-29%',
+              animationDelay: '4s'
+            }}>
+              <div style={{ fontSize: '0.9rem', color: '#666' }}>
+                💰 Average monthly cost
+              </div>
+              <div style={{ fontWeight: 'bold', fontSize: '1.2rem', color: '#FF3F00' }}>
+                $2,400
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -607,14 +625,14 @@ const HomePage = () => {
                     left: 0,
                     width: '100%',
                     height: '100%',
-                    background: 'rgba(0,0,0,0.3)',
+                    background: 'linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.7))',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}>
                     <h3 style={{ 
                       color: 'white', 
-                      fontSize: '1.5rem', 
+                      fontSize: '1.8rem', 
                       fontWeight: 'bold',
                       margin: 0,
                       textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
@@ -622,11 +640,6 @@ const HomePage = () => {
                       {destination.name}
                     </h3>
                   </div>
-                </div>
-                <div style={styles.destinationContent}>
-                  <p style={{ color: '#666', margin: 0, fontWeight: '500' }}>
-                    {destination.count}
-                  </p>
                 </div>
               </div>
             ))}
@@ -638,24 +651,24 @@ const HomePage = () => {
       <section style={styles.section}>
         <h2 style={styles.sectionTitle}>Student Success Stories</h2>
         <p style={styles.sectionSubtitle}>
-          Real reviews from SMU students about their exchange experiences abroad
+          Hear from students who found their perfect exchange experience through WanderWise
         </p>
 
-        <div style={styles.grid}>
+        <div style={styles.testimonialGrid}>
           {testimonials.map((testimonial, index) => (
-            <div key={index} style={styles.testimonialCard}>
-              <div style={styles.stars}>
-                {'★'.repeat(testimonial.rating)}
-              </div>
+            <div key={index} className="hover-lift" style={styles.testimonialCard}>
               <p style={styles.testimonialText}>
                 "{testimonial.text}"
               </p>
               <div style={styles.testimonialAuthor}>
-                <div style={styles.avatar}>{testimonial.avatar}</div>
-                <div>
-                  <div style={{ fontWeight: 'bold' }}>{testimonial.name}</div>
-                  <div style={{ color: '#666', fontSize: '0.9rem' }}>
-                    {testimonial.university}
+                <div style={styles.testimonialAvatar}>
+                  {testimonial.avatar}
+                </div>
+                <div style={styles.testimonialInfo}>
+                  <div style={styles.testimonialName}>{testimonial.name}</div>
+                  <div style={styles.testimonialUniversity}>{testimonial.university}</div>
+                  <div style={styles.stars}>
+                    {'★'.repeat(testimonial.rating)}
                   </div>
                 </div>
               </div>
@@ -664,12 +677,13 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* CTA Section - Willing to Share Your Experience */}
       <section style={styles.ctaSection}>
         <h2 style={{
           fontSize: 'clamp(2rem, 4vw, 2.5rem)',
           fontWeight: 'bold',
-          marginBottom: '16px'
+          marginBottom: '16px',
+          color: 'white'
         }}>
           Willing to Share Your Experience?
         </h2>
@@ -678,7 +692,8 @@ const HomePage = () => {
           marginBottom: '32px',
           opacity: 0.9,
           maxWidth: '600px',
-          margin: '0 auto 32px'
+          margin: '0 auto 32px',
+          color: 'white'
         }}>
           Help future exchange students by sharing your honest review and experiences.
         </p>

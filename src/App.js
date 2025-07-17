@@ -13,6 +13,8 @@ import SignUpPage from './pages/SignupPage';
 import ProfilePage from './pages/ProfilePage';
 import UniversityProfile from './pages/UniversityProfile';
 
+import UniListPage from './pages/UniListPage';
+import CountryListPage from './pages/CountryListPage';
 import ReviewDisplay from './pages/ReviewDisplay';
 import WriteReview from './pages/WriteReview';
 
@@ -40,6 +42,8 @@ function App() {
             <Route path="/search/:countryName" element={<SearchResults />} />
             <Route path="/university/:universitySlug" element={<UniversityProfile />} />
 
+            <Route path="/universities" element={<UniListPage />} />
+            <Route path="/countries" element={<CountryListPage />} />
             <Route path="/review/:id" element={<ReviewDisplay />} />
             <Route path="/write-review" element={<WriteReview />} />
           </Routes>
