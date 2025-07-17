@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination, Autoplay } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 import './UniversityProfile.css';
 
 // Supabase client
@@ -12,7 +17,7 @@ const supabase = createClient(
 const UniversityProfile = () => {
   const { universitySlug } = useParams();
   const location = useLocation();
-  const navigate = useNavigate(); // Add this line to get the navigate function
+  const navigate = useNavigate();
   const [university, setUniversity] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [topCountries, setTopCountries] = useState([]);
@@ -114,24 +119,13 @@ const UniversityProfile = () => {
         universityData = mockUniversity;
       }
 
-      // Fetch reviews with user and university data
+      // Fetch reviews from reviews_details table
       try {
+        const universityName = universityData.name;
         const { data: reviewsData, error: reviewsError } = await supabase
-          .from('reviews')
-          .select(`
-            *,
-            users!reviews_user_fkey (
-              firstName,
-              lastName,
-              email,
-              profileImage,
-              countries!users_nationality_fkey (
-                name,
-                flag
-              )
-            )
-          `)
-          .eq('university_id', universityData.id)
+          .from('reviews_details')
+          .select('*')
+          .eq('university_name', universityName)
           .order('created_at', { ascending: false })
           .limit(10);
 
@@ -141,21 +135,31 @@ const UniversityProfile = () => {
         } else {
           setReviews(reviewsData || []);
           
-          // Process photo highlights from reviews
-          const photos = [];
+          // Process photo highlights from reviews with review mapping
+          const photoHighlightsData = [];
           reviewsData?.forEach(review => {
             if (review.imageUrls && Array.isArray(review.imageUrls)) {
-              photos.push(...review.imageUrls);
+              review.imageUrls.forEach(imageUrl => {
+                photoHighlightsData.push({
+                  imageUrl,
+                  reviewId: review.id,
+                  reviewerName: getUserName(review),
+                  reviewerAvatar: getProfileImage(review)
+                });
+              });
             }
           });
-          setPhotoHighlights(photos.slice(0, 8)); // Get first 8 photos
+          setPhotoHighlights(photoHighlightsData);
           
-          // Process top countries from review users' nationalities
+          // Process top countries from visitedCountries field
           const countryCount = {};
           reviewsData?.forEach(review => {
-            if (review.users?.countries?.name) {
-              const countryName = review.users.countries.name;
-              countryCount[countryName] = (countryCount[countryName] || 0) + 1;
+            if (review.visitedCountries && Array.isArray(review.visitedCountries)) {
+              review.visitedCountries.forEach(country => {
+                if (country && country.trim()) {
+                  countryCount[country] = (countryCount[country] || 0) + 1;
+                }
+              });
             }
           });
           
@@ -181,6 +185,14 @@ const UniversityProfile = () => {
                   flag: countryInfo?.flag || `https://flagcdn.com/w40/${name.toLowerCase().substring(0, 2)}.png`
                 };
               });
+              setTopCountries(topCountriesWithFlags);
+            } else {
+              // Fallback: create country objects with generated flags
+              const topCountriesWithFlags = sortedCountries.map(([name, count]) => ({
+                name,
+                count,
+                flag: `https://flagcdn.com/w40/${name.toLowerCase().substring(0, 2)}.png`
+              }));
               setTopCountries(topCountriesWithFlags);
             }
           }
@@ -231,51 +243,42 @@ const UniversityProfile = () => {
     return stars;
   };
 
-  const getProfileImage = (user) => {
-    if (user?.profileImage) {
-      return user.profileImage;
+  const getProfileImage = (review) => {
+    if (review?.profileImage) {
+      return review.profileImage;
     }
-    const seed = user?.email ? user.email.split('@')[0] : Math.random().toString();
+    // Use firstName + lastName or fallback to a seed based on review id
+    const seed = review?.firstName && review?.lastName 
+      ? `${review.firstName}${review.lastName}` 
+      : review?.id?.toString() || Math.random().toString();
     return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
   };
 
-  const getUserName = (user) => {
-    if (!user) return 'Anonymous';
-    if (user.firstName && user.lastName) {
-      return `${user.firstName} ${user.lastName}`;
+  const getUserName = (review) => {
+    if (!review) return 'Anonymous';
+    if (review.firstName && review.lastName) {
+      return `${review.firstName} ${review.lastName}`;
     }
-    if (user.email) {
-      return user.email.split('@')[0].charAt(0).toUpperCase() + user.email.split('@')[0].slice(1);
+    if (review.firstName) {
+      return review.firstName;
     }
     return 'Anonymous';
   };
 
-  const getUserNationality = (user) => {
-    if (user?.countries?.name) {
-      return user.countries.name;
+  const getUserNationality = (review) => {
+    if (review?.country_name) {
+      return review.country_name;
     }
     return 'Unknown';
   };
 
-  const getDefaultPhotoHighlights = () => {
-    return [
-      "https://images.unsplash.com/photo-1562774053-701939374585?w=200&h=200&fit=crop",
-      "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=200&h=200&fit=crop",
-      "https://images.unsplash.com/photo-1543785734-4b6e564642f8?w=200&h=200&fit=crop",
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop"
-    ];
-  };
-
-  const getDefaultTopCountries = () => {
-    return [
-      { name: "France", flag: "https://flagcdn.com/w40/fr.png", count: 5 },
-      { name: "Netherlands", flag: "https://flagcdn.com/w40/nl.png", count: 3 },
-      { name: "Italy", flag: "https://flagcdn.com/w40/it.png", count: 2 }
-    ];
-  };
-
   // Handle review click - redirect to ReviewDisplay page
   const handleReviewClick = (reviewId) => {
+    navigate(`/review?id=${reviewId}`);
+  };
+
+  // Handle photo click - redirect to specific review
+  const handlePhotoClick = (reviewId) => {
     navigate(`/review?id=${reviewId}`);
   };
 
@@ -365,7 +368,7 @@ const UniversityProfile = () => {
                       <div className="reviewer-info" style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
                         <div className="reviewer-avatar" style={{ marginRight: '12px' }}>
                           <img 
-                            src={getProfileImage(review.users)} 
+                            src={getProfileImage(review)} 
                             alt="Reviewer Avatar"
                             style={{
                               width: '40px',
@@ -377,12 +380,12 @@ const UniversityProfile = () => {
                         </div>
                         <div className="reviewer-details">
                           <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>
-                            {getUserName(review.users)}
+                            {getUserName(review)}
                           </h4>
                           <div className="reviewer-location" style={{ fontSize: '14px', color: '#6b7280' }}>
                             <span>{review.courseStudied}</span>
-                            {review.users?.countries?.name && (
-                              <span> • {getUserNationality(review.users)}</span>
+                            {review.country_name && (
+                              <span> • {getUserNationality(review)}</span>
                             )}
                           </div>
                         </div>
@@ -578,30 +581,108 @@ const UniversityProfile = () => {
             )}
           </div>
 
-          {/* Photo Highlights */}
+          {/* Photo Highlights with Swiper Carousel */}
           <div className="photo-highlights">
             <h3>Photo Highlights</h3>
-            {reviews.length === 0 ? (
-              <div className="no-photos">
-                <p>No pics to show, upload a review now! 😋</p>
-              </div>
-            ) : photoHighlights.length === 0 ? (
+            {photoHighlights.length === 0 ? (
               <div className="no-photos">
                 <p>No pics to show, upload a review now! 😋</p>
               </div>
             ) : (
-              <div className="photo-grid">
-                {photoHighlights.slice(0, 4).map((photo, index) => (
-                  <div key={index} className="photo-item">
-                    <img 
-                      src={photo} 
-                      alt={`University highlight ${index + 1}`}
-                      onError={(e) => {
-                        e.target.src = "https://images.unsplash.com/photo-1562774053-701939374585?w=200&h=200&fit=crop";
-                      }}
-                    />
-                  </div>
-                ))}
+              <div className="photo-carousel">
+                <Swiper
+                  modules={[Navigation, Pagination, Autoplay]}
+                  spaceBetween={10}
+                  slidesPerView={2}
+                  navigation
+                  pagination={{ clickable: true }}
+                  autoplay={{
+                    delay: 3000,
+                    disableOnInteraction: false,
+                  }}
+                  loop={photoHighlights.length > 2}
+                  breakpoints={{
+                    320: {
+                      slidesPerView: 1,
+                      spaceBetween: 5,
+                    },
+                    640: {
+                      slidesPerView: 2,
+                      spaceBetween: 10,
+                    },
+                  }}
+                  style={{
+                    paddingBottom: '35px'
+                  }}
+                >
+                  {photoHighlights.map((photo, index) => (
+                    <SwiperSlide key={index}>
+                      <div 
+                        className="photo-slide"
+                        onClick={() => handlePhotoClick(photo.reviewId)}
+                        style={{
+                          position: 'relative',
+                          cursor: 'pointer',
+                          borderRadius: '12px',
+                          overflow: 'hidden',
+                          height: '180px',
+                          backgroundColor: '#f3f4f6',
+                          transition: 'all 0.3s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'scale(1.05)';
+                          e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'scale(1)';
+                          e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+                        }}
+                      >
+                        <img 
+                          src={photo.imageUrl} 
+                          alt={`University highlight ${index + 1}`}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover'
+                          }}
+                          onError={(e) => {
+                            e.target.src = "https://images.unsplash.com/photo-1562774053-701939374585?w=200&h=200&fit=crop";
+                          }}
+                        />
+                        {/* Overlay with user info */}
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '0',
+                          left: '0',
+                          right: '0',
+                          background: 'linear-gradient(transparent, rgba(0, 0, 0, 0.7))',
+                          color: 'white',
+                          padding: '20px 12px 12px',
+                          fontSize: '12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}>
+                          <img 
+                            src={photo.reviewerAvatar} 
+                            alt="Reviewer"
+                            style={{
+                              width: '24px',
+                              height: '24px',
+                              borderRadius: '50%',
+                              objectFit: 'cover',
+                              border: '2px solid white'
+                            }}
+                          />
+                          <span style={{ fontWeight: '500' }}>
+                            {photo.reviewerName}
+                          </span>
+                        </div>
+                      </div>
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
               </div>
             )}
           </div>
@@ -609,11 +690,7 @@ const UniversityProfile = () => {
           {/* Top Countries */}
           <div className="top-countries">
             <h3>Most Visited Countries While on Exchange</h3>
-            {reviews.length === 0 ? (
-              <div className="no-countries">
-                <p>No countries to show, tell us about your experience!</p>
-              </div>
-            ) : topCountries.length === 0 ? (
+            {topCountries.length === 0 ? (
               <div className="no-countries">
                 <p>No countries to show, tell us about your experience!</p>
               </div>

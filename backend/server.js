@@ -9,8 +9,8 @@ try {
   const { createClient } = require('@supabase/supabase-js');
   
   // Supabase connection (Updated with your credentials)
-  const supabaseUrl = 'https://jjcobexdfpcrbswgkcas.supabase.co';
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpqY29iZXhkZnBjcmJzd2drY2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1NjYyNjAsImV4cCI6MjA2ODE0MjI2MH0.IPUMt-oAFZ_jQP5NMh51P6EI2vU-V8Y_lx1Yz5788rU';
+  const supabaseUrl = 'https://aojighzqmzouwhxyndbs.supabase.co/';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvamlnaHpxbXpvdXdoeHluZGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MDgyNTMsImV4cCI6MjA2Nzk4NDI1M30.1f2HHXbYxP8KaABhv4uw151Xj1mRDWxd63pHYgKIXnQ';
   supabase = createClient(supabaseUrl, supabaseKey);
   console.log('✅ Supabase client created successfully');
 } catch (error) {
@@ -24,23 +24,6 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
-
-// MySQL connection (keep for universities/search for now)
-const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: 'password',
-  database: 'wanderwise'
-});
-
-// Test connections
-db.connect((err) => {
-  if (err) {
-    console.log('❌ MySQL connection failed:', err);
-  } else {
-    console.log('✅ Connected to MySQL (for universities)!');
-  }
-});
 
 async function testSupabase() {
   try {
@@ -173,7 +156,7 @@ app.post('/api/register', async (req, res) => {
       lastName,
       email,
       password: hashedPassword,
-      nationality,
+      nationality, // <-- Use this instead
       dateOfBirth,
       university
     };
@@ -357,77 +340,3 @@ app.put('/api/profile', async (req, res) => {
   }
 });
 
-// ===========================================
-// EXISTING ENDPOINTS (Still using MySQL)
-// ===========================================
-
-app.get('/api/names', (req, res) => {
-  db.query('SELECT * FROM names', (err, results) => {
-    res.json(results);
-  });
-});
-
-app.post('/api/names', (req, res) => {
-  const { name } = req.body;
-  db.query('INSERT INTO names (name) VALUES (?)', [name], (err, result) => {
-    res.json({ message: 'Added!' });
-  });
-});
-
-app.get('/api/search', (req, res) => {
-  const { q } = req.query;
-  
-  if (!q || q.trim() === '') {
-    return res.status(400).json({ 
-      error: 'Search query is required',
-      universities: []
-    });
-  }
-  
-  const searchTerm = `%${q.trim()}%`;
-  
-  const searchQuery = `
-    SELECT id, name, description, country, rating, logo, flag, created_at
-    FROM universities 
-    WHERE name LIKE ? 
-       OR country LIKE ? 
-       OR description LIKE ?
-    ORDER BY 
-      CASE 
-        WHEN name LIKE ? THEN 1
-        WHEN country LIKE ? THEN 2
-        ELSE 3
-      END,
-      rating DESC,
-      name ASC
-    LIMIT 50
-  `;
-  
-  db.query(
-    searchQuery, 
-    [searchTerm, searchTerm, searchTerm, searchTerm, searchTerm], 
-    (err, results) => {
-      if (err) {
-        console.error('Database search error:', err);
-        return res.status(500).json({ 
-          error: 'Database error occurred during search',
-          universities: []
-        });
-      }
-      
-      res.json({
-        success: true,
-        query: q,
-        count: results.length,
-        universities: results
-      });
-    }
-  );
-});
-
-app.listen(5000, () => {
-  console.log('\n🚀 Server running on port 5000');
-  console.log('📊 Using Supabase for: Users, Authentication, Profiles');
-  console.log('🗄️  Using MySQL for: Universities, Search');
-  console.log('🔗 Ready to accept connections...\n');
-});
