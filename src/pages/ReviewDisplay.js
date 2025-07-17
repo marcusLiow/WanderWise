@@ -1,23 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import './ReviewDisplay.css'; // Import the CSS file
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination, Autoplay, EffectCoverflow } from 'swiper/modules';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+
+// Import Swiper styles
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+import 'swiper/css/effect-coverflow';
+
+import './ReviewDisplay.css'; // Import your existing CSS file
 
 // Initialize Supabase
 const supabaseUrl = 'https://aojighzqmzouwhxyndbs.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvamlnaHpxbXpvdXdoeHluZGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MDgyNTMsImV4cCI6MjA2Nzk4NDI1M30.1f2HHXbYxP8KaABhv4uw151Xj1mRDWxd63pHYgKIXnQ';
 const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
-// Image Gallery Component
+// Image Gallery Component with Swiper Coverflow
 const ImageGallery = ({ imageUrls }) => {
-  // Move this check to the very top to avoid conditional hooks
-  if (!imageUrls || imageUrls.length === 0) return null;
-
   const [modalOpen, setModalOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imageLoading, setImageLoading] = useState(true);
 
   const openModal = (index) => {
     setCurrentImageIndex(index);
     setModalOpen(true);
+    setImageLoading(true);
     document.body.style.overflow = 'hidden';
   };
 
@@ -27,13 +36,17 @@ const ImageGallery = ({ imageUrls }) => {
   };
 
   const nextImage = () => {
-    setCurrentImageIndex((prev) => 
-      prev < imageUrls.length - 1 ? prev + 1 : prev
-    );
+    if (currentImageIndex < imageUrls.length - 1) {
+      setCurrentImageIndex((prev) => prev + 1);
+      setImageLoading(true);
+    }
   };
 
   const prevImage = () => {
-    setCurrentImageIndex((prev) => prev > 0 ? prev - 1 : prev);
+    if (currentImageIndex > 0) {
+      setCurrentImageIndex((prev) => prev - 1);
+      setImageLoading(true);
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -47,77 +60,483 @@ const ImageGallery = ({ imageUrls }) => {
       document.addEventListener('keydown', handleKeyDown);
       return () => document.removeEventListener('keydown', handleKeyDown);
     }
-    return () => {}; // Always return cleanup function
+    return () => {};
   }, [modalOpen]);
+
+  if (!imageUrls || imageUrls.length === 0) {
+    console.log('ImageGallery: No image URLs provided', imageUrls);
+    return null;
+  }
+
+  console.log('ImageGallery: Received imageUrls:', imageUrls);
 
   return (
     <>
       <div className="review-card">
-        <h2 className="review-card-title">
+        <h2 style={{ marginBottom: '20px', textAlign: 'left', fontSize: '20px', fontWeight: 'bold', color: '#111827', margin: '0 0 20px 0' }}>
           📸 Exchange Photos ({imageUrls.length})
         </h2>
-        <div className="image-gallery-grid">
-          {imageUrls.map((url, index) => (
-            <img
-              key={index}
-              src={url}
-              alt={`Exchange photo ${index + 1}`}
-              className="gallery-image"
-              onClick={() => openModal(index)}
-              onError={(e) => {
-                e.target.style.display = 'none';
-                console.error('Failed to load image:', url);
+        
+        {/* Swiper Coverflow Carousel */}
+        <div style={{ 
+          display: 'flex',
+          justifyContent: 'center',
+          width: '100%',
+          position: 'relative'
+        }}>
+          <div style={{ 
+            maxWidth: '900px',
+            width: '100%',
+            position: 'relative'
+          }}>
+            <Swiper
+              modules={[Navigation, Pagination, Autoplay, EffectCoverflow]}
+              effect="coverflow"
+              grabCursor={true}
+              centeredSlides={true}
+              slidesPerView="auto"
+              coverflowEffect={{
+                rotate: 50,
+                stretch: 0,
+                depth: 100,
+                modifier: 1,
+                slideShadows: true,
               }}
-            />
-          ))}
+              navigation={{
+                nextEl: '.swiper-button-next-custom',
+                prevEl: '.swiper-button-prev-custom',
+              }}
+              pagination={{
+                clickable: true,
+                dynamicBullets: true,
+              }}
+              autoplay={{
+                delay: 3500,
+                disableOnInteraction: false,
+                pauseOnMouseEnter: true,
+              }}
+              loop={imageUrls.length > 1}
+              style={{
+                '--swiper-navigation-color': '#FEC89A',
+                '--swiper-pagination-color': '#FEC89A',
+                '--swiper-navigation-size': '20px',
+                padding: '40px 60px 60px 60px'
+              }}
+            >
+              {imageUrls.map((url, index) => (
+                <SwiperSlide 
+                  key={index}
+                  style={{
+                    width: '280px',
+                    height: 'auto'
+                  }}
+                >
+                  <div
+                    style={{
+                      position: 'relative',
+                      aspectRatio: '4/3',
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
+                      background: '#f0f0f0',
+                      height: '200px'
+                    }}
+                    onClick={() => openModal(index)}
+                  >
+                    <img
+                      src={url}
+                      alt={`Exchange photo ${index + 1}`}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        transition: 'opacity 0.2s ease'
+                      }}
+                      onLoad={(e) => {
+                        console.log('Image loaded successfully:', url);
+                      }}
+                      onError={(e) => {
+                        console.error('Failed to load image:', url);
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                    
+                    {/* Elegant overlay */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.8), rgba(59, 130, 246, 0.6))',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        opacity: 0,
+                        transition: 'opacity 0.4s ease',
+                        color: 'white',
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.opacity = '1';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.opacity = '0';
+                      }}
+                    >
+                      🔍 View Full Size
+                    </div>
+                  </div>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+
+            {/* Custom Navigation Buttons - Positioned for coverflow */}
+            {imageUrls.length > 1 && (
+              <>
+                <div 
+                  className="swiper-button-prev-custom"
+                  style={{
+                    position: 'absolute',
+                    left: '20px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    zIndex: 10,
+                    background: 'rgba(255, 255, 255, 0.95)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '50px',
+                    height: '50px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+                    transition: 'all 0.3s ease',
+                    fontSize: '20px',
+                    color: '#2563eb',
+                    backdropFilter: 'blur(10px)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 1)';
+                    e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.15)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.95)';
+                    e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
+                  }}
+                >
+                  ‹
+                </div>
+                <div 
+                  className="swiper-button-next-custom"
+                  style={{
+                    position: 'absolute',
+                    right: '20px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    zIndex: 10,
+                    background: 'rgba(255, 255, 255, 0.95)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '50px',
+                    height: '50px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+                    transition: 'all 0.3s ease',
+                    fontSize: '20px',
+                    color: '#2563eb',
+                    backdropFilter: 'blur(10px)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 1)';
+                    e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.15)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.95)';
+                    e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
+                  }}
+                >
+                  ›
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Enhanced Modal (keeping your existing modal code) */}
       {modalOpen && (
         <div 
-          className={`modal-overlay ${modalOpen ? 'show' : ''}`}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.95)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            animation: 'fadeIn 0.3s ease'
+          }}
           onClick={closeModal}
         >
-          <button className="modal-close" onClick={closeModal}>
+          {/* Close button */}
+          <button 
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              background: 'rgba(255, 255, 255, 0.2)',
+              border: 'none',
+              borderRadius: '50%',
+              width: '50px',
+              height: '50px',
+              color: 'white',
+              fontSize: '24px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.3s ease',
+              backdropFilter: 'blur(10px)',
+              zIndex: 1001
+            }}
+            onClick={closeModal}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+              e.currentTarget.style.transform = 'scale(1.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
             ×
           </button>
           
+          {/* Navigation arrows */}
           {imageUrls.length > 1 && (
             <>
-              <button 
-                className="modal-nav prev"
+              <button
+                style={{
+                  position: 'absolute',
+                  left: '30px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '60px',
+                  height: '60px',
+                  color: 'white',
+                  fontSize: '30px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.3s ease',
+                  backdropFilter: 'blur(10px)',
+                  opacity: currentImageIndex === 0 ? 0.5 : 1,
+                  zIndex: 1001
+                }}
                 onClick={(e) => { e.stopPropagation(); prevImage(); }}
                 disabled={currentImageIndex === 0}
+                onMouseEnter={(e) => {
+                  if (currentImageIndex > 0) {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                    e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                  e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+                }}
               >
                 ‹
               </button>
-              <button 
-                className="modal-nav next"
+              <button
+                style={{
+                  position: 'absolute',
+                  right: '30px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '60px',
+                  height: '60px',
+                  color: 'white',
+                  fontSize: '30px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.3s ease',
+                  backdropFilter: 'blur(10px)',
+                  opacity: currentImageIndex === imageUrls.length - 1 ? 0.5 : 1,
+                  zIndex: 1001
+                }}
                 onClick={(e) => { e.stopPropagation(); nextImage(); }}
                 disabled={currentImageIndex === imageUrls.length - 1}
+                onMouseEnter={(e) => {
+                  if (currentImageIndex < imageUrls.length - 1) {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                    e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                  e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+                }}
               >
                 ›
               </button>
             </>
           )}
 
-          <img
-            src={imageUrls[currentImageIndex]}
-            alt={`Exchange photo ${currentImageIndex + 1}`}
-            className="modal-image"
-            onClick={(e) => e.stopPropagation()}
-          />
-
-          {imageUrls.length > 1 && (
-            <div style={{ position: 'absolute', bottom: '80px', left: '50%', transform: 'translateX(-50%)' }}>
-              <div style={{ background: 'rgba(255, 255, 255, 0.9)', padding: '4px 12px', borderRadius: '999px', fontSize: '14px', fontWeight: '500' }}>
-                {currentImageIndex + 1} of {imageUrls.length}
+          {/* Main image with loading state */}
+          <div style={{ position: 'relative', maxWidth: '90vw', maxHeight: '90vh' }}>
+            {imageLoading && (
+              <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                color: 'white',
+                fontSize: '18px'
+              }}>
+                Loading...
               </div>
+            )}
+            <img
+              src={imageUrls[currentImageIndex]}
+              alt={`Exchange photo ${currentImageIndex + 1}`}
+              style={{
+                maxWidth: '100%',
+                maxHeight: '100%',
+                objectFit: 'contain',
+                borderRadius: '8px',
+                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
+                transition: 'opacity 0.3s ease',
+                opacity: imageLoading ? 0 : 1
+              }}
+              onClick={(e) => e.stopPropagation()}
+              onLoad={() => setImageLoading(false)}
+              onError={(e) => {
+                console.error('Modal image failed to load:', imageUrls[currentImageIndex]);
+                setImageLoading(false);
+              }}
+            />
+          </div>
+
+          {/* Image counter */}
+          {imageUrls.length > 1 && (
+            <div style={{
+              position: 'absolute',
+              bottom: '30px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: 'rgba(255, 255, 255, 0.2)',
+              color: 'white',
+              padding: '8px 16px',
+              borderRadius: '20px',
+              fontSize: '14px',
+              fontWeight: '500',
+              backdropFilter: 'blur(10px)'
+            }}>
+              {currentImageIndex + 1} of {imageUrls.length}
+            </div>
+          )}
+
+          {/* Thumbnail strip for multiple images */}
+          {imageUrls.length > 1 && (
+            <div style={{
+              position: 'absolute',
+              bottom: '80px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              display: 'flex',
+              gap: '8px',
+              maxWidth: '80vw',
+              overflowX: 'auto',
+              padding: '10px'
+            }}>
+              {imageUrls.map((url, index) => (
+                <div
+                  key={index}
+                  style={{
+                    width: '60px',
+                    height: '40px',
+                    borderRadius: '4px',
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    border: index === currentImageIndex ? '2px solid white' : '2px solid transparent',
+                    transition: 'all 0.3s ease',
+                    flexShrink: 0
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentImageIndex(index);
+                    setImageLoading(true);
+                  }}
+                >
+                  <img
+                    src={url}
+                    alt={`Thumbnail ${index + 1}`}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      opacity: index === currentImageIndex ? 1 : 0.6
+                    }}
+                  />
+                </div>
+              ))}
             </div>
           )}
         </div>
       )}
+
+      {/* Add fade-in animation and Swiper custom styles */}
+      <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        .swiper-pagination-bullet {
+          background: #2563eb !important;
+          opacity: 0.5 !important;
+        }
+        
+        .swiper-pagination-bullet-active {
+          opacity: 1 !important;
+        }
+        
+        .swiper-slide {
+          text-align: center;
+          font-size: 18px;
+          background: transparent;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+      `}</style>
     </>
   );
 };
@@ -138,84 +557,203 @@ const StarRating = ({ rating, label }) => (
   </div>
 );
 
-// ExpenseChart Component
+// ExpenseChart Component with Recharts Animation
 const ExpenseChart = ({ expenses, currency }) => {
+  const [animatedData, setAnimatedData] = useState([]);
+  const [animationStep, setAnimationStep] = useState(0);
+  
   const expenseData = [
-    { label: 'Accom.', full: 'Accommodation', amount: expenses.expense_rental || 0,          color: '#eab308' },
-    { label: 'Travel', full: 'Travel',         amount: expenses.expense_travel || 0,         color: '#3b82f6' },
-    { label: 'Food',   full: 'Food',           amount: expenses.expense_food || 0,           color: '#ef4444' },
-    { label: 'Shop.',  full: 'Shopping',       amount: expenses.expense_shopping || 0,       color: '#f97316' },
-    { label: 'Misc.',  full: 'Miscellaneous',  amount: expenses.expense_miscellaneous || 0,  color: '#8b5cf6' },
-    { label: 'Trans.', full: 'Transport',      amount: expenses.expense_public_transport || 0, color: '#22c55e' }
+    { label: 'Accommodation', shortLabel: 'Accom.', amount: expenses.expense_rental || 0, color: '#eab308' },
+    { label: 'Travel', shortLabel: 'Travel', amount: expenses.expense_travel || 0, color: '#3b82f6' },
+    { label: 'Food', shortLabel: 'Food', amount: expenses.expense_food || 0, color: '#ef4444' },
+    { label: 'Shopping', shortLabel: 'Shop.', amount: expenses.expense_shopping || 0, color: '#f97316' },
+    { label: 'Miscellaneous', shortLabel: 'Misc.', amount: expenses.expense_miscellaneous || 0, color: '#8b5cf6' },
+    { label: 'Transport', shortLabel: 'Trans.', amount: expenses.expense_public_transport || 0, color: '#22c55e' }
   ]
-  .filter(i => i.amount > 0)
-  .sort((a,b) => b.amount - a.amount);
+  .filter(item => item.amount > 0)
+  .sort((a, b) => b.amount - a.amount);
+
+  // Clean bottom-to-top animation
+  useEffect(() => {
+    setAnimatedData([]);
+    setAnimationStep(0);
+    
+    if (expenseData.length === 0) return;
+    
+    // Add bars one by one
+    expenseData.forEach((item, index) => {
+      setTimeout(() => {
+        setAnimatedData(prev => {
+          // Check if item already exists to prevent duplicates
+          const exists = prev.some(existing => existing.label === item.label);
+          if (exists) return prev;
+          
+          return [...prev, item];
+        });
+        setAnimationStep(index + 1);
+      }, index * 250); // 250ms delay between each bar
+    });
+  }, [JSON.stringify(expenseData)]);
 
   if (!expenseData.length) return null;
-  const maxAmt = Math.max(...expenseData.map(i => i.amount));
-  const [tooltip, setTooltip] = useState({ show: false, x:0, y:0, content: '' });
 
-  const handleEnter = (e, item) => {
-    const { left, width, top } = e.target.getBoundingClientRect();
-    setTooltip({
-      show: true,
-      x: left + width/2,
-      y: top - 6,
-      content: `${item.full}: ${currency} ${item.amount.toFixed(2)}`
-    });
+  // Custom tooltip
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div style={{
+          background: '#1f2937',
+          color: 'white',
+          padding: '12px 16px',
+          borderRadius: '8px',
+          fontSize: '14px',
+          fontWeight: '500',
+          boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
+          border: 'none'
+        }}>
+          <p style={{ margin: 0, fontWeight: '600' }}>{data.label}</p>
+          <p style={{ margin: '4px 0 0 0', color: '#fbbf24' }}>
+            {currency} {data.amount.toFixed(2)}
+          </p>
+        </div>
+      );
+    }
+    return null;
   };
-  const handleLeave = () => setTooltip({ show:false, x:0, y:0, content: '' });
 
   return (
     <div style={{ position: 'relative' }}>
-      <div style={{ background: '#f9fafb', padding: '24px', borderRadius: '8px', marginBottom: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: '256px', gap: '16px' }}>
-          {expenseData.map(item => {
-            const pct = (item.amount / maxAmt)*100;
-            const h = Math.max(pct, 8);
-            return (
-              <div key={item.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: '1', minWidth: '0' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', height: '256px', width: '100%' }}>
-                  <div
-                    className="expense-bar"
-                    style={{ height: `${h}%`, backgroundColor: item.color, width: '100%', borderRadius: '8px 8px 0 0' }}
-                    onMouseEnter={e => handleEnter(e, item)}
-                    onMouseLeave={handleLeave}
-                  />
-                </div>
-                <div style={{ fontSize: '10px', color: '#374151', marginTop: '8px', textAlign: 'center', fontWeight: '500' }}>
-                  {item.label}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+      {/* Bar Chart */}
+      <div style={{ 
+        background: '#f9fafb', 
+        padding: '24px', 
+        borderRadius: '12px', 
+        marginBottom: '20px',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+      }}>
+        <ResponsiveContainer width="100%" height={280}>
+          <BarChart
+            data={animatedData}
+            margin={{
+              top: 20,
+              right: 30,
+              left: 20,
+              bottom: 20,
+            }}
+            barCategoryGap="20%"
+          >
+            <CartesianGrid 
+              strokeDasharray="3 3" 
+              stroke="#e5e7eb"
+              vertical={false}
+            />
+            <XAxis 
+              dataKey="shortLabel" 
+              axisLine={false}
+              tickLine={false}
+              tick={false}
+              height={0}
+            />
+            <YAxis 
+              axisLine={false}
+              tickLine={false}
+              tick={{ 
+                fontSize: 12, 
+                fill: '#6b7280'
+              }}
+              tickFormatter={(value) => `${currency} ${value}`}
+            />
+            <Tooltip 
+              content={<CustomTooltip />}
+              cursor={{ fill: 'rgba(59, 130, 246, 0.1)' }}
+            />
+            <Bar 
+              dataKey="amount" 
+              animationDuration={800}
+              animationEasing="ease-out"
+              animationBegin={0}
+              radius={[0, 0, 0, 0]}
+            >
+              {animatedData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', fontSize: '12px' }}>
-        {expenseData.map(item => (
-          <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <div style={{ width: '12px', height: '12px', borderRadius: '4px', backgroundColor: item.color }} />
-            <span style={{ fontSize: '10px', color: '#374151' }}>{item.label}:</span>
-            <span style={{ fontSize: '10px', fontWeight: '500', marginLeft: 'auto' }}>
-              {currency} {item.amount.toFixed(2)}
-            </span>
-          </div>
-        ))}
+      {/* Compact Legend */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', 
+        gap: '8px', 
+        fontSize: '12px' 
+      }}>
+        {expenseData.map((item, index) => {
+          const isAnimated = animatedData.some(animItem => animItem.label === item.label);
+          
+          return (
+            <div 
+              key={item.label} 
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px',
+                padding: '6px 10px',
+                background: 'white',
+                borderRadius: '6px',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                border: `2px solid ${item.color}20`,
+                transition: 'all 0.3s ease',
+                cursor: 'default',
+                opacity: isAnimated ? 1 : 0.3,
+                transform: isAnimated ? 'translateY(0)' : 'translateY(10px)'
+              }}
+              onMouseEnter={(e) => {
+                if (isAnimated) {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (isAnimated) {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+                }
+              }}
+            >
+              <div style={{ 
+                width: '12px', 
+                height: '12px', 
+                borderRadius: '3px', 
+                backgroundColor: item.color,
+                boxShadow: `0 1px 3px ${item.color}40`,
+                flexShrink: 0
+              }} />
+              <span style={{ 
+                fontSize: '11px', 
+                color: '#374151',
+                fontWeight: '500',
+                flex: 1,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
+              }}>
+                {item.shortLabel}:
+              </span>
+              <span style={{ 
+                fontSize: '11px', 
+                fontWeight: '600',
+                color: '#111827',
+                flexShrink: 0
+              }}>
+                {currency} {item.amount.toFixed(0)}
+              </span>
+            </div>
+          );
+        })}
       </div>
-
-      {tooltip.show && (
-        <div
-          className="tooltip show"
-          style={{
-            left: tooltip.x,
-            top: tooltip.y,
-            transform: 'translateX(-50%) translateY(-100%)'
-          }}
-        >
-          {tooltip.content}
-        </div>
-      )}
     </div>
   );
 };
@@ -225,56 +763,86 @@ const ReviewDisplay = () => {
   const [review, setReview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState(0);
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
-    if (p.get('demo') === 'true') {
-      loadSample();
+    const id = p.get('id');
+    if (id) {
+      fetchReview(id);
     } else {
-      const id = p.get('id');
-      if (id) fetchReview(id);
-      else {
-        setError('No review ID – add ?demo=true');
-        setLoading(false);
-      }
+      setError('No review ID provided');
+      setLoading(false);
     }
   }, []);
-
-  const loadSample = () => {
-    const sample = {
-      id:1, created_at:'2024-01-15T10:30:00Z',
-      country:'United States', university:'Stanford University',
-      course_studied:'Computer Science', gpa:3.85,
-      overall_rating:5,
-      academic_rating:5, academic_comment:'World-class CS program with cutting-edge research opportunities and incredible faculty mentorship that pushed me to excel beyond my expectations.',
-      culture_rating:4, culture_comment:'Entrepreneurial mindset is contagious here. The innovation ecosystem and networking opportunities are unparalleled, though the competitive atmosphere can be intense.',
-      food_rating:4, food_comment:'Great dining options on campus and amazing food trucks. Palo Alto has excellent restaurants, though they can be quite expensive for students.',
-      accommodation_rating:4, accommodation_comment:'Comfortable housing with great facilities. The dorms foster community well, though some buildings are older. Campus is beautiful year-round.',
-      safety_rating:5, safety_comment:'Very safe campus with excellent security. Never felt unsafe walking around at night. The surrounding area is also very secure and well-maintained.',
-      tags:['Life-changing','Rigorous','Career Boost','Diverse'],
-      review_text:'My semester at Stanford was truly transformative. The academic rigor pushed me to new heights, while the entrepreneurial ecosystem opened doors I never knew existed. The connections I made and the mindset I developed will benefit me for years to come.',
-      tips_text:'Network early and often! Attend startup events in the valley, join student organizations, and don\'t be afraid to reach out to professors. The weather is perfect for exploring San Francisco on weekends.',
-      currency:'USD - US Dollar',
-      expense_food:1200, expense_shopping:800, expense_rental:2500,
-      expense_public_transport:300, expense_travel:1500, expense_miscellaneous:400,
-      image_urls: [
-        'https://images.unsplash.com/photo-1606103819203-2ea3e5c9c7ee?w=500',
-        'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=500',
-        'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=500',
-        'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=500'
-      ]
-    };
-    setReview(sample);
-    setLoading(false);
-  };
 
   const fetchReview = async (id) => {
     try {
       const { data, error } = await supabaseClient
         .from('reviews').select('*').eq('id', id).single();
       if (error) throw error;
+      
+      console.log('Raw data from database:', data);
+      console.log('Raw image_urls field:', data.image_urls);
+      console.log('Type of image_urls:', typeof data.image_urls);
+      
+      // Handle image_urls field - convert storage paths to public URLs
+      if (data.image_urls) {
+        let imageUrls = data.image_urls;
+        
+        // If it's stored as a string, try to parse it
+        if (typeof imageUrls === 'string') {
+          console.log('image_urls is a string, attempting to parse:', imageUrls);
+          try {
+            // Try parsing as JSON first
+            imageUrls = JSON.parse(imageUrls);
+            console.log('Successfully parsed as JSON:', imageUrls);
+          } catch (parseError) {
+            console.log('JSON parse failed, trying comma split:', parseError);
+            // If not JSON, split by comma
+            imageUrls = imageUrls.split(',').map(url => url.trim()).filter(url => url);
+            console.log('Split by comma:', imageUrls);
+          }
+        }
+        
+        // Convert storage paths to public URLs if needed
+        if (Array.isArray(imageUrls)) {
+          console.log('Converting storage paths to public URLs...');
+          data.image_urls = imageUrls.map(url => {
+            if (url.startsWith('http')) {
+              // Already a full URL
+              console.log('Already full URL:', url);
+              return url;
+            } else {
+              // Convert storage path to public URL
+              const { data: publicUrl } = supabaseClient.storage
+                .from('wanderwise')
+                .getPublicUrl(url);
+              console.log(`Converted ${url} to ${publicUrl.publicUrl}`);
+              return publicUrl.publicUrl;
+            }
+          });
+        }
+      } else {
+        console.log('No image_urls field found or it is null/undefined');
+        data.image_urls = []; // Set empty array if no images
+      }
+      
+      // Handle tags field similarly
+      if (data.tags && typeof data.tags === 'string') {
+        try {
+          data.tags = JSON.parse(data.tags);
+        } catch {
+          data.tags = data.tags.split(',').map(tag => tag.trim());
+        }
+      }
+      
+      console.log('Processed review data:', data);
+      console.log('Final image URLs:', data.image_urls);
+      
       setReview(data);
-    } catch {
+    } catch (err) {
+      console.error('Error fetching review:', err);
       setError('Failed to load review');
     } finally {
       setLoading(false);
@@ -365,6 +933,7 @@ const ReviewDisplay = () => {
         </div>
 
         {/* Image Gallery */}
+        {console.log('About to render ImageGallery with:', review.image_urls)}
         <ImageGallery imageUrls={review.image_urls} />
 
         <div className="review-main-grid">
@@ -399,45 +968,97 @@ const ReviewDisplay = () => {
           )}
         </div>
 
-        {/* Comments & Tips */}
+        {/* Comments & Tips with Custom Tabbed Interface */}
         <div className="review-comments-card">
           <h2>Detailed Reviews</h2>
           <div className="review-overall-experience">
             <h3>Overall Experience</h3>
             <p>{review.review_text}</p>
           </div>
-          <div className="review-details-grid">
-            {review.academic_comment && (
-              <div className="review-detail-section">
-                <h4>Academic Experience</h4>
-                <p>{review.academic_comment}</p>
+
+          {/* Custom Tabbed Interface */}
+          {(() => {
+            const tabs = [];
+            const panels = [];
+            
+            if (review.academic_comment) {
+              tabs.push({ id: 'academic', label: 'Academic', content: review.academic_comment, title: 'Academic Experience' });
+            }
+            if (review.culture_comment) {
+              tabs.push({ id: 'culture', label: 'Cultural', content: review.culture_comment, title: 'Cultural Experience' });
+            }
+            if (review.food_comment) {
+              tabs.push({ id: 'food', label: 'Food', content: review.food_comment, title: 'Food' });
+            }
+            if (review.accommodation_comment) {
+              tabs.push({ id: 'accommodation', label: 'Accommodation', content: review.accommodation_comment, title: 'Accommodation' });
+            }
+            if (review.safety_comment) {
+              tabs.push({ id: 'safety', label: 'Safety', content: review.safety_comment, title: 'Safety' });
+            }
+
+            if (tabs.length === 0) return null;
+
+            return (
+              <div style={{ marginTop: '24px' }}>
+                {/* Tab Navigation */}
+                <div style={{
+                  display: 'flex',
+                  gap: '4px',
+                  background: '#FEC89A',
+                  padding: '4px',
+                  borderRadius: '8px',
+                  marginBottom: '24px'
+                }}>
+                  {tabs.map((tab, index) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(index)}
+                      style={{
+                        flex: 1,
+                        padding: '12px 16px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        borderRadius: '6px',
+                        border: 'none',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        background: activeTab === index ? 'white' : 'transparent',
+                        color: activeTab === index ? '#2563eb' : '#6b7280',
+                        boxShadow: activeTab === index ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none'
+                      }}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Tab Content */}
+                <div style={{
+                  padding: '20px',
+                  background: '#f9fafb',
+                  borderRadius: '8px'
+                }}>
+                  <h4 style={{ 
+                    margin: '0 0 12px 0', 
+                    fontSize: '16px', 
+                    fontWeight: '600', 
+                    color: '#1f2937' 
+                  }}>
+                    {tabs[activeTab]?.title}
+                  </h4>
+                  <p style={{ 
+                    margin: 0, 
+                    color: '#374151', 
+                    lineHeight: '1.6',
+                    fontSize: '14px'
+                  }}>
+                    {tabs[activeTab]?.content}
+                  </p>
+                </div>
               </div>
-            )}
-            {review.culture_comment && (
-              <div className="review-detail-section">
-                <h4>Cultural Experience</h4>
-                <p>{review.culture_comment}</p>
-              </div>
-            )}
-            {review.food_comment && (
-              <div className="review-detail-section">
-                <h4>Food</h4>
-                <p>{review.food_comment}</p>
-              </div>
-            )}
-            {review.accommodation_comment && (
-              <div className="review-detail-section">
-                <h4>Accommodation</h4>
-                <p>{review.accommodation_comment}</p>
-              </div>
-            )}
-            {review.safety_comment && (
-              <div className="review-detail-section">
-                <h4>Safety</h4>
-                <p>{review.safety_comment}</p>
-              </div>
-            )}
-          </div>
+            );
+          })()}
 
           {review.tips_text && (
             <div className="review-tips-section">
