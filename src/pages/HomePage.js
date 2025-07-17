@@ -395,6 +395,14 @@ const HomePage = () => {
       cursor: 'pointer',
       transition: 'all 0.3s ease',
       boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+    },
+    footer: {
+      backgroundColor: '#fef7ed',
+      color: '#1a365d',
+      textAlign: 'center',
+      padding: '0.5px 20px',
+      fontSize: '0.8rem',
+      width: '100%'
     }
   };
 
@@ -690,6 +698,10 @@ const HomePage = () => {
           Login to Share Review →
         </button>
       </section>
+
+      <footer style={styles.footer}>
+        <p>Copyright © 2025 WanderWise</p>
+      </footer>
     </div>
   );
 };
