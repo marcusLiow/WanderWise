@@ -12,28 +12,28 @@ const CountryListPage = () => {
         { country: 'Hong Kong', region: 'Asia', count: 7, image: 'https://images.unsplash.com/photo-1536599018102-9f803c140fc1?w=400&h=300&fit=crop' },
         { country: 'Japan', region: 'Asia', count: 14, image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400&h=300&fit=crop' },
         { country: 'South Korea', region: 'Asia', count: 12, image: 'https://images.unsplash.com/photo-1517154421773-0529f29ea451?w=400&h=300&fit=crop' },
-        { country: 'Taiwan', region: 'Asia', count: 7, image: 'https://images.unsplash.com/photo-1562644719-2e3b2d8b7a94?w=400&h=300&fit=crop' },
-        { country: 'Thailand', region: 'Asia', count: 3, image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop' },
-        { country: 'Philippines', region: 'Asia', count: 1, image: 'https://images.unsplash.com/photo-1551601651-2a8555f1a136?w=400&h=300&fit=crop' },
+        { country: 'Taiwan', region: 'Asia', count: 7, image: 'https://images.unsplash.com/photo-1519677100203-a0e668c92439?w=400&h=300&fit=crop' }, // Taiwan landmark
+        { country: 'Thailand', region: 'Asia', count: 3, image: 'https://images.unsplash.com/photo-1528181304800-259b08848526?w=400&h=300&fit=crop' },
+        { country: 'Philippines', region: 'Asia', count: 1, image: 'https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?w=400&h=300&fit=crop' },
         
         // Central Asia
-        { country: 'Kazakhstan', region: 'Central Asia', count: 1, image: 'https://images.unsplash.com/photo-1599577180218-e8c92f7fa7b8?w=400&h=300&fit=crop' },
+        { country: 'Kazakhstan', region: 'Central Asia', count: 1, image: 'https://images.unsplash.com/photo-1571771019784-3ff35f4f4277?w=400&h=300&fit=crop' },
         
         // Europe
         { country: 'Austria', region: 'Europe', count: 2, image: 'https://images.unsplash.com/photo-1538991383142-36c4edeaffde?w=400&h=300&fit=crop' },
-        { country: 'Belgium', region: 'Europe', count: 5, image: 'https://images.unsplash.com/photo-1559564484-0b69e4b2e4d7?w=400&h=300&fit=crop' },
+        { country: 'Belgium', region: 'Europe', count: 5, image: 'https://images.unsplash.com/photo-1515777315835-281b94c9589f?w=400&h=300&fit=crop' },
         { country: 'Czech Republic', region: 'Europe', count: 1, image: 'https://images.unsplash.com/photo-1541849546-216549ae216d?w=400&h=300&fit=crop' },
-        { country: 'Denmark', region: 'Europe', count: 3, image: 'https://images.unsplash.com/photo-1513622470522-26e89109a852?w=400&h=300&fit=crop' },
-        { country: 'Finland', region: 'Europe', count: 2, image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop' },
-        { country: 'France', region: 'Europe', count: 9, image: 'https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=400&h=300&fit=crop' },
+        { country: 'Denmark', region: 'Europe', count: 3, image: 'https://images.unsplash.com/photo-1508189860359-777d945909ef?w=400&h=300&fit=crop' },
+        { country: 'Finland', region: 'Europe', count: 2, image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop' }, // Finland landmark
+        { country: 'France', region: 'Europe', count: 9, image: 'https://images.unsplash.com/photo-1431274172761-fca41d930114?w=400&h=300&fit=crop' },
         { country: 'Germany', region: 'Europe', count: 8, image: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=400&h=300&fit=crop' },
-        { country: 'Hungary', region: 'Europe', count: 1, image: 'https://images.unsplash.com/photo-1541862676-6c5e8d0e2a54?w=400&h=300&fit=crop' },
-        { country: 'Iceland', region: 'Europe', count: 1, image: 'https://images.unsplash.com/photo-1539956964046-2eac4b7d1c8a?w=400&h=300&fit=crop' },
-        { country: 'Ireland', region: 'Europe', count: 2, image: 'https://images.unsplash.com/photo-1590089415225-401ed6f9b6d4?w=400&h=300&fit=crop' },
+        { country: 'Hungary', region: 'Europe', count: 1, image: 'https://images.unsplash.com/photo-1527838832700-5059252407fa?w=400&h=300&fit=crop' },
+        { country: 'Iceland', region: 'Europe', count: 1, image: 'https://images.unsplash.com/photo-1539627831859-a911cf04d3cd?w=400&h=300&fit=crop' },
+        { country: 'Ireland', region: 'Europe', count: 2, image: 'https://images.unsplash.com/photo-1549918864-48ac978761a4?w=400&h=300&fit=crop' }, // Cliffs of Moher
         { country: 'Italy', region: 'Europe', count: 4, image: 'https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=400&h=300&fit=crop' },
-        { country: 'Lithuania', region: 'Europe', count: 1, image: 'https://images.unsplash.com/photo-1539650116574-75c0c6930311?w=400&h=300&fit=crop' },
+        { country: 'Lithuania', region: 'Europe', count: 1, image: 'https://images.unsplash.com/photo-1571771019784-3ff35f4f4277?w=400&h=300&fit=crop' },
         { country: 'Norway', region: 'Europe', count: 2, image: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=300&fit=crop' },
-        { country: 'Poland', region: 'Europe', count: 3, image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop' },
+        { country: 'Poland', region: 'Europe', count: 3, image: 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=400&h=300&fit=crop' },
         { country: 'Portugal', region: 'Europe', count: 3, image: 'https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=400&h=300&fit=crop' },
         { country: 'Spain', region: 'Europe', count: 7, image: 'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=400&h=300&fit=crop' },
         { country: 'Sweden', region: 'Europe', count: 8, image: 'https://images.unsplash.com/photo-1509356843151-3e7d96241e11?w=400&h=300&fit=crop' },
@@ -46,14 +46,15 @@ const CountryListPage = () => {
         
         // North America
         { country: 'Canada', region: 'North America', count: 9, image: 'https://images.unsplash.com/photo-1517935706615-2717063c2225?w=400&h=300&fit=crop' },
-        { country: 'United States', region: 'North America', count: 12, image: 'https://images.unsplash.com/photo-1485738422979-4c2e97112a1c?w=400&h=300&fit=crop' },
+        { country: 'United States', region: 'North America', count: 12, image: 'https://images.unsplash.com/photo-1485738422979-f5c462d49f74?w=400&h=300&fit=crop' }, // Statue of Liberty
         
         // Oceania
-        { country: 'Australia', region: 'Oceania', count: 1, image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop' },
+        { country: 'Australia', region: 'Oceania', count: 1, image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop' }, // Sydney Opera House
         
         // South America
         { country: 'Brazil', region: 'South America', count: 1, image: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=400&h=300&fit=crop' }
-    ];
+];
+
 
     const regions = ['All', 'Asia', 'Europe', 'North America', 'Middle East', 'Central Asia', 'Oceania', 'South America'];
 
