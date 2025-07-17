@@ -504,15 +504,6 @@ const HomePage = () => {
                 Search
               </button>
             </div>
-
-            <div className="hero-buttons" style={styles.heroButtons}>
-              <button style={styles.primaryButton} className="primary-button">
-                Explore Universities →
-              </button>
-              <button style={styles.secondaryButton} className="secondary-button">
-                Read Reviews
-              </button>
-            </div>
           </div>
           
           {/* Floating Cards */}
