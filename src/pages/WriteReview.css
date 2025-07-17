@@ -198,6 +198,131 @@ body {
   border-color: #bfdbfe;
 }
 
+/* Travel Section Styles */
+.write-review-radio-group {
+  display: flex;
+  gap: 32px;
+  margin: 16px 0;
+}
+
+.write-review-radio-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #374151;
+}
+
+.write-review-radio {
+  width: 18px;
+  height: 18px;
+  accent-color: #3b82f6;
+  cursor: pointer;
+}
+
+.write-review-countries-section {
+  margin-top: 24px;
+}
+
+.write-review-countries-container {
+  margin-top: 16px;
+  padding: 16px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.write-review-countries-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.write-review-country-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  position: relative;
+}
+
+.write-review-country-checkbox:hover {
+  background-color: #f1f5f9;
+  border-color: #3b82f6;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.write-review-country-checkbox input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.write-review-checkbox-custom {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #d1d5db;
+  border-radius: 4px;
+  background-color: white;
+  position: relative;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.write-review-country-checkbox input[type="checkbox"]:checked + .write-review-checkbox-custom {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.write-review-country-checkbox input[type="checkbox"]:checked + .write-review-checkbox-custom::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 6px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.write-review-country-name {
+  font-size: 14px;
+  color: #374151;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.write-review-selected-summary {
+  margin-top: 16px;
+  padding: 12px;
+  background-color: #eff6ff;
+  border-radius: 6px;
+  border-left: 4px solid #3b82f6;
+}
+
+.write-review-selected-summary strong {
+  color: #1e40af;
+  font-size: 16px;
+}
+
+.write-review-selected-countries {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
 /* Image Upload */
 .write-review-upload-area {
   border: 2px dashed #d1d5db;
@@ -438,5 +563,18 @@ body {
   
   .write-review-submit-section {
     flex-direction: column;
+  }
+  
+  .write-review-countries-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .write-review-country-checkbox {
+    padding: 8px;
+  }
+  
+  .write-review-radio-group {
+    gap: 16px;
   }
 }
