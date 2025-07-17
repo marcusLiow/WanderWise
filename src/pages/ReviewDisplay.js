@@ -9,9 +9,6 @@ const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
 // Image Gallery Component
 const ImageGallery = ({ imageUrls }) => {
-  // Move this check to the very top to avoid conditional hooks
-  if (!imageUrls || imageUrls.length === 0) return null;
-
   const [modalOpen, setModalOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -20,7 +17,7 @@ const ImageGallery = ({ imageUrls }) => {
     setModalOpen(true);
     document.body.style.overflow = 'hidden';
   };
-
+  
   const closeModal = () => {
     setModalOpen(false);
     document.body.style.overflow = 'auto';
@@ -49,6 +46,8 @@ const ImageGallery = ({ imageUrls }) => {
     }
     return () => {}; // Always return cleanup function
   }, [modalOpen]);
+
+  if (!imageUrls || imageUrls.length === 0) return null;
 
   return (
     <>
@@ -140,6 +139,8 @@ const StarRating = ({ rating, label }) => (
 
 // ExpenseChart Component
 const ExpenseChart = ({ expenses, currency }) => {
+  const [tooltip, setTooltip] = useState({ show: false, x:0, y:0, content: '' });
+
   const expenseData = [
     { label: 'Accom.', full: 'Accommodation', amount: expenses.expense_rental || 0,          color: '#eab308' },
     { label: 'Travel', full: 'Travel',         amount: expenses.expense_travel || 0,         color: '#3b82f6' },
@@ -153,7 +154,7 @@ const ExpenseChart = ({ expenses, currency }) => {
 
   if (!expenseData.length) return null;
   const maxAmt = Math.max(...expenseData.map(i => i.amount));
-  const [tooltip, setTooltip] = useState({ show: false, x:0, y:0, content: '' });
+
 
   const handleEnter = (e, item) => {
     const { left, width, top } = e.target.getBoundingClientRect();
@@ -222,6 +223,7 @@ const ExpenseChart = ({ expenses, currency }) => {
 
 // Main Review Display Component
 const ReviewDisplay = () => {
+  
   const [review, setReview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
