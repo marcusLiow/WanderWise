@@ -161,6 +161,82 @@ const StarRating = ({ rating, setRating, label, readOnly = false, comment, setCo
   </div>
 );
 
+// Travel Section Component
+const TravelSection = ({ didTravel, setDidTravel, visitedCountries, setVisitedCountries, countries }) => {
+  const handleCountryToggle = (countryName) => {
+    setVisitedCountries(prev => 
+      prev.includes(countryName)
+        ? prev.filter(country => country !== countryName)
+        : [...prev, countryName]
+    );
+  };
+
+  return (
+    <div className="write-review-section">
+      <label className="write-review-label">
+        Did you travel during your exchange?
+      </label>
+      <div className="write-review-radio-group">
+        <label className="write-review-radio-option">
+          <input
+            type="radio"
+            value="yes"
+            checked={didTravel === true}
+            onChange={() => setDidTravel(true)}
+            className="write-review-radio"
+          />
+          <span>Yes</span>
+        </label>
+        <label className="write-review-radio-option">
+          <input
+            type="radio"
+            value="no"
+            checked={didTravel === false}
+            onChange={() => {
+              setDidTravel(false);
+              setVisitedCountries([]); // Clear visited countries if no travel
+            }}
+            className="write-review-radio"
+          />
+          <span>No</span>
+        </label>
+      </div>
+
+      {didTravel === true && (
+        <div className="write-review-countries-section">
+          <label className="write-review-label">
+            Which countries did you visit?
+          </label>
+          <div className="write-review-countries-container">
+            <div className="write-review-countries-grid">
+              {countries.map(country => (
+                <label key={country.code} className="write-review-country-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={visitedCountries.includes(country.name)}
+                    onChange={() => handleCountryToggle(country.name)}
+                    className="write-review-checkbox"
+                  />
+                  <span className="write-review-checkbox-custom"></span>
+                  <span className="write-review-country-name">{country.name}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          {visitedCountries.length > 0 && (
+            <div className="write-review-selected-summary">
+              <strong>{visitedCountries.length}</strong> countr{visitedCountries.length !== 1 ? 'ies' : 'y'} selected
+              <div className="write-review-selected-countries">
+                {visitedCountries.join(', ')}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 function WriteReview() {
   const navigate = useNavigate();
   
@@ -201,6 +277,10 @@ function WriteReview() {
     travel: '',
     miscellaneous: ''
   });
+  
+  // New travel state
+  const [didTravel, setDidTravel] = useState(null);
+  const [visitedCountries, setVisitedCountries] = useState([]);
 
   // Load countries and universities from database
   useEffect(() => {
@@ -254,7 +334,7 @@ function WriteReview() {
     if (!selectedCountry || !selectedUniversity || !courseStudied || !gpa || 
         academicRating === 0 || cultureRating === 0 || foodRating === 0 || 
         accommodationRating === 0 || safetyRating === 0 || selectedTags.length === 0 || 
-        !reviewText.trim()) {
+        !reviewText.trim() || didTravel === null) {
       setSubmitMessage('Please fill in all required fields before proceeding.');
       return;
     }
@@ -445,7 +525,10 @@ function WriteReview() {
         expenseRental: parseFloat(expenses.rental) || 0,
         expensePublicTransport: parseFloat(expenses.public_transport) || 0,
         expenseTravel: parseFloat(expenses.travel) || 0,
-        expenseMiscellaneous: parseFloat(expenses.miscellaneous) || 0
+        expenseMiscellaneous: parseFloat(expenses.miscellaneous) || 0,
+        // New travel fields
+        didTravel: didTravel,
+        visitedCountries: visitedCountries
       };
 
       const { data, error } = await supabaseClient
@@ -658,6 +741,16 @@ function WriteReview() {
                   ))}
                 </div>
               </div>
+
+              {/* Travel Section */}
+              <div className="write-review-divider" />
+              <TravelSection 
+                didTravel={didTravel}
+                setDidTravel={setDidTravel}
+                visitedCountries={visitedCountries}
+                setVisitedCountries={setVisitedCountries}
+                countries={countries}
+              />
 
               {/* Review & Tips */}
               <div className="write-review-section">

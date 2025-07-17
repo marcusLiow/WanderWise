@@ -1,5 +1,4 @@
 const express = require('express');
-const mysql = require('mysql2');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 
@@ -8,9 +7,9 @@ let supabase;
 try {
   const { createClient } = require('@supabase/supabase-js');
   
-  // Supabase connection (Updated with your credentials)
-  const supabaseUrl = 'https://jjcobexdfpcrbswgkcas.supabase.co';
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpqY29iZXhkZnBjcmJzd2drY2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1NjYyNjAsImV4cCI6MjA2ODE0MjI2MH0.IPUMt-oAFZ_jQP5NMh51P6EI2vU-V8Y_lx1Yz5788rU';
+  // Supabase connection
+  const supabaseUrl = 'https://aojighzqmzouwhxyndbs.supabase.co/';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvamlnaHpxbXpvdXdoeHluZGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MDgyNTMsImV4cCI6MjA2Nzk4NDI1M30.1f2HHXbYxP8KaABhv4uw151Xj1mRDWxd63pHYgKIXnQ';
   supabase = createClient(supabaseUrl, supabaseKey);
   console.log('✅ Supabase client created successfully');
 } catch (error) {
@@ -25,23 +24,7 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-// MySQL connection (keep for universities/search for now)
-const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: 'password',
-  database: 'wanderwise'
-});
-
-// Test connections
-db.connect((err) => {
-  if (err) {
-    console.log('❌ MySQL connection failed:', err);
-  } else {
-    console.log('✅ Connected to MySQL (for universities)!');
-  }
-});
-
+// Test Supabase connection
 async function testSupabase() {
   try {
     console.log('🔍 Testing Supabase connection...');
@@ -50,7 +33,7 @@ async function testSupabase() {
       console.log('❌ Supabase test failed:', error);
       console.log('💡 Make sure you created the users table in Supabase dashboard');
     } else {
-      console.log('✅ Connected to Supabase (for users)!');
+      console.log('✅ Connected to Supabase successfully!');
     }
   } catch (error) {
     console.log('❌ Supabase connection error:', error.message);
@@ -58,7 +41,7 @@ async function testSupabase() {
 }
 testSupabase();
 
-// Helper functions (keep existing)
+// Helper functions
 function extractUniversityFromDomain(domain) {
   const universityMapping = [
     { pattern: 'nus.edu.sg', name: 'National University of Singapore' },
@@ -92,10 +75,10 @@ function isValidSingaporeUniversityEmail(email) {
 }
 
 // ===========================================
-// USER ENDPOINTS (Now using Supabase)
+// USER ENDPOINTS (Using Supabase)
 // ===========================================
 
-// REGISTER - Now using Supabase with detailed logging
+// REGISTER
 app.post('/api/register', async (req, res) => {
   console.log('\n🚀 Registration request received:', req.body);
   
@@ -187,7 +170,7 @@ app.post('/api/register', async (req, res) => {
 
     if (insertError) {
       console.log('❌ Supabase insert error:', insertError);
-      if (insertError.code === '23505') { // Unique constraint violation
+      if (insertError.code === '23505') {
         return res.status(400).json({ error: 'Email already exists' });
       }
       return res.status(500).json({ error: 'Failed to create user account: ' + insertError.message });
@@ -217,7 +200,7 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
-// LOGIN - Now using Supabase with detailed logging
+// LOGIN
 app.post('/api/login', async (req, res) => {
   console.log('\n🔐 Login request received for:', req.body.email);
   
@@ -282,7 +265,106 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// PROFILE UPDATE - Now using Supabase
+// RESET PASSWORD
+app.post('/api/reset-password', async (req, res) => {
+  console.log('\n🔄 Reset password request received for:', req.body.email);
+  
+  const { email, newPassword } = req.body;
+  
+  // Step 1: Validate required fields
+  if (!email || !newPassword) {
+    console.log('❌ Missing email or password');
+    return res.status(400).json({ 
+      error: 'Email and new password are required' 
+    });
+  }
+  console.log('✅ Required fields present');
+
+  // Step 2: Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    console.log('❌ Invalid email format:', email);
+    return res.status(400).json({ error: 'Invalid email format' });
+  }
+  console.log('✅ Email format valid');
+
+  // Step 3: Validate Singapore university email
+  if (!isValidSingaporeUniversityEmail(email)) {
+    console.log('❌ Not a Singapore university email:', email);
+    return res.status(400).json({ 
+      error: 'Please use a valid Singapore university email address' 
+    });
+  }
+  console.log('✅ Singapore university email valid');
+
+  // Step 4: Validate password strength
+  if (newPassword.length < 8) {
+    console.log('❌ Password too short');
+    return res.status(400).json({ 
+      error: 'Password must be at least 8 characters long' 
+    });
+  }
+  console.log('✅ Password length valid');
+
+  try {
+    // Step 5: Check if user exists in Supabase
+    console.log('🔍 Checking if user exists in Supabase...');
+    const { data: existingUsers, error: checkError } = await supabase
+      .from('users')
+      .select('id, email')
+      .eq('email', email)
+      .limit(1);
+
+    if (checkError) {
+      console.log('❌ Supabase check error:', checkError);
+      return res.status(500).json({ error: 'Database error during user check: ' + checkError.message });
+    }
+    
+    if (!existingUsers || existingUsers.length === 0) {
+      console.log('❌ User not found');
+      return res.status(404).json({ error: 'No account found with this email address' });
+    }
+    console.log('✅ User found, proceeding with password reset');
+    
+    const user = existingUsers[0];
+    
+    // Step 6: Hash the new password
+    console.log('🔐 Hashing new password...');
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+    console.log('✅ Password hashed successfully');
+    
+    // Step 7: Update password in Supabase
+    console.log('💾 Updating password in Supabase...');
+    const { data: updatedUser, error: updateError } = await supabase
+      .from('users')
+      .update({
+        password: hashedPassword,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', user.id)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.log('❌ Supabase update error:', updateError);
+      return res.status(500).json({ error: 'Failed to reset password: ' + updateError.message });
+    }
+    
+    console.log('✅ Password reset successfully');
+    res.status(200).json({ 
+      message: 'Password has been reset successfully. You can now login with your new password.',
+      success: true
+    });
+    
+  } catch (error) {
+    console.log('❌ Unexpected reset password error:', error);
+    console.log('📋 Error stack:', error.stack);
+    res.status(500).json({ error: 'Password reset failed: ' + error.message });
+  }
+});
+
+// PROFILE UPDATE
 app.put('/api/profile', async (req, res) => {
   console.log('\n✏️ Profile update request received for user:', req.body.userId);
   
@@ -358,23 +440,11 @@ app.put('/api/profile', async (req, res) => {
 });
 
 // ===========================================
-// EXISTING ENDPOINTS (Still using MySQL)
+// UNIVERSITY ENDPOINTS (Using Supabase)
 // ===========================================
 
-app.get('/api/names', (req, res) => {
-  db.query('SELECT * FROM names', (err, results) => {
-    res.json(results);
-  });
-});
-
-app.post('/api/names', (req, res) => {
-  const { name } = req.body;
-  db.query('INSERT INTO names (name) VALUES (?)', [name], (err, result) => {
-    res.json({ message: 'Added!' });
-  });
-});
-
-app.get('/api/search', (req, res) => {
+// SEARCH UNIVERSITIES
+app.get('/api/search', async (req, res) => {
   const { q } = req.query;
   
   if (!q || q.trim() === '') {
@@ -384,50 +454,81 @@ app.get('/api/search', (req, res) => {
     });
   }
   
-  const searchTerm = `%${q.trim()}%`;
-  
-  const searchQuery = `
-    SELECT id, name, description, country, rating, logo, flag, created_at
-    FROM universities 
-    WHERE name LIKE ? 
-       OR country LIKE ? 
-       OR description LIKE ?
-    ORDER BY 
-      CASE 
-        WHEN name LIKE ? THEN 1
-        WHEN country LIKE ? THEN 2
-        ELSE 3
-      END,
-      rating DESC,
-      name ASC
-    LIMIT 50
-  `;
-  
-  db.query(
-    searchQuery, 
-    [searchTerm, searchTerm, searchTerm, searchTerm, searchTerm], 
-    (err, results) => {
-      if (err) {
-        console.error('Database search error:', err);
-        return res.status(500).json({ 
-          error: 'Database error occurred during search',
-          universities: []
-        });
-      }
-      
-      res.json({
-        success: true,
-        query: q,
-        count: results.length,
-        universities: results
+  try {
+    console.log('🔍 Searching universities in Supabase for:', q);
+    
+    // Search in Supabase universities table
+    const { data: universities, error } = await supabase
+      .from('universities')
+      .select('id, name, description, country, rating, logo, flag, created_at')
+      .or(`name.ilike.%${q}%,country.ilike.%${q}%,description.ilike.%${q}%`)
+      .order('rating', { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.error('Supabase search error:', error);
+      return res.status(500).json({ 
+        error: 'Database error occurred during search',
+        universities: []
       });
     }
-  );
+    
+    console.log(`✅ Found ${universities?.length || 0} universities`);
+    
+    res.json({
+      success: true,
+      query: q,
+      count: universities?.length || 0,
+      universities: universities || []
+    });
+    
+  } catch (error) {
+    console.error('Unexpected search error:', error);
+    res.status(500).json({ 
+      error: 'Search failed: ' + error.message,
+      universities: []
+    });
+  }
 });
 
+// GET ALL UNIVERSITIES
+app.get('/api/universities', async (req, res) => {
+  try {
+    console.log('🏫 Fetching all universities from Supabase...');
+    
+    const { data: universities, error } = await supabase
+      .from('universities')
+      .select('*')
+      .order('rating', { ascending: false });
+
+    if (error) {
+      console.error('Supabase universities fetch error:', error);
+      return res.status(500).json({ 
+        error: 'Failed to fetch universities',
+        universities: []
+      });
+    }
+    
+    console.log(`✅ Retrieved ${universities?.length || 0} universities`);
+    
+    res.json({
+      success: true,
+      count: universities?.length || 0,
+      universities: universities || []
+    });
+    
+  } catch (error) {
+    console.error('Unexpected universities fetch error:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch universities: ' + error.message,
+      universities: []
+    });
+  }
+});
+
+// START SERVER
 app.listen(5000, () => {
   console.log('\n🚀 Server running on port 5000');
-  console.log('📊 Using Supabase for: Users, Authentication, Profiles');
-  console.log('🗄️  Using MySQL for: Universities, Search');
+  console.log('📊 Using Supabase for: Users, Universities, Authentication, Profiles');
   console.log('🔗 Ready to accept connections...\n');
 });
