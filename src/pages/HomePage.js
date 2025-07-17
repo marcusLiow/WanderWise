@@ -552,8 +552,8 @@ const HomePage = () => {
             
             <div style={{
               ...styles.floatingCard,
-              top: '60%',
-              right: '0%',
+              top: '100%',
+              right: '-29%',
               animationDelay: '4s'
             }}>
               <div style={{ fontSize: '0.9rem', color: '#666' }}>
