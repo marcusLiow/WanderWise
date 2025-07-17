@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
 import './WriteReview.css';
@@ -164,7 +164,13 @@ const StarRating = ({ rating, setRating, label, readOnly = false, comment, setCo
 function WriteReview() {
   const navigate = useNavigate();
   
-  // State hooks
+  // Database state
+  const [countries, setCountries] = useState([]);
+  const [universities, setUniversities] = useState([]);
+  const [filteredUniversities, setFilteredUniversities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Form state hooks
   const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedUniversity, setSelectedUniversity] = useState('');
   const [courseStudied, setCourseStudied] = useState('');
@@ -195,6 +201,52 @@ function WriteReview() {
     travel: '',
     miscellaneous: ''
   });
+
+  // Load countries and universities from database
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Load countries
+        const { data: countriesData, error: countriesError } = await supabaseClient
+          .from('countries')
+          .select('*')
+          .order('name');
+        
+        if (countriesError) throw countriesError;
+        setCountries(countriesData);
+
+        // Load universities
+        const { data: universitiesData, error: universitiesError } = await supabaseClient
+          .from('universities')
+          .select(`
+            *,
+            countries(name, code)
+          `)
+          .order('name');
+        
+        if (universitiesError) throw universitiesError;
+        setUniversities(universitiesData);
+
+      } catch (error) {
+        console.error('Error loading data:', error);
+        setSubmitMessage('Error loading data. Please refresh the page.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  // Filter universities when country changes
+  useEffect(() => {
+    if (selectedCountry) {
+      const filtered = universities.filter(uni => uni.countries.name === selectedCountry);
+      setFilteredUniversities(filtered);
+    } else {
+      setFilteredUniversities([]);
+    }
+  }, [selectedCountry, universities]);
 
   // Helper functions
   const handleNext = () => {
@@ -232,6 +284,11 @@ function WriteReview() {
 
   const handleExpenseChange = (category, value) => {
     setExpenses(prev => ({ ...prev, [category]: value }));
+  };
+
+  const handleCountryChange = (countryName) => {
+    setSelectedCountry(countryName);
+    setSelectedUniversity(''); // Reset university selection
   };
 
   // Auto-compute overall rating
@@ -288,42 +345,31 @@ function WriteReview() {
     'Safe Environment', 'Delicious Food'
   ];
 
-  const countries = [
-    'Australia','Austria','Belgium','Canada','China','Denmark','Finland',
-    'France','Germany','Hong Kong','Italy','Japan','Netherlands','New Zealand',
-    'Norway','South Korea','Spain','Sweden','Switzerland','United Kingdom','United States'
-  ];
-
-  const universities = {
-    'United States': ['Harvard University','Stanford University','MIT','UC Berkeley','NYU'],
-    'United Kingdom': ['Oxford University','Cambridge University','Imperial College London','UCL','LSE'],
-    'Australia': ['University of Melbourne','Australian National University','University of Sydney','UNSW'],
-    'Canada': ['University of Toronto','UBC','McGill University','University of Waterloo'],
-    'Germany': ['Technical University of Munich','Heidelberg University','Humboldt University'],
-    'France': ['Sorbonne University','École Normale Supérieure','Sciences Po'],
-    'Japan': ['University of Tokyo','Kyoto University','Waseda University','Keio University'],
-    'South Korea': ['Seoul National University','KAIST','Yonsei University','Korea University'],
-    'China': ['Peking University','Tsinghua University','Fudan University','Shanghai Jiao Tong University'],
-    'Netherlands': ['University of Amsterdam','Delft University of Technology','Erasmus University'],
-    'Sweden': ['KTH Royal Institute of Technology','Stockholm University','Lund University'],
-    'Switzerland': ['ETH Zurich','University of Zurich','EPFL'],
-    'Italy': ['Bocconi University','University of Bologna','Sapienza University of Rome'],
-    'Spain': ['IE University','Universidad Carlos III de Madrid','University of Barcelona'],
-    'Norway': ['University of Oslo','Norwegian University of Science and Technology'],
-    'Denmark': ['University of Copenhagen','Technical University of Denmark'],
-    'Finland': ['University of Helsinki','Aalto University'],
-    'Austria': ['University of Vienna','Vienna University of Technology'],
-    'Belgium': ['KU Leuven','Ghent University'],
-    'Hong Kong': ['University of Hong Kong','HKUST','Chinese University of Hong Kong'],
-    'New Zealand': ['University of Auckland','University of Otago']
-  };
-
   const currencies = [
-    'USD - US Dollar','EUR - Euro','GBP - British Pound','JPY - Japanese Yen',
-    'AUD - Australian Dollar','CAD - Canadian Dollar','CHF - Swiss Franc',
-    'CNY - Chinese Yuan','KRW - South Korean Won','SGD - Singapore Dollar',
-    'HKD - Hong Kong Dollar','NOK - Norwegian Krone','SEK - Swedish Krona',
-    'DKK - Danish Krone'
+    'USD - US Dollar',
+    'EUR - Euro',
+    'GBP - British Pound',
+    'JPY - Japanese Yen',
+    'AUD - Australian Dollar',
+    'CAD - Canadian Dollar',
+    'CHF - Swiss Franc',
+    'CNY - Chinese Yuan',
+    'KRW - South Korean Won',
+    'SGD - Singapore Dollar',
+    'HKD - Hong Kong Dollar',
+    'NOK - Norwegian Krone',
+    'SEK - Swedish Krona',
+    'DKK - Danish Krone',
+    'BRL - Brazilian Real',
+    'TRY - Turkish Lira',
+    'CZK - Czech Koruna',
+    'PLN - Polish Zloty',
+    'HUF - Hungarian Forint',
+    'ISK - Icelandic Krona',
+    'KZT - Kazakhstani Tenge',
+    'PHP - Philippine Peso',
+    'THB - Thai Baht',
+    'TWD - Taiwan Dollar'
   ];
 
   // Tag click handler
@@ -344,48 +390,79 @@ function WriteReview() {
 
     setIsSubmitting(true);
     setSubmitMessage('');
+    
     try {
+      // Get the selected university ID
+      const selectedUniversityObj = filteredUniversities.find(uni => uni.name === selectedUniversity);
+      if (!selectedUniversityObj) {
+        throw new Error('Selected university not found');
+      }
+
+      // For now, create a temporary user (in a real app, this would come from authentication)
+      // You'll need to replace this with actual user authentication
+      const tempUser = {
+        firstName: 'Anonymous',
+        lastName: 'User',
+        email: `user${Date.now()}@example.com`,
+        password: 'temp_password'
+      };
+
+      const { data: userData, error: userError } = await supabaseClient
+        .from('users')
+        .insert([tempUser])
+        .select()
+        .single();
+
+      if (userError) throw userError;
+
       // Upload images to Supabase Storage
       const imageUrls = await uploadImagesToSupabase();
 
+      // Prepare review data using new schema field names
       const reviewData = {
-        country: selectedCountry,
-        university: selectedUniversity,
-        course_studied: courseStudied,
+        user_id: userData.id,
+        university_id: selectedUniversityObj.id,
+        courseStudied: courseStudied,
         gpa: parseFloat(gpa),
-        overall_rating: computedOverallRating,
-        academic_rating: academicRating,
-        academic_comment: academicComment,
-        culture_rating: cultureRating,
-        culture_comment: cultureComment,
-        food_rating: foodRating,
-        food_comment: foodComment,
-        accommodation_rating: accommodationRating,
-        accommodation_comment: accommodationComment,
-        safety_rating: safetyRating,
-        safety_comment: safetyComment,
+        overallRating: computedOverallRating,
+        academicRating: academicRating,
+        academicComment: academicComment,
+        cultureRating: cultureRating,
+        cultureComment: cultureComment,
+        foodRating: foodRating,
+        foodComment: foodComment,
+        accommodationRating: accommodationRating,
+        accommodationComment: accommodationComment,
+        safetyRating: safetyRating,
+        safetyComment: safetyComment,
         tags: selectedTags,
-        review_text: reviewText,
-        tips_text: tipsText,
-        image_urls: imageUrls,
+        reviewText: reviewText,
+        tipsText: tipsText,
+        imageUrls: imageUrls,
         currency: currency,
-        expense_food: parseFloat(expenses.food) || 0,
-        expense_shopping: parseFloat(expenses.shopping) || 0,
-        expense_rental: parseFloat(expenses.rental) || 0,
-        expense_public_transport: parseFloat(expenses.public_transport) || 0,
-        expense_travel: parseFloat(expenses.travel) || 0,
-        expense_miscellaneous: parseFloat(expenses.miscellaneous) || 0
+        expenseFood: parseFloat(expenses.food) || 0,
+        expenseShopping: parseFloat(expenses.shopping) || 0,
+        expenseRental: parseFloat(expenses.rental) || 0,
+        expensePublicTransport: parseFloat(expenses.public_transport) || 0,
+        expenseTravel: parseFloat(expenses.travel) || 0,
+        expenseMiscellaneous: parseFloat(expenses.miscellaneous) || 0
       };
 
-      const { data, error } = await supabaseClient.from('reviews').insert([reviewData]).select();
+      const { data, error } = await supabaseClient
+        .from('reviews')
+        .insert([reviewData])
+        .select()
+        .single();
+
       if (error) throw error;
 
-      setSubmitMessage('Review submitted successfully! Redirecting to your review...');
+      setSubmitMessage('Review submitted successfully! Redirecting...');
       
-      // Redirect to the newly created review
+      // Redirect to home page or review page
       setTimeout(() => {
-        navigate(`/review/1?id=${data[0].id}`);
+        navigate('/');
       }, 1500);
+      
     } catch (err) {
       console.error('Submission error:', err);
       setSubmitMessage('Error submitting review. Please try again.');
@@ -405,6 +482,19 @@ function WriteReview() {
       parseFloat(expenses.miscellaneous || 0)
     ).toFixed(2);
   }, [expenses]);
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="write-review-container">
+        <div className="write-review-content">
+          <div className="write-review-card">
+            <p>Loading...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Render UI
   return (
@@ -432,16 +522,15 @@ function WriteReview() {
                 </label>
                 <select
                   value={selectedCountry}
-                  onChange={(e) => { 
-                    setSelectedCountry(e.target.value); 
-                    setSelectedUniversity(''); 
-                  }}
+                  onChange={(e) => handleCountryChange(e.target.value)}
                   className="write-review-select"
                   required
                 >
                   <option value="">Select a Country</option>
                   {countries.map(country => (
-                    <option key={country} value={country}>{country}</option>
+                    <option key={country.code} value={country.name}>
+                      {country.name}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -459,8 +548,10 @@ function WriteReview() {
                     required
                   >
                     <option value="">Select a University</option>
-                    {universities[selectedCountry]?.map(university => (
-                      <option key={university} value={university}>{university}</option>
+                    {filteredUniversities.map(university => (
+                      <option key={university.id} value={university.name}>
+                        {university.name}
+                      </option>
                     ))}
                   </select>
                 </div>

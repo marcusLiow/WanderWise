@@ -25,21 +25,21 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // Initialize Supabase client
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Get list of countries from universities table
+// Get list of countries from the countries table
 const getCountriesList = async () => {
   try {
     const { data, error } = await supabase
-      .from('universities')
-      .select('country')
-      .not('country', 'is', null);
+      .from('countries')
+      .select('name')
+      .order('name');
     
     if (error) {
       console.error('Error fetching countries:', error);
       return [];
     }
     
-    // Get unique countries and normalize them
-    const countries = [...new Set(data.map(item => item.country.trim().toLowerCase()))];
+    // Get country names and normalize them
+    const countries = data.map(item => item.name.trim().toLowerCase());
     return countries;
   } catch (error) {
     console.error('Error getting countries list:', error);
@@ -47,7 +47,7 @@ const getCountriesList = async () => {
   }
 };
 
-// MODIFIED: More restrictive university search that avoids country matches
+// UPDATED: More restrictive university search that avoids country matches
 const findUniversityByName = async (searchTerm) => {
   try {
     console.log('🔍 Searching for university:', searchTerm);
@@ -71,7 +71,13 @@ const findUniversityByName = async (searchTerm) => {
     // Search for universities with more restrictive matching
     const { data, error } = await supabase
       .from('universities')
-      .select('*')
+      .select(`
+        *,
+        countries!universities_country_fkey (
+          name,
+          flag
+        )
+      `)
       .ilike('name', `%${searchTerm}%`)
       .order('name');
     
@@ -101,10 +107,6 @@ const findUniversityByName = async (searchTerm) => {
     }
     
     // For partial matches, be more restrictive
-    // Only return a university if:
-    // 1. There's only one result, OR
-    // 2. The search term is clearly a university name (contains university keywords)
-    
     const universityKeywords = ['university', 'college', 'institute', 'school', 'academy'];
     const containsUniversityKeyword = universityKeywords.some(keyword => 
       searchLower.includes(keyword)
@@ -127,7 +129,7 @@ const findUniversityByName = async (searchTerm) => {
       }
     }
     
-    // If only one result and search term is substantial (not just a country name)
+    // If only one result and search term is substantial
     if (data.length === 1 && searchTerm.length > 3) {
       const singleResult = data[0];
       const uniNameLower = singleResult.name.toLowerCase();
@@ -145,7 +147,7 @@ const findUniversityByName = async (searchTerm) => {
     }
     
     console.log('❓ No clear university match found, treating as potential country search');
-    return null; // Let it fall through to country search
+    return null;
     
   } catch (error) {
     console.error('❌ Error finding university:', error);
@@ -153,22 +155,49 @@ const findUniversityByName = async (searchTerm) => {
   }
 };
 
+// UPDATED: Find universities by country using the new schema
 const findCountryAndUniversities = async (countryName) => {
   try {
-    const { data, error } = await supabase
+    // First, find the country by name
+    const { data: countryData, error: countryError } = await supabase
+      .from('countries')
+      .select('code, name')
+      .ilike('name', `%${countryName}%`)
+      .limit(1);
+    
+    if (countryError) {
+      console.error('Country lookup error:', countryError);
+      return { exists: false, universities: [] };
+    }
+    
+    if (!countryData || countryData.length === 0) {
+      return { exists: false, universities: [] };
+    }
+    
+    const country = countryData[0];
+    
+    // Now find universities in that country
+    const { data: universitiesData, error: universitiesError } = await supabase
       .from('universities')
-      .select('*')
-      .ilike('country', countryName)
+      .select(`
+        *,
+        countries!universities_country_fkey (
+          name,
+          flag
+        )
+      `)
+      .eq('country_code', country.code)
       .order('name');
     
-    if (error) {
-      console.error('Supabase error:', error);
+    if (universitiesError) {
+      console.error('Universities lookup error:', universitiesError);
       return { exists: false, universities: [] };
     }
     
     return {
-      exists: data && data.length > 0,
-      universities: data || []
+      exists: true,
+      universities: universitiesData || [],
+      countryName: country.name
     };
   } catch (error) {
     console.error('Error finding country:', error);
@@ -176,11 +205,18 @@ const findCountryAndUniversities = async (countryName) => {
   }
 };
 
+// UPDATED: Get all universities with country information
 const getAllUniversities = async () => {
   try {
     const { data, error } = await supabase
       .from('universities')
-      .select('*')
+      .select(`
+        *,
+        countries!universities_country_fkey (
+          name,
+          flag
+        )
+      `)
       .order('name');
     
     if (error) {
@@ -243,7 +279,7 @@ function SearchResults() {
         navigate(`/search?q=${encodeURIComponent(searchSlug)}`, { replace: true });
       }
 
-      // Step 1: Check if it's a university name (now more restrictive)
+      // Step 1: Check if it's a university name
       console.log('Step 1: Checking for university match...');
       const universityMatch = await findUniversityByName(trimmedSearch);
       
@@ -263,9 +299,9 @@ function SearchResults() {
       
       if (countryResult.exists) {
         // Step 2b: Country found → show list of universities in that country
-        console.log('✅ Country found, showing universities for:', trimmedSearch);
+        console.log('✅ Country found, showing universities for:', countryResult.countryName);
         setUniversities(countryResult.universities);
-        setDisplayCountryName(trimmedSearch);
+        setDisplayCountryName(countryResult.countryName);
         setSearchType('country');
       } else {
         // Step 2c: Neither university nor country found → no results
@@ -324,9 +360,9 @@ function SearchResults() {
     };
 
     initializeData();
-  }, [countryName, location.search]); // Added location.search to dependencies
+  }, [countryName, location.search]);
 
-  // UPDATED: Manual search function (for search button/enter key)
+  // Manual search function
   const handleSearch = async () => {
     if (!searchTerm || searchTerm.trim().length < 2) {
       setError('Please enter at least 2 characters to search');
@@ -334,9 +370,9 @@ function SearchResults() {
     }
 
     setIsSearching(true);
-    await performSearch(searchTerm, true); // Pass true to update URL
+    await performSearch(searchTerm, true);
     setIsSearching(false);
-    setSearchTerm(''); // Clear search after performing search
+    setSearchTerm('');
   };
 
   const handleKeyPress = (e) => {
@@ -345,7 +381,7 @@ function SearchResults() {
     }
   };
 
-  // UPDATED: Clear search function to remove URL params
+  // Clear search function
   const handleClearSearch = async () => {
     setSearchTerm('');
     setError(null);
@@ -362,7 +398,7 @@ function SearchResults() {
     setLoading(false);
   };
 
-  // Step 3: Handle university click (redirect to specific uni page)
+  // Handle university click
   const handleUniversityClick = (university) => {
     const universitySlug = createSlug(university.name);
     navigate(`/university/${universitySlug}`, { state: { universityId: university.id } });
@@ -426,7 +462,7 @@ function SearchResults() {
               startAdornment: <SearchIcon sx={{ mr: 1, color: 'action.active' }} />
             }}
             onKeyPress={handleKeyPress}
-            placeholder="e.g., Harvard, Stanford, France, Japan..."
+            placeholder="e.g., ESSEC Business School, Chuo Univeristy, ESADE ..."
             helperText="University names redirect directly. Country names show all universities in that country."
           />
           
@@ -532,8 +568,22 @@ function SearchResults() {
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                       <LocationOnIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />
                       <Typography variant="body2" color="text.secondary">
-                        {university.country || 'Unknown'}
+                        {university.countries?.name || 'Unknown'}
                       </Typography>
+                      {university.countries?.flag && (
+                        <Box 
+                          component="img" 
+                          src={university.countries.flag} 
+                          alt={`${university.countries.name} flag`}
+                          sx={{ 
+                            width: 16, 
+                            height: 12, 
+                            ml: 1,
+                            borderRadius: 0.5,
+                            objectFit: 'cover'
+                          }} 
+                        />
+                      )}
                     </Box>
 
                     {university.description && (
@@ -550,7 +600,7 @@ function SearchResults() {
                     )}
 
                     <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      {university.rating > 0 ? (
+                      {university.rating && university.rating > 0 ? (
                         <Chip 
                           label={`⭐ ${university.rating}/5`}
                           color="primary"

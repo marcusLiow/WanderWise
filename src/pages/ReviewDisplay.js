@@ -563,12 +563,12 @@ const ExpenseChart = ({ expenses, currency }) => {
   const [animationStep, setAnimationStep] = useState(0);
   
   const expenseData = [
-    { label: 'Accommodation', shortLabel: 'Accom.', amount: expenses.expense_rental || 0, color: '#eab308' },
-    { label: 'Travel', shortLabel: 'Travel', amount: expenses.expense_travel || 0, color: '#3b82f6' },
-    { label: 'Food', shortLabel: 'Food', amount: expenses.expense_food || 0, color: '#ef4444' },
-    { label: 'Shopping', shortLabel: 'Shop.', amount: expenses.expense_shopping || 0, color: '#f97316' },
-    { label: 'Miscellaneous', shortLabel: 'Misc.', amount: expenses.expense_miscellaneous || 0, color: '#8b5cf6' },
-    { label: 'Transport', shortLabel: 'Trans.', amount: expenses.expense_public_transport || 0, color: '#22c55e' }
+    { label: 'Accommodation', shortLabel: 'Accom.', amount: expenses.expenseRental || 0, color: '#eab308' },
+    { label: 'Travel', shortLabel: 'Travel', amount: expenses.expenseTravel || 0, color: '#3b82f6' },
+    { label: 'Food', shortLabel: 'Food', amount: expenses.expenseFood || 0, color: '#ef4444' },
+    { label: 'Shopping', shortLabel: 'Shop.', amount: expenses.expenseShopping || 0, color: '#f97316' },
+    { label: 'Miscellaneous', shortLabel: 'Misc.', amount: expenses.expenseMiscellaneous || 0, color: '#8b5cf6' },
+    { label: 'Transport', shortLabel: 'Trans.', amount: expenses.expensePublicTransport || 0, color: '#22c55e' }
   ]
   .filter(item => item.amount > 0)
   .sort((a, b) => b.amount - a.amount);
@@ -778,21 +778,26 @@ const ReviewDisplay = () => {
 
   const fetchReview = async (id) => {
     try {
+      // Use the review_details view instead of the raw reviews table
       const { data, error } = await supabaseClient
-        .from('reviews').select('*').eq('id', id).single();
+        .from('review_details')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
       if (error) throw error;
       
-      console.log('Raw data from database:', data);
-      console.log('Raw image_urls field:', data.image_urls);
-      console.log('Type of image_urls:', typeof data.image_urls);
+      console.log('Raw data from review_details view:', data);
+      console.log('Raw imageUrls field:', data.imageUrls);
+      console.log('Type of imageUrls:', typeof data.imageUrls);
       
-      // Handle image_urls field - convert storage paths to public URLs
-      if (data.image_urls) {
-        let imageUrls = data.image_urls;
+      // Handle imageUrls field - they should already be public URLs from storage
+      if (data.imageUrls) {
+        let imageUrls = data.imageUrls;
         
         // If it's stored as a string, try to parse it
         if (typeof imageUrls === 'string') {
-          console.log('image_urls is a string, attempting to parse:', imageUrls);
+          console.log('imageUrls is a string, attempting to parse:', imageUrls);
           try {
             // Try parsing as JSON first
             imageUrls = JSON.parse(imageUrls);
@@ -805,27 +810,17 @@ const ReviewDisplay = () => {
           }
         }
         
-        // Convert storage paths to public URLs if needed
+        // Ensure we have an array of URLs
         if (Array.isArray(imageUrls)) {
-          console.log('Converting storage paths to public URLs...');
-          data.image_urls = imageUrls.map(url => {
-            if (url.startsWith('http')) {
-              // Already a full URL
-              console.log('Already full URL:', url);
-              return url;
-            } else {
-              // Convert storage path to public URL
-              const { data: publicUrl } = supabaseClient.storage
-                .from('wanderwise')
-                .getPublicUrl(url);
-              console.log(`Converted ${url} to ${publicUrl.publicUrl}`);
-              return publicUrl.publicUrl;
-            }
-          });
+          console.log('ImageUrls is an array:', imageUrls);
+          data.imageUrls = imageUrls;
+        } else {
+          console.log('ImageUrls is not an array, setting to empty array');
+          data.imageUrls = [];
         }
       } else {
-        console.log('No image_urls field found or it is null/undefined');
-        data.image_urls = []; // Set empty array if no images
+        console.log('No imageUrls field found or it is null/undefined');
+        data.imageUrls = []; // Set empty array if no images
       }
       
       // Handle tags field similarly
@@ -838,7 +833,7 @@ const ReviewDisplay = () => {
       }
       
       console.log('Processed review data:', data);
-      console.log('Final image URLs:', data.image_urls);
+      console.log('Final image URLs:', data.imageUrls);
       
       setReview(data);
     } catch (err) {
@@ -866,11 +861,13 @@ const ReviewDisplay = () => {
   
   if (!review) return null;
 
+  // Calculate total expenses using new schema field names
   const total = [
-    review.expense_food, review.expense_shopping, review.expense_rental,
-    review.expense_public_transport, review.expense_travel, review.expense_miscellaneous
+    review.expenseFood, review.expenseShopping, review.expenseRental,
+    review.expensePublicTransport, review.expenseTravel, review.expenseMiscellaneous
   ].reduce((s,x)=>s+(x||0), 0);
-  const code = review.currency.split(' - ')[0];
+  
+  const code = review.currency ? review.currency.split(' - ')[0] : 'USD';
 
   return (
     <div className="review-container">
@@ -884,16 +881,25 @@ const ReviewDisplay = () => {
               </div>
               <div className="review-title">
                 <h1>Exchange Review</h1>
-                <p>{review.university}, {review.country}</p>
+                <p>
+                  {review.university_name}, {review.country_name}
+                  {review.country_flag && (
+                    <img 
+                      src={review.country_flag} 
+                      alt={review.country_name} 
+                      style={{ width: '20px', height: '15px', marginLeft: '8px' }}
+                    />
+                  )}
+                </p>
               </div>
             </div>
             <div className="review-rating-section">
               <div className="review-rating-display">
-                <span className="review-overall-rating">{review.overall_rating}</span>
+                <span className="review-overall-rating">{review.overallRating}</span>
                 <div>
                   {[1,2,3,4,5].map(star => (
                     <span key={star}
-                          className={`star-display ${star <= review.overall_rating ? '' : 'star-empty'}`}>
+                          className={`star-display ${star <= review.overallRating ? '' : 'star-empty'}`}>
                       ★
                     </span>
                   ))}
@@ -906,11 +912,15 @@ const ReviewDisplay = () => {
           <div className="review-info-grid">
             <div className="review-info-card">
               <h3>Course</h3>
-              <p>{review.course_studied}</p>
+              <p>{review.courseStudied}</p>
             </div>
             <div className="review-info-card">
               <h3>GPA</h3>
               <p>{review.gpa}</p>
+            </div>
+            <div className="review-info-card">
+              <h3>Student</h3>
+              <p>{review.firstName} {review.lastName}</p>
             </div>
             <div className="review-info-card">
               <h3>Date</h3>
@@ -933,19 +943,19 @@ const ReviewDisplay = () => {
         </div>
 
         {/* Image Gallery */}
-        {console.log('About to render ImageGallery with:', review.image_urls)}
-        <ImageGallery imageUrls={review.image_urls} />
+        {console.log('About to render ImageGallery with:', review.imageUrls)}
+        <ImageGallery imageUrls={review.imageUrls} />
 
         <div className="review-main-grid">
           {/* Ratings */}
           <div className="review-ratings-card">
             <h2>Detailed Ratings</h2>
             <div>
-              <StarRating rating={review.academic_rating}   label="Academic" />
-              <StarRating rating={review.culture_rating}    label="Cultural" />
-              <StarRating rating={review.food_rating}       label="Food" />
-              <StarRating rating={review.accommodation_rating} label="Accommodation" />
-              <StarRating rating={review.safety_rating}     label="Safety" />
+              <StarRating rating={review.academicRating} label="Academic" />
+              <StarRating rating={review.cultureRating} label="Cultural" />
+              <StarRating rating={review.foodRating} label="Food" />
+              <StarRating rating={review.accommodationRating} label="Accommodation" />
+              <StarRating rating={review.safetyRating} label="Safety" />
             </div>
           </div>
 
@@ -973,28 +983,27 @@ const ReviewDisplay = () => {
           <h2>Detailed Reviews</h2>
           <div className="review-overall-experience">
             <h3>Overall Experience</h3>
-            <p>{review.review_text}</p>
+            <p>{review.reviewText}</p>
           </div>
 
           {/* Custom Tabbed Interface */}
           {(() => {
             const tabs = [];
-            const panels = [];
             
-            if (review.academic_comment) {
-              tabs.push({ id: 'academic', label: 'Academic', content: review.academic_comment, title: 'Academic Experience' });
+            if (review.academicComment) {
+              tabs.push({ id: 'academic', label: 'Academic', content: review.academicComment, title: 'Academic Experience' });
             }
-            if (review.culture_comment) {
-              tabs.push({ id: 'culture', label: 'Cultural', content: review.culture_comment, title: 'Cultural Experience' });
+            if (review.cultureComment) {
+              tabs.push({ id: 'culture', label: 'Cultural', content: review.cultureComment, title: 'Cultural Experience' });
             }
-            if (review.food_comment) {
-              tabs.push({ id: 'food', label: 'Food', content: review.food_comment, title: 'Food' });
+            if (review.foodComment) {
+              tabs.push({ id: 'food', label: 'Food', content: review.foodComment, title: 'Food' });
             }
-            if (review.accommodation_comment) {
-              tabs.push({ id: 'accommodation', label: 'Accommodation', content: review.accommodation_comment, title: 'Accommodation' });
+            if (review.accommodationComment) {
+              tabs.push({ id: 'accommodation', label: 'Accommodation', content: review.accommodationComment, title: 'Accommodation' });
             }
-            if (review.safety_comment) {
-              tabs.push({ id: 'safety', label: 'Safety', content: review.safety_comment, title: 'Safety' });
+            if (review.safetyComment) {
+              tabs.push({ id: 'safety', label: 'Safety', content: review.safetyComment, title: 'Safety' });
             }
 
             if (tabs.length === 0) return null;
@@ -1060,10 +1069,10 @@ const ReviewDisplay = () => {
             );
           })()}
 
-          {review.tips_text && (
+          {review.tipsText && (
             <div className="review-tips-section">
               <h3>💡 Tips for Future Students</h3>
-              <p>{review.tips_text}</p>
+              <p>{review.tipsText}</p>
             </div>
           )}
         </div>
