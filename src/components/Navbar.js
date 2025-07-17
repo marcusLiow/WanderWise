@@ -46,7 +46,15 @@ function Navbar() {
   };
 
   const handleWriteReviewClick = () => {
-  navigate('/write-review');
+    navigate('/write-review');
+  };
+
+  const handleUniversitiesClick = () => {
+    navigate('/universities');
+  };
+
+  const handleCountriesClick = () => {
+    navigate('/countries');
   };
 
   const handleProfileClick = (event) => {
@@ -88,8 +96,8 @@ function Navbar() {
 
         {/* Right side: nav buttons */}
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-          <Button color="inherit">Countries</Button>
-          <Button color="inherit">Universities</Button>
+          <Button color="inherit" onClick={handleCountriesClick}>Countries</Button>
+          <Button color="inherit" onClick={handleUniversitiesClick}>Universities</Button>
           
           {/* Write Review button - only show when logged in */}
           {user && (
