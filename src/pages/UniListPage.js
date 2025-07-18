@@ -13,6 +13,7 @@ const UniListPage = () => {
     const navigate = useNavigate();
     const [selectedRegion, setSelectedRegion] = useState('All');
     const [universities, setUniversities] = useState([]);
+    const [ratings, setRatings] = useState({}); // NEW: Added state for ratings
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -196,7 +197,22 @@ const UniListPage = () => {
         return fallbackImages[nameHash % fallbackImages.length];
     };
 
-    // NEW: University Card Component with enhanced error handling
+    // NEW: Function to calculate average rating for a university
+    const getAverageRating = (universityId) => {
+        const universityRatings = ratings[universityId];
+        if (!universityRatings || universityRatings.length === 0) return null;
+        
+        const ratingsWithValues = universityRatings.filter(review => 
+            review.overallRating && review.overallRating > 0
+        );
+        
+        if (ratingsWithValues.length === 0) return null;
+        
+        const total = ratingsWithValues.reduce((sum, review) => sum + review.overallRating, 0);
+        return total / ratingsWithValues.length;
+    };
+
+    // NEW: University Card Component with enhanced error handling and rating display
     const UniversityCard = ({ university, index }) => {
         const [imageSrc, setImageSrc] = useState(university.image);
         const [imageError, setImageError] = useState(false);
@@ -217,6 +233,9 @@ const UniListPage = () => {
                 setImageError(true);
             }
         };
+
+        // Get the average rating for this university
+        const averageRating = getAverageRating(university.id);
 
         return (
             <div 
@@ -277,9 +296,14 @@ const UniListPage = () => {
                     <p style={{ color: '#888', fontSize: '0.9rem', margin: '5px 0 0 0' }}>
                         {university.region}
                     </p>
-                    {university.rating && university.rating > 0 && (
+                    {/* UPDATED: Display rating from Supabase reviews table instead of university.rating */}
+                    {averageRating !== null ? (
                         <p style={{ color: '#ff3f00', fontSize: '0.9rem', margin: '10px 0 0 0', fontWeight: 'bold' }}>
-                            ⭐ {university.rating}/5.0
+                            ⭐ {averageRating.toFixed(1)}/5.0
+                        </p>
+                    ) : (
+                        <p style={{ color: '#999', fontSize: '0.9rem', margin: '10px 0 0 0', fontStyle: 'italic' }}>
+                            No ratings yet
                         </p>
                     )}
                     {university.description && (
@@ -300,28 +324,69 @@ const UniListPage = () => {
         );
     };
 
-    // Fetch universities from Supabase
+    // NEW: Fetch all ratings from reviews table
+    const fetchRatings = async () => {
+        try {
+            console.log('Fetching ratings from reviews table...');
+            
+            const { data: reviewsData, error: reviewsError } = await supabase
+                .from('reviews')
+                .select('university_id, overallRating')
+                .not('overallRating', 'is', null)
+                .gt('overallRating', 0);
+
+            if (reviewsError) {
+                console.error('Error fetching ratings:', reviewsError);
+                return {};
+            }
+
+            // Group ratings by university_id
+            const ratingsMap = {};
+            reviewsData?.forEach(review => {
+                if (!ratingsMap[review.university_id]) {
+                    ratingsMap[review.university_id] = [];
+                }
+                ratingsMap[review.university_id].push({
+                    overallRating: review.overallRating
+                });
+            });
+
+            console.log(`Loaded ratings for ${Object.keys(ratingsMap).length} universities`);
+            return ratingsMap;
+        } catch (error) {
+            console.error('Error in fetchRatings:', error);
+            return {};
+        }
+    };
+
+    // UPDATED: Fetch universities from Supabase with ratings
     useEffect(() => {
         const fetchUniversities = async () => {
             try {
                 setLoading(true);
                 setError(null);
 
-                const { data, error } = await supabase
-                    .from('universities')
-                    .select(`
-                        id,
-                        name,
-                        description,
-                        logo,
-                        rating,
-                        country_code,
-                        countries!universities_country_fkey (
+                // Fetch universities and ratings in parallel
+                const [universitiesResult, ratingsResult] = await Promise.all([
+                    supabase
+                        .from('universities')
+                        .select(`
+                            id,
                             name,
-                            flag
-                        )
-                    `)
-                    .order('name');
+                            description,
+                            logo,
+                            rating,
+                            country_code,
+                            countries!universities_country_fkey (
+                                name,
+                                flag
+                            )
+                        `)
+                        .order('name'),
+                    fetchRatings()
+                ]);
+
+                const { data, error } = universitiesResult;
 
                 if (error) {
                     console.error('Error fetching universities:', error);
@@ -345,6 +410,7 @@ const UniListPage = () => {
                     }));
 
                     setUniversities(transformedData);
+                    setRatings(ratingsResult); // Set the ratings data
                     console.log(`Loaded ${transformedData.length} universities from database`);
                 }
             } catch (error) {
@@ -552,7 +618,7 @@ const UniListPage = () => {
             <div style={styles.container}>
                 <header style={styles.header}>
                     <h1 style={styles.title}>Partner Universities</h1>
-                    <p style={styles.subtitle}>Loading universities from our database...</p>
+                    <p style={styles.subtitle}>Loading universities and ratings from our database...</p>
                 </header>
                 <div style={styles.loadingContainer}>
                     Loading universities...
