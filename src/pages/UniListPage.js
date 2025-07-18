@@ -16,6 +16,11 @@ const UniListPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Helper function to create URL-friendly slugs (same as SearchResults.js)
+    const createSlug = (str) => {
+        return str.toLowerCase().replace(/\s+/g, '-');
+    };
+
     // Region mapping for countries
     const getRegionForCountry = (countryName) => {
         const regionMapping = {
@@ -39,7 +44,10 @@ const UniListPage = () => {
             'Denmark': 'Europe',
             'France': 'Europe',
             'Germany': 'Europe',
+            'Hungary': 'Europe',
+            'Iceland': 'Europe',
             'Italy': 'Europe',
+            'Lithuania': 'Europe',
             'Netherlands': 'Europe',
             'Spain': 'Europe',
             'Sweden': 'Europe',
@@ -50,6 +58,7 @@ const UniListPage = () => {
             'Norway': 'Europe',
             'Ireland': 'Europe',
             'Poland': 'Europe',
+            'Portugal': 'Europe',
             'Czech Republic': 'Europe',
             
             // North America
@@ -133,37 +142,152 @@ const UniListPage = () => {
         return '🌍';
     };
 
-    // Get placeholder image based on country/region
+    // UPDATED: Get placeholder image based on country/region with better fallbacks
     const getUniversityImage = (countryName, universityName) => {
         const countryImages = {
-            'China': 'https://images.unsplash.com/photo-1518623001395-125242310d0c?w=400&h=300&fit=crop',
+            'China': 'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=400&h=300&fit=crop',
             'Hong Kong': 'https://images.unsplash.com/photo-1518623001395-125242310d0c?w=400&h=300&fit=crop',
             'Japan': 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400&h=300&fit=crop',
-            'South Korea': 'https://images.unsplash.com/photo-1518623001395-125242310d0c?w=400&h=300&fit=crop',
-            'Taiwan': 'https://images.unsplash.com/photo-1518623001395-125242310d0c?w=400&h=300&fit=crop',
+            'South Korea': 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=300&fit=crop',
+            'Taiwan': 'https://images.unsplash.com/photo-1590736969955-71cc94901144?w=400&h=300&fit=crop',
             'Thailand': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop',
-            'Philippines': 'https://images.unsplash.com/photo-1518623001395-125242310d0c?w=400&h=300&fit=crop',
+            'Philippines': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop',
             'Singapore': 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=400&h=300&fit=crop',
-            'United States': `https://picsum.photos/400/300?random=${Math.abs(universityName.split('').reduce((a, b) => a + b.charCodeAt(0), 0))}`,
-            'USA': `https://picsum.photos/400/300?random=${Math.abs(universityName.split('').reduce((a, b) => a + b.charCodeAt(0), 0))}`,
-            'US': `https://picsum.photos/400/300?random=${Math.abs(universityName.split('').reduce((a, b) => a + b.charCodeAt(0), 0))}`,
+            'United States': 'https://images.unsplash.com/photo-1569098644584-210bcd375b59?w=400&h=300&fit=crop',
+            'USA': 'https://images.unsplash.com/photo-1569098644584-210bcd375b59?w=400&h=300&fit=crop',
+            'US': 'https://images.unsplash.com/photo-1569098644584-210bcd375b59?w=400&h=300&fit=crop',
             'Canada': 'https://images.unsplash.com/photo-1517935706615-2717063c2225?w=400&h=300&fit=crop',
-            'France': 'https://images.unsplash.com/photo-1518623001395-125242310d0c?w=400&h=300&fit=crop',
+            'France': 'https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=400&h=300&fit=crop',
             'Germany': 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=400&h=300&fit=crop',
             'United Kingdom': 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400&h=300&fit=crop',
             'UK': 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400&h=300&fit=crop',
             'Spain': 'https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=400&h=300&fit=crop',
-            'Italy': 'https://images.unsplash.com/photo-1518623001395-125242310d0c?w=400&h=300&fit=crop',
+            'Italy': 'https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=400&h=300&fit=crop',
             'Netherlands': 'https://images.unsplash.com/photo-1534351590666-13e3e96b5017?w=400&h=300&fit=crop',
             'Switzerland': 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=300&fit=crop',
             'Sweden': 'https://images.unsplash.com/photo-1509356843151-3e7d96241e11?w=400&h=300&fit=crop',
-            'Australia': `https://picsum.photos/400/300?random=${Math.abs(universityName.split('').reduce((a, b) => a + b.charCodeAt(0), 0)) + 100}`,
+            'Australia': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop',
             'Turkey': 'https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?w=400&h=300&fit=crop',
             'Kazakhstan': 'https://images.unsplash.com/photo-1526481280693-3bfa7568e0f3?w=400&h=300&fit=crop',
-            'Brazil': `https://picsum.photos/400/300?random=${Math.abs(universityName.split('').reduce((a, b) => a + b.charCodeAt(0), 0)) + 200}`
+            'Brazil': 'https://images.unsplash.com/photo-1483729558449-99ef09a8c325?w=400&h=300&fit=crop',
+            'Belgium': 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=300&fit=crop',
+            'Austria': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop',
+            'Denmark': 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=400&h=300&fit=crop'
         };
         
-        return countryImages[countryName] || `https://picsum.photos/400/300?random=${Math.abs(universityName.split('').reduce((a, b) => a + b.charCodeAt(0), 0)) + 300}`;
+        // First try to get country-specific image
+        if (countryImages[countryName]) {
+            return countryImages[countryName];
+        }
+        
+        // If no country match, use a reliable fallback based on university name hash
+        const nameHash = Math.abs(universityName.split('').reduce((a, b) => a + b.charCodeAt(0), 0));
+        const fallbackImages = [
+            'https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=400&h=300&fit=crop',
+            'https://images.unsplash.com/photo-1562774053-701939374585?w=400&h=300&fit=crop',
+            'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=400&h=300&fit=crop',
+            'https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?w=400&h=300&fit=crop',
+            'https://images.unsplash.com/photo-1607013251379-e6eecfffe234?w=400&h=300&fit=crop',
+            'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=400&h=300&fit=crop',
+            'https://images.unsplash.com/photo-1568515387631-8b650bbcdb90?w=400&h=300&fit=crop',
+            'https://images.unsplash.com/photo-1592280771190-3e2e4d571952?w=400&h=300&fit=crop'
+        ];
+        
+        return fallbackImages[nameHash % fallbackImages.length];
+    };
+
+    // NEW: University Card Component with error handling
+    const UniversityCard = ({ university, index }) => {
+        const [imageSrc, setImageSrc] = useState(university.image);
+        const [imageError, setImageError] = useState(false);
+
+        const handleImageError = () => {
+            if (!imageError) {
+                setImageError(true);
+                // Try fallback image
+                const fallbackImage = getUniversityImage(university.country, university.name);
+                setImageSrc(fallbackImage);
+            }
+        };
+
+        return (
+            <div 
+                key={university.id || index} 
+                style={styles.destinationCard}
+                onClick={() => handleDestinationClick(university)}
+                onMouseOver={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-5px)';
+                    e.currentTarget.style.boxShadow = '0 15px 35px rgba(0,0,0,0.15)';
+                }}
+                onMouseOut={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.1)';
+                }}
+            >
+                <div style={{
+                    ...styles.destinationImage,
+                    backgroundImage: `url(${imageSrc})`
+                }}>
+                    {/* Hidden img tag to trigger error handling */}
+                    <img 
+                        src={imageSrc} 
+                        alt={university.name}
+                        style={{ display: 'none' }}
+                        onError={handleImageError}
+                    />
+                    <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        background: 'rgba(0,0,0,0.3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}>
+                        <h3 style={{ 
+                            color: 'white', 
+                            fontSize: '1.3rem', 
+                            fontWeight: 'bold',
+                            margin: 0,
+                            textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                            textAlign: 'center',
+                            padding: '0 10px'
+                        }}>
+                            {university.name}
+                        </h3>
+                    </div>
+                </div>
+                <div style={styles.destinationContent}>
+                    <p style={{ color: '#666', margin: 0, fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>{university.country}</span>
+                        <span>{getCountryFlag(university.countryFlag, university.countryCode, university.country)}</span>
+                    </p>
+                    <p style={{ color: '#888', fontSize: '0.9rem', margin: '5px 0 0 0' }}>
+                        {university.region}
+                    </p>
+                    {university.rating && university.rating > 0 && (
+                        <p style={{ color: '#ff3f00', fontSize: '0.9rem', margin: '10px 0 0 0', fontWeight: 'bold' }}>
+                            ⭐ {university.rating}/5.0
+                        </p>
+                    )}
+                    {university.description && (
+                        <p style={{ 
+                            color: '#777', 
+                            fontSize: '0.85rem', 
+                            margin: '10px 0 0 0',
+                            lineHeight: '1.4'
+                        }}>
+                            {university.description.length > 100 
+                                ? `${university.description.substring(0, 100)}...` 
+                                : university.description
+                            }
+                        </p>
+                    )}
+                </div>
+            </div>
+        );
     };
 
     // Fetch universities from Supabase
@@ -240,10 +364,10 @@ const UniListPage = () => {
             .sort((a, b) => a.name.localeCompare(b.name));
     }, [selectedRegion, universities]);
 
-    // Navigation function - uses exact university name from database
-    const handleDestinationClick = (universityName) => {
-        // Use the exact university name for search (no slug conversion)
-        navigate(`/search?q=${encodeURIComponent(universityName)}`);
+    // UPDATED: Navigation function - redirects directly to university page like SearchResults.js
+    const handleDestinationClick = (university) => {
+        const universitySlug = createSlug(university.name);
+        navigate(`/university/${universitySlug}`, { state: { universityId: university.id } });
     };
 
     // Get statistics
@@ -516,77 +640,14 @@ const UniListPage = () => {
                         }
                     </p>
 
+                    {/* UPDATED: Using new UniversityCard component */}
                     <div style={styles.grid}>
                         {filteredData.map((university, index) => (
-                            <div 
-                                key={university.id || index} 
-                                style={styles.destinationCard}
-                                onClick={() => handleDestinationClick(university.name)}
-                                onMouseOver={(e) => {
-                                    e.currentTarget.style.transform = 'translateY(-5px)';
-                                    e.currentTarget.style.boxShadow = '0 15px 35px rgba(0,0,0,0.15)';
-                                }}
-                                onMouseOut={(e) => {
-                                    e.currentTarget.style.transform = 'translateY(0)';
-                                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.1)';
-                                }}
-                            >
-                                <div style={{
-                                    ...styles.destinationImage,
-                                    backgroundImage: `url(${university.image})`
-                                }}>
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: 0,
-                                        left: 0,
-                                        width: '100%',
-                                        height: '100%',
-                                        background: 'rgba(0,0,0,0.3)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}>
-                                        <h3 style={{ 
-                                            color: 'white', 
-                                            fontSize: '1.3rem', 
-                                            fontWeight: 'bold',
-                                            margin: 0,
-                                            textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-                                            textAlign: 'center',
-                                            padding: '0 10px'
-                                        }}>
-                                            {university.name}
-                                        </h3>
-                                    </div>
-                                </div>
-                                <div style={styles.destinationContent}>
-                                    <p style={{ color: '#666', margin: 0, fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <span>{university.country}</span>
-                                        <span>{getCountryFlag(university.countryFlag, university.countryCode, university.country)}</span>
-                                    </p>
-                                    <p style={{ color: '#888', fontSize: '0.9rem', margin: '5px 0 0 0' }}>
-                                        {university.region}
-                                    </p>
-                                    {university.rating && university.rating > 0 && (
-                                        <p style={{ color: '#ff3f00', fontSize: '0.9rem', margin: '10px 0 0 0', fontWeight: 'bold' }}>
-                                            ⭐ {university.rating}/5.0
-                                        </p>
-                                    )}
-                                    {university.description && (
-                                        <p style={{ 
-                                            color: '#777', 
-                                            fontSize: '0.85rem', 
-                                            margin: '10px 0 0 0',
-                                            lineHeight: '1.4'
-                                        }}>
-                                            {university.description.length > 100 
-                                                ? `${university.description.substring(0, 100)}...` 
-                                                : university.description
-                                            }
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
+                            <UniversityCard 
+                                key={university.id || index}
+                                university={university}
+                                index={index}
+                            />
                         ))}
                     </div>
                 </div>
