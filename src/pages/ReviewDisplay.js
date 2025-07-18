@@ -816,7 +816,7 @@ const ReviewDisplay = () => {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '');
       
-      navigate(`/universityprofile/${universitySlug}`, {
+      navigate(`/university/${universitySlug}`, {
         state: { universityId: review.universities.id }
       });
     } else {

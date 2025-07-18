@@ -327,7 +327,7 @@ const UniversityProfile = () => {
   // Handle photo click - redirect to specific review
   const handlePhotoClick = (reviewId) => {
     console.log('Navigating to review from photo with ID:', reviewId);
-    navigate(`/review?id=${reviewId}`);
+    navigate(`/review/1?id=${reviewId}`);
   };
 
   if (loading) {
