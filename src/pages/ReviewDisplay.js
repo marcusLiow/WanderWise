@@ -827,6 +827,7 @@ const ReviewDisplay = () => {
 
   // Round to 2 decimal places
   const averageRating = Math.round(rawAvg * 100) / 100;
+  const formattedRating = averageRating.toFixed(2);
   
   if (!review) return null;
 
@@ -863,7 +864,7 @@ const ReviewDisplay = () => {
             <div className="review-rating-section">
               <div className="review-rating-display">
                                 <span className="review-overall-rating">
-                  {averageRating}
+                  {formattedRating}
                 </span>
                 <div>
                   {[1,2,3,4,5].map(star => (

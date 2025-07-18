@@ -380,7 +380,7 @@ function WriteReview() {
     return Math.round(average);
   }, [academicRating, cultureRating, foodRating, accommodationRating, safetyRating]);
 
-  // Upload images to Supabase Storage
+  // Upload images to Supabase Storage - FIXED VERSION
   const uploadImagesToSupabase = async () => {
     if (images.length === 0) return [];
     
@@ -393,13 +393,20 @@ function WriteReview() {
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
         const filePath = `reviews/${fileName}`;
         
-        // Upload to Supabase Storage
+        // Convert file to ArrayBuffer for better compatibility
+        const arrayBuffer = await image.file.arrayBuffer();
+        
+        // Upload to Supabase Storage with explicit content type
         const { data, error } = await supabaseClient.storage
           .from('wanderwise')
-          .upload(filePath, image.file);
+          .upload(filePath, arrayBuffer, {
+            contentType: image.file.type,
+            cacheControl: '3600',
+            upsert: false
+          });
         
         if (error) {
-          console.error('Upload error:', error);
+          console.error('Upload error for file:', image.file.name, error);
           continue; // Skip this image but continue with others
         }
         
@@ -408,12 +415,15 @@ function WriteReview() {
           .from('wanderwise')
           .getPublicUrl(filePath);
         
+        console.log('Uploaded image:', fileName, 'URL:', publicUrl);
         imageUrls.push(publicUrl);
+        
       } catch (error) {
-        console.error('Error uploading image:', error);
+        console.error('Error uploading image:', image.file.name, error);
       }
     }
     
+    console.log('All uploaded image URLs:', imageUrls);
     return imageUrls;
   };
 
@@ -461,15 +471,15 @@ function WriteReview() {
     );
   };
 
-  // Submit handler
-    const handleSubmit = async () => {
+  // Submit handler - FIXED VERSION
+  const handleSubmit = async () => {
     if (!currency) {
       setSubmitMessage('Please select a currency before submitting.');
       return;
     }
 
     setIsSubmitting(true);
-    setSubmitMessage('');
+    setSubmitMessage('Uploading images and submitting review...');
     
     try {
       // Extract only the currency code (first 3 characters) from the full string
@@ -497,8 +507,10 @@ function WriteReview() {
 
       if (userError) throw userError;
 
-      // Upload images to Supabase Storage
+      // Upload images to Supabase Storage FIRST
+      console.log('Starting image upload...');
       const imageUrls = await uploadImagesToSupabase();
+      console.log('Image upload completed. URLs:', imageUrls);
 
       // Prepare review data using new schema field names
       const reviewData = {
@@ -520,18 +532,19 @@ function WriteReview() {
         tags: selectedTags,
         reviewText: reviewText,
         tipsText: tipsText,
-        imageUrls: imageUrls,
-        currency: currencyCode, // ✅ Now using only the 3-character code
+        imageUrls: imageUrls, // This should now contain the uploaded URLs
+        currency: currencyCode,
         expenseFood: parseFloat(expenses.food) || 0,
         expenseShopping: parseFloat(expenses.shopping) || 0,
         expenseRental: parseFloat(expenses.rental) || 0,
         expensePublicTransport: parseFloat(expenses.public_transport) || 0,
         expenseTravel: parseFloat(expenses.travel) || 0,
         expenseMiscellaneous: parseFloat(expenses.miscellaneous) || 0,
-        // New travel fields (add these if they exist in your schema)
         didTravel: didTravel,
         visitedCountries: visitedCountries
       };
+
+      console.log('Submitting review data:', reviewData);
 
       const { data, error } = await supabaseClient
         .from('reviews')
@@ -539,8 +552,12 @@ function WriteReview() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database insert error:', error);
+        throw error;
+      }
 
+      console.log('Review submitted successfully:', data);
       setSubmitMessage('Review submitted successfully! Redirecting...');
       
       // Redirect to the review page with the new review ID
@@ -550,7 +567,7 @@ function WriteReview() {
       
     } catch (err) {
       console.error('Submission error:', err);
-      setSubmitMessage('Error submitting review. Please try again.');
+      setSubmitMessage(`Error submitting review: ${err.message}`);
     } finally {
       setIsSubmitting(false);
     }
