@@ -490,7 +490,7 @@ const HomePage = () => {
             <div style={styles.searchContainer}>
               <input
                 type="text"
-                placeholder="Search universities, countries, or programs..."
+                placeholder="Search universities or countries..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}

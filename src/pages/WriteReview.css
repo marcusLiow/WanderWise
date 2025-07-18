@@ -1,4 +1,4 @@
-/* WriteReview.css - Original CSS (No Tailwind) */
+/* WriteReview.css - Orange Theme */
 
 /* Reset and base styles */
 * {
@@ -13,7 +13,7 @@ body {
 
 .write-review-container {
   min-height: 100vh;
-  background-color: #f9fafb;
+  background-color: #fef7f0;
   padding: 32px 0;
 }
 
@@ -40,7 +40,82 @@ body {
 .write-review-logo {
   width: 32px;
   height: 32px;
-  background: #2563eb;
+  background: #FF5722;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.write-review-logo span {
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.write-review-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #111827;
+  margin: 0;
+  flex: 1;
+}
+
+.write-review-step {
+  font-size: 14px;
+  color: #6b7280;
+  margin-left: auto;
+}
+
+.write-review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.write-review-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.write-review-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.write-review-auto-calc {
+  font-size: 14px;
+  color: #6b7280;
+  margin-left: 8px;
+}
+
+.write-review-content {
+  max-width: 672px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.write-review-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 32px;
+}
+
+.write-review-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.write-review-logo {
+  width: 32px;
+  height: 32px;
+  background: #FF5722;
   border-radius: 4px;
   display: flex;
   align-items: center;
@@ -105,8 +180,8 @@ body {
 .write-review-select:focus,
 .write-review-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  border-color: #FF5722;
+  box-shadow: 0 0 0 2px rgba(255, 87, 34, 0.2);
 }
 
 .write-review-textarea {
@@ -122,8 +197,8 @@ body {
 
 .write-review-textarea:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  border-color: #FF5722;
+  box-shadow: 0 0 0 2px rgba(255, 87, 34, 0.2);
 }
 
 .write-review-char-count {
@@ -158,11 +233,11 @@ body {
 }
 
 .write-review-star.filled {
-  color: #fbbf24;
+  color: #FF5722;
 }
 
 .write-review-star:hover:not(:disabled) {
-  color: #f59e0b;
+  color: #e64a19;
 }
 
 .write-review-star:disabled {
@@ -193,9 +268,9 @@ body {
 }
 
 .write-review-tag.selected {
-  background: #dbeafe;
-  color: #1d4ed8;
-  border-color: #bfdbfe;
+  background: #fff2f0;
+  color: #FF5722;
+  border-color: #FF5722;
 }
 
 /* Travel Section Styles */
@@ -217,7 +292,7 @@ body {
 .write-review-radio {
   width: 18px;
   height: 18px;
-  accent-color: #3b82f6;
+  accent-color: #FF5722;
   cursor: pointer;
 }
 
@@ -228,9 +303,9 @@ body {
 .write-review-countries-container {
   margin-top: 16px;
   padding: 16px;
-  background-color: #f8fafc;
+  background-color: #fff7ed;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #fed7aa;
 }
 
 .write-review-countries-grid {
@@ -256,8 +331,8 @@ body {
 }
 
 .write-review-country-checkbox:hover {
-  background-color: #f1f5f9;
-  border-color: #3b82f6;
+  background-color: #fff2f0;
+  border-color: #FF5722;
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
@@ -280,8 +355,8 @@ body {
 }
 
 .write-review-country-checkbox input[type="checkbox"]:checked + .write-review-checkbox-custom {
-  background-color: #3b82f6;
-  border-color: #3b82f6;
+  background-color: #FF5722;
+  border-color: #FF5722;
 }
 
 .write-review-country-checkbox input[type="checkbox"]:checked + .write-review-checkbox-custom::after {
@@ -306,13 +381,13 @@ body {
 .write-review-selected-summary {
   margin-top: 16px;
   padding: 12px;
-  background-color: #eff6ff;
+  background-color: #fff2f0;
   border-radius: 6px;
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid #FF5722;
 }
 
 .write-review-selected-summary strong {
-  color: #1e40af;
+  color: #e65722;
   font-size: 16px;
 }
 
@@ -335,13 +410,13 @@ body {
 }
 
 .write-review-upload-area:hover {
-  border-color: #3b82f6;
-  background: #eff6ff;
+  border-color: #FF5722;
+  background: #fff2f0;
 }
 
 .write-review-upload-area.dragover {
-  border-color: #3b82f6;
-  background: #dbeafe;
+  border-color: #FF5722;
+  background: #fff2f0;
 }
 
 .write-review-upload-content {
@@ -365,7 +440,7 @@ body {
 
 .write-review-upload-link {
   font-weight: 500;
-  color: #3b82f6;
+  color: #FF5722;
 }
 
 .write-review-upload-help {
@@ -438,9 +513,10 @@ body {
 
 /* Total */
 .write-review-total {
-  background: #f9fafb;
+  background: #fff7ed;
   padding: 16px;
   border-radius: 8px;
+  border: 1px solid #fed7aa;
 }
 
 .write-review-total-content {
@@ -458,7 +534,7 @@ body {
 .write-review-total-amount {
   font-size: 20px;
   font-weight: bold;
-  color: #2563eb;
+  color: #FF5722;
 }
 
 /* Actions */
@@ -486,7 +562,7 @@ body {
 .write-review-next-btn,
 .write-review-submit-btn {
   padding: 12px 32px;
-  background: #2563eb;
+  background: #FF5722;
   color: white;
   border: none;
   border-radius: 8px;
@@ -497,7 +573,13 @@ body {
 
 .write-review-next-btn:hover,
 .write-review-submit-btn:hover {
-  background: #1d4ed8;
+  background: #e64a19;
+}
+
+.write-review-next-btn:disabled,
+.write-review-submit-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
 }
 
 .write-review-back-btn {
@@ -540,6 +622,11 @@ body {
 .write-review-message.success {
   background: #f0fdf4;
   color: #16a34a;
+}
+
+.write-review-message.warning {
+  background: #fffbeb;
+  color: #d97706;
 }
 
 /* Responsive */
