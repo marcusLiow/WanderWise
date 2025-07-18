@@ -380,7 +380,7 @@ function WriteReview() {
     return Math.round(average);
   }, [academicRating, cultureRating, foodRating, accommodationRating, safetyRating]);
 
-  // Upload images to Supabase Storage
+  // Upload images to Supabase Storage - FIXED VERSION
   const uploadImagesToSupabase = async () => {
     if (images.length === 0) return [];
     
@@ -393,13 +393,20 @@ function WriteReview() {
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
         const filePath = `reviews/${fileName}`;
         
-        // Upload to Supabase Storage
+        // Convert file to ArrayBuffer for better compatibility
+        const arrayBuffer = await image.file.arrayBuffer();
+        
+        // Upload to Supabase Storage with explicit content type
         const { data, error } = await supabaseClient.storage
           .from('wanderwise')
-          .upload(filePath, image.file);
+          .upload(filePath, arrayBuffer, {
+            contentType: image.file.type,
+            cacheControl: '3600',
+            upsert: false
+          });
         
         if (error) {
-          console.error('Upload error:', error);
+          console.error('Upload error for file:', image.file.name, error);
           continue; // Skip this image but continue with others
         }
         
@@ -408,12 +415,15 @@ function WriteReview() {
           .from('wanderwise')
           .getPublicUrl(filePath);
         
+        console.log('Uploaded image:', fileName, 'URL:', publicUrl);
         imageUrls.push(publicUrl);
+        
       } catch (error) {
-        console.error('Error uploading image:', error);
+        console.error('Error uploading image:', image.file.name, error);
       }
     }
     
+    console.log('All uploaded image URLs:', imageUrls);
     return imageUrls;
   };
 
@@ -461,100 +471,82 @@ function WriteReview() {
     );
   };
 
-  // Submit handler
-    const handleSubmit = async () => {
-    if (!currency) {
-      setSubmitMessage('Please select a currency before submitting.');
-      return;
-    }
+const handleSubmit = async () => {
+  if (!currency) {
+    setSubmitMessage('Please select a currency before submitting.');
+    return;
+  }
 
-    setIsSubmitting(true);
-    setSubmitMessage('');
-    
-    try {
-      // Extract only the currency code (first 3 characters) from the full string
-      const currencyCode = currency.split(' - ')[0]; // Gets "USD" from "USD - US Dollar"
-      
-      // Get the selected university ID
-      const selectedUniversityObj = filteredUniversities.find(uni => uni.name === selectedUniversity);
-      if (!selectedUniversityObj) {
-        throw new Error('Selected university not found');
-      }
+  // Check localStorage login
+  const stored = localStorage.getItem('wanderwise_user');
+  if (!stored) {
+    setSubmitMessage('You must be logged in to submit a review.');
+    return;
+  }
+  const userObj = JSON.parse(stored);
 
-      // For now, create a temporary user (in a real app, this would come from authentication)
-      const tempUser = {
-        firstName: 'Anonymous',
-        lastName: 'User',
-        email: `user${Date.now()}@example.com`,
-        password: 'temp_password'
-      };
+  setIsSubmitting(true);
+  setSubmitMessage('Uploading images and submitting review…');
 
-      const { data: userData, error: userError } = await supabaseClient
-        .from('users')
-        .insert([tempUser])
-        .select()
-        .single();
+  try {
+    // Upload images first
+    const imageUrls = await uploadImagesToSupabase();
 
-      if (userError) throw userError;
+    // Build payload
+    const currencyCode = currency.split(' - ')[0];
+    const selectedUniversityObj = filteredUniversities.find(u => u.name === selectedUniversity);
+    if (!selectedUniversityObj) throw new Error('Selected university not found');
 
-      // Upload images to Supabase Storage
-      const imageUrls = await uploadImagesToSupabase();
+    const reviewData = {
+      user_id:               userObj.id,
+      university_id:         selectedUniversityObj.id,
+      courseStudied,
+      gpa:                   parseFloat(gpa),
+      overallRating:         computedOverallRating,
+      academicRating,
+      academicComment,
+      cultureRating,
+      cultureComment,
+      foodRating,
+      foodComment,
+      accommodationRating,
+      accommodationComment,
+      safetyRating,
+      safetyComment,
+      tags:                  selectedTags,
+      reviewText,
+      tipsText,
+      imageUrls,
+      currency:              currencyCode,
+      expenseFood:           parseFloat(expenses.food)            || 0,
+      expenseShopping:       parseFloat(expenses.shopping)        || 0,
+      expenseRental:         parseFloat(expenses.rental)          || 0,
+      expensePublicTransport:parseFloat(expenses.public_transport) || 0,
+      expenseTravel:         parseFloat(expenses.travel)          || 0,
+      expenseMiscellaneous:  parseFloat(expenses.miscellaneous)    || 0,
+      didTravel,
+      visitedCountries
+    };
 
-      // Prepare review data using new schema field names
-      const reviewData = {
-        user_id: userData.id,
-        university_id: selectedUniversityObj.id,
-        courseStudied: courseStudied,
-        gpa: parseFloat(gpa),
-        overallRating: computedOverallRating,
-        academicRating: academicRating,
-        academicComment: academicComment,
-        cultureRating: cultureRating,
-        cultureComment: cultureComment,
-        foodRating: foodRating,
-        foodComment: foodComment,
-        accommodationRating: accommodationRating,
-        accommodationComment: accommodationComment,
-        safetyRating: safetyRating,
-        safetyComment: safetyComment,
-        tags: selectedTags,
-        reviewText: reviewText,
-        tipsText: tipsText,
-        imageUrls: imageUrls,
-        currency: currencyCode, // ✅ Now using only the 3-character code
-        expenseFood: parseFloat(expenses.food) || 0,
-        expenseShopping: parseFloat(expenses.shopping) || 0,
-        expenseRental: parseFloat(expenses.rental) || 0,
-        expensePublicTransport: parseFloat(expenses.public_transport) || 0,
-        expenseTravel: parseFloat(expenses.travel) || 0,
-        expenseMiscellaneous: parseFloat(expenses.miscellaneous) || 0,
-        // New travel fields (add these if they exist in your schema)
-        didTravel: didTravel,
-        visitedCountries: visitedCountries
-      };
+    // 4️⃣ Insert review
+    const { data, error } = await supabaseClient
+      .from('reviews')
+      .insert([reviewData])
+      .select()
+      .single();
+    if (error) throw error;
 
-      const { data, error } = await supabaseClient
-        .from('reviews')
-        .insert([reviewData])
-        .select()
-        .single();
+    setSubmitMessage('Review submitted successfully! Redirecting…');
+    setTimeout(() => navigate(`/review/1?id=${data.id}`), 1500);
 
-      if (error) throw error;
+  } catch (err) {
+    console.error(err);
+    setSubmitMessage(`Error submitting review: ${err.message}`);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
-      setSubmitMessage('Review submitted successfully! Redirecting...');
-      
-      // Redirect to the review page with the new review ID
-      setTimeout(() => {
-        navigate(`/review/1?id=${data.id}`);
-      }, 1500);
-      
-    } catch (err) {
-      console.error('Submission error:', err);
-      setSubmitMessage('Error submitting review. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   // Calculate total expenses
   const totalExpenses = useMemo(() => {

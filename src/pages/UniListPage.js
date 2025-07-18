@@ -142,14 +142,14 @@ const UniListPage = () => {
         return '🌍';
     };
 
-    // UPDATED: Get placeholder image based on country/region with better fallbacks
+    // UPDATED: Get placeholder image based on country/region with fixed South Korea and Taiwan URLs
     const getUniversityImage = (countryName, universityName) => {
         const countryImages = {
             'China': 'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=400&h=300&fit=crop',
             'Hong Kong': 'https://images.unsplash.com/photo-1518623001395-125242310d0c?w=400&h=300&fit=crop',
             'Japan': 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400&h=300&fit=crop',
-            'South Korea': 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=300&fit=crop',
-            'Taiwan': 'https://images.unsplash.com/photo-1590736969955-71cc94901144?w=400&h=300&fit=crop',
+            'South Korea': 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=300&fit=crop',
+            'Taiwan': 'https://images.unsplash.com/photo-1524413840807-0c3cb6fa808d?w=400&h=300&fit=crop',
             'Thailand': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop',
             'Philippines': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop',
             'Singapore': 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=400&h=300&fit=crop',
@@ -170,9 +170,9 @@ const UniListPage = () => {
             'Turkey': 'https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?w=400&h=300&fit=crop',
             'Kazakhstan': 'https://images.unsplash.com/photo-1526481280693-3bfa7568e0f3?w=400&h=300&fit=crop',
             'Brazil': 'https://images.unsplash.com/photo-1483729558449-99ef09a8c325?w=400&h=300&fit=crop',
-            'Belgium': 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=300&fit=crop',
-            'Austria': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop',
-            'Denmark': 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=400&h=300&fit=crop'
+            'Belgium': 'https://images.unsplash.com/photo-1564071305012-dadb7c2f5d1c?w=400&h=300&fit=crop',
+            'Austria': 'https://images.unsplash.com/photo-1527004013197-933c4bb611b3?w=400&h=300&fit=crop',
+            'Denmark': 'https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?w=400&h=300&fit=crop'
         };
         
         // First try to get country-specific image
@@ -196,17 +196,25 @@ const UniListPage = () => {
         return fallbackImages[nameHash % fallbackImages.length];
     };
 
-    // NEW: University Card Component with error handling
+    // NEW: University Card Component with enhanced error handling
     const UniversityCard = ({ university, index }) => {
         const [imageSrc, setImageSrc] = useState(university.image);
         const [imageError, setImageError] = useState(false);
+        const [retryCount, setRetryCount] = useState(0);
 
         const handleImageError = () => {
-            if (!imageError) {
+            if (retryCount < 2) {
+                setRetryCount(prev => prev + 1);
+                // Try different fallback images
+                const fallbackImages = [
+                    getUniversityImage(university.country, university.name),
+                    'https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=400&h=300&fit=crop',
+                    'https://images.unsplash.com/photo-1562774053-701939374585?w=400&h=300&fit=crop',
+                    'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=400&h=300&fit=crop'
+                ];
+                setImageSrc(fallbackImages[retryCount] || fallbackImages[0]);
+            } else {
                 setImageError(true);
-                // Try fallback image
-                const fallbackImage = getUniversityImage(university.country, university.name);
-                setImageSrc(fallbackImage);
             }
         };
 
@@ -226,22 +234,24 @@ const UniListPage = () => {
             >
                 <div style={{
                     ...styles.destinationImage,
-                    backgroundImage: `url(${imageSrc})`
+                    backgroundImage: imageError ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : `url(${imageSrc})`
                 }}>
                     {/* Hidden img tag to trigger error handling */}
-                    <img 
-                        src={imageSrc} 
-                        alt={university.name}
-                        style={{ display: 'none' }}
-                        onError={handleImageError}
-                    />
+                    {!imageError && (
+                        <img 
+                            src={imageSrc} 
+                            alt={university.name}
+                            style={{ display: 'none' }}
+                            onError={handleImageError}
+                        />
+                    )}
                     <div style={{
                         position: 'absolute',
                         top: 0,
                         left: 0,
                         width: '100%',
                         height: '100%',
-                        background: 'rgba(0,0,0,0.3)',
+                        background: imageError ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.3)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center'
@@ -640,7 +650,7 @@ const UniListPage = () => {
                         }
                     </p>
 
-                    {/* UPDATED: Using new UniversityCard component */}
+                    {/* UPDATED: Using enhanced UniversityCard component */}
                     <div style={styles.grid}>
                         {filteredData.map((university, index) => (
                             <UniversityCard 

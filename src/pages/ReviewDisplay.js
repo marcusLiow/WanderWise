@@ -18,7 +18,7 @@ const supabaseUrl = 'https://aojighzqmzouwhxyndbs.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvamlnaHpxbXpvdXdoeHluZGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MDgyNTMsImV4cCI6MjA2Nzk4NDI1M30.1f2HHXbYxP8KaABhv4uw151Xj1mRDWxd63pHYgKIXnQ';
 const supabaseClient = createClient(supabaseUrl, supabaseKey); 
 
-// Image Gallery Component (unchanged)
+// Image Gallery Component
 const ImageGallery = ({ imageUrls }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -481,7 +481,7 @@ const ImageGallery = ({ imageUrls }) => {
   );
 };
 
-// Star Rating Component (unchanged)
+// Star Rating Component
 const StarRating = ({ rating, label }) => {
   const validRating = rating && !isNaN(rating) ? Number(rating) : 0;
   
@@ -501,13 +501,13 @@ const StarRating = ({ rating, label }) => {
   );
 };
 
-// ExpenseChart Component (unchanged)
+// ExpenseChart Component
 const ExpenseChart = ({ expenses, currency }) => {
   const [isVisible, setIsVisible] = useState(false);
   
   const expenseData = [
     { 
-      label: 'Accommodation', 
+      label: 'Rental', 
       shortLabel: 'Accom.', 
       amount: expenses.expenseRental || 0, 
       color: '#FF5722' 
@@ -732,41 +732,76 @@ const ReviewDisplay = () => {
       setLoading(true);
       setError(null);
 
-      // Updated query to match your schema
-      const { data, error } = await supabaseClient
+      // FIXED: Separate queries to avoid relationship issues
+      // Step 1: Get the main review data
+      const { data: reviewData, error: reviewError } = await supabaseClient
         .from('reviews')
-        .select(`
-          *,
-          universities (
-            id,
-            name,
-            countries (
-              name,
-              flag
-            )
-          ),
-          users (
-            firstName,
-            lastName
-          )
-        `)
+        .select('*')
         .eq('id', id)
         .single();
       
-      console.log('Supabase query result:', { data, error });
+      console.log('Review query result:', { reviewData, reviewError });
       
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
+      if (reviewError) {
+        console.error('Review fetch error:', reviewError);
+        throw reviewError;
       }
       
-      if (!data) {
+      if (!reviewData) {
         throw new Error('No review found with this ID');
       }
 
+      // Step 2: Get university data separately
+      let universityData = null;
+      if (reviewData.university_id) {
+        const { data: uniData, error: uniError } = await supabaseClient
+          .from('universities')
+          .select('*')
+          .eq('id', reviewData.university_id)
+          .single();
+        
+        if (!uniError && uniData) {
+          universityData = uniData;
+          
+          // Step 3: Get country data for the university
+          if (uniData.country_code) {
+            const { data: countryData, error: countryError } = await supabaseClient
+              .from('countries')
+              .select('name, flag')
+              .eq('code', uniData.country_code)
+              .single();
+            
+            if (!countryError && countryData) {
+              universityData.countries = countryData;
+            }
+          }
+        }
+      }
+
+      // Step 4: Get user data separately
+      let userData = null;
+      if (reviewData.user_id) {
+        const { data: userDataResult, error: userError } = await supabaseClient
+          .from('users')
+          .select('firstName, lastName')
+          .eq('id', reviewData.user_id)
+          .single();
+        
+        if (!userError && userDataResult) {
+          userData = userDataResult;
+        }
+      }
+
+      // Combine all data
+      const combinedData = {
+        ...reviewData,
+        universities: universityData,
+        users: userData
+      };
+
       // Process imageUrls - ensure they're valid URLs
-      if (data.imageUrls && Array.isArray(data.imageUrls)) {
-        data.imageUrls = data.imageUrls
+      if (combinedData.imageUrls && Array.isArray(combinedData.imageUrls)) {
+        combinedData.imageUrls = combinedData.imageUrls
           .filter(url => url && url.trim()) // Remove empty URLs
           .map(url => {
             if (url.startsWith('http')) {
@@ -780,25 +815,25 @@ const ReviewDisplay = () => {
             }
           });
       } else {
-        data.imageUrls = [];
+        combinedData.imageUrls = [];
       }
 
       // Process visitedCountries - ensure it's an array
-      console.log('Raw visitedCountries from database:', data.visitedCountries);
-      if (data.visitedCountries && Array.isArray(data.visitedCountries)) {
-        data.visitedCountries = data.visitedCountries.filter(country => country && country.trim());
-      } else if (data.visitedCountries && typeof data.visitedCountries === 'string') {
+      console.log('Raw visitedCountries from database:', combinedData.visitedCountries);
+      if (combinedData.visitedCountries && Array.isArray(combinedData.visitedCountries)) {
+        combinedData.visitedCountries = combinedData.visitedCountries.filter(country => country && country.trim());
+      } else if (combinedData.visitedCountries && typeof combinedData.visitedCountries === 'string') {
         try {
-          data.visitedCountries = JSON.parse(data.visitedCountries);
+          combinedData.visitedCountries = JSON.parse(combinedData.visitedCountries);
         } catch {
-          data.visitedCountries = data.visitedCountries.split(',').map(country => country.trim()).filter(country => country);
+          combinedData.visitedCountries = combinedData.visitedCountries.split(',').map(country => country.trim()).filter(country => country);
         }
       } else {
-        data.visitedCountries = [];
+        combinedData.visitedCountries = [];
       }
       
-      console.log('Processed review data:', data);
-      setReview(data);
+      console.log('Processed review data:', combinedData);
+      setReview(combinedData);
     } catch (err) {
       console.error('Error fetching review:', err);
       setError(`Failed to load review: ${err.message}`);
@@ -855,9 +890,12 @@ const ReviewDisplay = () => {
     review.safetyRating
   ].map(r => Number(r) || 0).filter(r => r > 0);
 
-  const averageRating = detailRatings.length > 0 
-    ? Math.round((detailRatings.reduce((sum, r) => sum + r, 0) / detailRatings.length) * 100) / 100
-    : review.overallRating || 0;
+  // Compute an un‑rounded average
+  const rawAvg = detailRatings.reduce((sum, r) => sum + r, 0) / detailRatings.length;
+
+  // Round to 2 decimal places
+  const averageRating = Math.round(rawAvg * 100) / 100;
+  const formattedRating = averageRating.toFixed(2);
   
   // Calculate total expenses
   const total = [
@@ -883,7 +921,7 @@ const ReviewDisplay = () => {
               <div className="review-title">
                 <h1>Exchange Review</h1>
                 <p>
-                  {review.universities?.name}, {review.universities?.countries?.name}
+                  {review.universities?.name || 'Unknown University'}, {review.universities?.countries?.name || 'Unknown Country'}
                   {review.universities?.countries?.flag && (
                     <img 
                       src={review.universities.countries.flag} 
@@ -897,7 +935,7 @@ const ReviewDisplay = () => {
             <div className="review-rating-section">
               <div className="review-rating-display">
                 <span className="review-overall-rating">
-                  {averageRating}
+                  {formattedRating}
                 </span>
                 <div>
                   {[1,2,3,4,5].map(star => (
@@ -917,11 +955,11 @@ const ReviewDisplay = () => {
           <div className="review-info-grid">
             <div className="review-info-card">
               <h3>Course</h3>
-              <p>{review.courseStudied}</p>
+              <p>{review.courseStudied || 'N/A'}</p>
             </div>
             <div className="review-info-card">
               <h3>GPA</h3>
-              <p>{review.gpa}</p>
+              <p>{review.gpa || 'N/A'}</p>
             </div>
             {review.users && (
               <div className="review-info-card">
@@ -961,7 +999,7 @@ const ReviewDisplay = () => {
               <div>
                 <StarRating rating={review.academicRating}      label="Academic"       />
                 <StarRating rating={review.cultureRating}       label="Cultural"        />
-                <StarRating rating={review.accommodationRating} label="Accommodation"  />
+                <StarRating rating={review.accommodationRating} label="Rental"  />
                 <StarRating rating={review.safetyRating}        label="Safety"          />
               </div>
             </div>
@@ -1006,7 +1044,7 @@ const ReviewDisplay = () => {
           <h2>Detailed Reviews</h2>
           <div className="review-overall-experience">
             <h3>Overall Experience</h3>
-            <p>{review.reviewText}</p>
+            <p>{review.reviewText || 'No review text provided.'}</p>
           </div>
 
           {(() => {
