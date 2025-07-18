@@ -29,24 +29,10 @@ const UniversityProfile = () => {
   const universityId = location.state?.universityId;
 
   const slugToName = (slug) => {
-    if (!slug) return "IE University";
+    if (!slug) return "";
     return slug.split('-').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
-  };
-
-  // Helper function to create URL-friendly slugs
-  const createSlug = (str) => {
-    return str.toLowerCase().replace(/\s+/g, '-');
-  };
-
-  const mockUniversity = {
-    id: '1',
-    name: universitySlug ? slugToName(universitySlug) : "IE University",
-    description: "IE University is a private university with innovative programs. Known for its entrepreneurship focus and international perspective.",
-    countries: { name: "Spain", flag: "https://flagcdn.com/w40/es.png" },
-    rating: 4.4,
-    logo: "https://images.unsplash.com/photo-1562774053-701939374585?w=100&h=100&fit=crop&crop=center"
   };
 
   useEffect(() => {
@@ -58,10 +44,9 @@ const UniversityProfile = () => {
       setLoading(true);
       setError(null);
 
-      await new Promise(resolve => setTimeout(resolve, 800));
-
-      let universityData;
+      let universityData = null;
       
+      // Try to fetch university by ID first
       if (universityId) {
         try {
           const { data: uniData, error: uniError } = await supabase
@@ -76,22 +61,21 @@ const UniversityProfile = () => {
             .eq('id', universityId)
             .single();
           
-          if (uniError) {
-            console.warn('University not found by ID, trying by name');
-            universityData = null;
-          } else {
+          if (!uniError && uniData) {
             universityData = uniData;
           }
         } catch (err) {
-          console.warn('Supabase connection failed, using mock data');
-          universityData = null;
+          console.warn('Error fetching university by ID:', err);
         }
       }
       
+      // If not found by ID, try by slug/name
       if (!universityData && universitySlug) {
         try {
           const searchName = slugToName(universitySlug);
-          const { data: uniData, error: uniError } = await supabase
+          
+          // Try exact match first
+          let { data: uniData, error: uniError } = await supabase
             .from('universities')
             .select(`
               *,
@@ -100,42 +84,106 @@ const UniversityProfile = () => {
                 flag
               )
             `)
-            .ilike('name', `%${searchName}%`)
+            .eq('name', searchName)
             .single();
           
+          // If exact match fails, try fuzzy match
           if (uniError) {
-            console.warn('University not found by name, using mock data');
-            universityData = { ...mockUniversity, name: searchName };
+            const { data: fuzzyData, error: fuzzyError } = await supabase
+              .from('universities')
+              .select(`
+                *,
+                countries!universities_country_fkey (
+                  name,
+                  flag
+                )
+              `)
+              .ilike('name', `%${searchName}%`)
+              .limit(1);
+            
+            if (!fuzzyError && fuzzyData && fuzzyData.length > 0) {
+              universityData = fuzzyData[0];
+            }
           } else {
             universityData = uniData;
           }
         } catch (err) {
-          console.warn('Supabase connection failed, using mock data');
-          universityData = { ...mockUniversity, name: slugToName(universitySlug) };
+          console.warn('Error fetching university by name:', err);
         }
       }
-      
+
       if (!universityData) {
-        universityData = mockUniversity;
+        throw new Error('University not found');
       }
 
-      // Fetch reviews from reviews_details table
+      // Fetch reviews from review_details table (summary/preview data)
       try {
-        const universityName = universityData.name;
-        const { data: reviewsData, error: reviewsError } = await supabase
-          .from('reviews_details')
+        console.log('Fetching reviews for university:', universityData.name);
+        console.log('University ID:', universityData.id);
+        
+        // First, try to query by university name (exact match)
+        let { data: reviewsData, error: reviewsError } = await supabase
+          .from('review_details')
           .select('*')
-          .eq('university_name', universityName)
-          .order('created_at', { ascending: false })
+          .eq('university_name', universityData.name)
+          .order('created_at', { ascending: false });
+
+        console.log('Reviews query result (exact match):', { reviewsData, reviewsError });
+
+        // If no exact match, try case-insensitive search
+        if ((!reviewsData || reviewsData.length === 0) && !reviewsError) {
+          console.log('Trying case-insensitive search by university name...');
+          
+          const { data: fallbackReviewsData, error: fallbackReviewsError } = await supabase
+            .from('review_details')
+            .select('*')
+            .ilike('university_name', universityData.name)
+            .order('created_at', { ascending: false });
+            
+          console.log('Case-insensitive search result:', { fallbackReviewsData, fallbackReviewsError });
+          
+          if (!fallbackReviewsError && fallbackReviewsData) {
+            reviewsData = fallbackReviewsData;
+            reviewsError = null;
+          }
+        }
+
+        // If still no results, try partial match
+        if ((!reviewsData || reviewsData.length === 0) && !reviewsError) {
+          console.log('Trying partial match search...');
+          
+          const { data: partialMatchData, error: partialMatchError } = await supabase
+            .from('review_details')
+            .select('*')
+            .ilike('university_name', `%${universityData.name}%`)
+            .order('created_at', { ascending: false });
+            
+          console.log('Partial match search result:', { partialMatchData, partialMatchError });
+          
+          if (!partialMatchError && partialMatchData) {
+            reviewsData = partialMatchData;
+            reviewsError = null;
+          }
+        }
+
+        // Debug: Let's also check what university names are available in the database
+        const { data: allUniversityNames, error: namesError } = await supabase
+          .from('review_details')
+          .select('university_name')
           .limit(10);
+        
+        console.log('Available university names in review_details:', allUniversityNames);
+        console.log('Searching for:', JSON.stringify(universityData.name));
 
         if (reviewsError) {
-          console.warn('Error fetching reviews:', reviewsError);
+          console.error('Error fetching reviews:', reviewsError);
           setReviews([]);
         } else {
+          console.log('Final reviews found:', reviewsData?.length || 0);
+          console.log('Review data sample:', reviewsData?.[0]);
           setReviews(reviewsData || []);
           
-          // Process photo highlights from reviews with review mapping
+          // Process photo highlights from reviews
           const photoHighlightsData = [];
           reviewsData?.forEach(review => {
             if (review.imageUrls && Array.isArray(review.imageUrls)) {
@@ -198,16 +246,14 @@ const UniversityProfile = () => {
           }
         }
       } catch (err) {
-        console.warn('Reviews fetch failed:', err);
+        console.error('Error fetching reviews:', err);
         setReviews([]);
       }
 
       setUniversity(universityData);
     } catch (err) {
-      console.error('Error fetching data:', err);
+      console.error('Error fetching university data:', err);
       setError(err.message);
-      setUniversity(mockUniversity);
-      setReviews([]);
     } finally {
       setLoading(false);
     }
@@ -272,13 +318,15 @@ const UniversityProfile = () => {
     return 'Unknown';
   };
 
-  // Handle review click - redirect to ReviewDisplay page
+  // Handle review click - redirect to ReviewDisplay page with the review ID
   const handleReviewClick = (reviewId) => {
-    navigate(`/review?id=${reviewId}`);
+    console.log('Navigating to review with ID:', reviewId);
+    navigate(`/review/1?id=${reviewId}`);
   };
 
   // Handle photo click - redirect to specific review
   const handlePhotoClick = (reviewId) => {
+    console.log('Navigating to review from photo with ID:', reviewId);
     navigate(`/review?id=${reviewId}`);
   };
 
@@ -290,11 +338,20 @@ const UniversityProfile = () => {
     );
   }
 
-  if (error && !university) {
+  if (error) {
     return (
       <div className="error">
         <p>Error loading university data: {error}</p>
         <button onClick={fetchUniversityData}>Retry</button>
+      </div>
+    );
+  }
+
+  if (!university) {
+    return (
+      <div className="error">
+        <p>University not found</p>
+        <button onClick={() => navigate(-1)}>Go Back</button>
       </div>
     );
   }
@@ -309,23 +366,23 @@ const UniversityProfile = () => {
           {/* University Header */}
           <div className="university-header">
             <div className="university-logo">
-              <img src={university.logo || mockUniversity.logo} alt={`${university.name} Logo`} />
+              <img src={university.logo || "https://images.unsplash.com/photo-1562774053-701939374585?w=100&h=100&fit=crop&crop=center"} alt={`${university.name} Logo`} />
             </div>
             <div className="university-info">
               <h1>{university.name}</h1>
               <div className="country-info">
                 <img 
-                  src={university.countries?.flag || mockUniversity.countries.flag} 
-                  alt={`${university.countries?.name || mockUniversity.countries.name} Flag`} 
+                  src={university.countries?.flag || "https://flagcdn.com/w40/es.png"} 
+                  alt={`${university.countries?.name || "Country"} Flag`} 
                   className="country-flag" 
                 />
-                <span>{university.countries?.name || mockUniversity.countries.name}</span>
+                <span>{university.countries?.name || "Unknown"}</span>
               </div>
               <div className="rating">
-                {renderStars(Math.round(university.rating))}
-                <span className="rating-number">{university.rating}/5</span>
+                {renderStars(Math.round(university.rating || 0))}
+                <span className="rating-number">{university.rating || 0}/5</span>
               </div>
-              <p className="description">{university.description}</p>
+              <p className="description">{university.description || "No description available."}</p>
             </div>
           </div>
 
@@ -338,7 +395,7 @@ const UniversityProfile = () => {
               </div>
             ) : (
               <div className="reviews-grid">
-                {reviews.map((review) => (
+                {reviews.slice(0, 10).map((review) => (
                   <div 
                     key={review.id} 
                     className="review-card clickable-review"
@@ -399,7 +456,7 @@ const UniversityProfile = () => {
                       <div className="review-rating" style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
                         {renderStars(review.overallRating || 0)}
                         <span style={{ marginLeft: '8px', fontSize: '14px', color: '#6b7280' }}>
-                          {review.overallRating}/5
+                          {review.overallRating || 0}/5
                         </span>
                       </div>
                       
@@ -411,7 +468,7 @@ const UniversityProfile = () => {
                       }}>
                         {review.reviewText && review.reviewText.length > 150 
                           ? `${review.reviewText.substring(0, 150)}...` 
-                          : review.reviewText
+                          : review.reviewText || "No review text available."
                         }
                       </p>
                       
@@ -529,7 +586,7 @@ const UniversityProfile = () => {
                       style={{ width: maxExpense > 0 ? `${(averageExpenses.rental / maxExpense) * 100}%` : '0%' }}
                       onMouseEnter={() => setHoveredExpense({ type: 'rental', amount: averageExpenses.rental })}
                       onMouseLeave={() => setHoveredExpense(null)}
-                      title={`$${averageExpenses.rental.toFixed(0)}`}
+                      title={`${averageExpenses.rental.toFixed(0)}`}
                     />
                     {hoveredExpense && hoveredExpense.type === 'rental' && (
                       <div className="expense-tooltip">
@@ -548,7 +605,7 @@ const UniversityProfile = () => {
                       style={{ width: maxExpense > 0 ? `${(averageExpenses.food / maxExpense) * 100}%` : '0%' }}
                       onMouseEnter={() => setHoveredExpense({ type: 'food', amount: averageExpenses.food })}
                       onMouseLeave={() => setHoveredExpense(null)}
-                      title={`$${averageExpenses.food.toFixed(0)}`}
+                      title={`${averageExpenses.food.toFixed(0)}`}
                     />
                     {hoveredExpense && hoveredExpense.type === 'food' && (
                       <div className="expense-tooltip">
@@ -567,7 +624,7 @@ const UniversityProfile = () => {
                       style={{ width: maxExpense > 0 ? `${(averageExpenses.transport / maxExpense) * 100}%` : '0%' }}
                       onMouseEnter={() => setHoveredExpense({ type: 'transport', amount: averageExpenses.transport })}
                       onMouseLeave={() => setHoveredExpense(null)}
-                      title={`$${averageExpenses.transport.toFixed(0)}`}
+                      title={`${averageExpenses.transport.toFixed(0)}`}
                     />
                     {hoveredExpense && hoveredExpense.type === 'transport' && (
                       <div className="expense-tooltip">
@@ -689,7 +746,7 @@ const UniversityProfile = () => {
 
           {/* Top Countries */}
           <div className="top-countries">
-            <h3>Most Visited Countries While on Exchange</h3>
+            <h3>Most Visited Countries While On Exchange</h3>
             {topCountries.length === 0 ? (
               <div className="no-countries">
                 <p>No countries to show, tell us about your experience!</p>

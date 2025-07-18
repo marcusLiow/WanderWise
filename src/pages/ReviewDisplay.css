@@ -22,6 +22,20 @@
   margin-bottom: 24px;
 }
 
+.review-card:hover,
+.review-ratings-card:hover,
+.review-expenses-card:hover,
+.review-comments-card:hover {
+  box-shadow: 0 4px 20px rgba(255, 87, 34, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.review-back-button:focus,
+button:focus {
+  outline: 2px solid #FF5722;
+  outline-offset: 2px;
+}
+
 .review-header {
   display: flex;
   align-items: center;
@@ -38,7 +52,7 @@
 .review-logo {
   width: 32px;
   height: 32px;
-  background: #2563eb;
+  background: #FF5722;
   border-radius: 4px;
   display: flex;
   align-items: center;
@@ -78,7 +92,7 @@
 .review-overall-rating {
   font-size: 24px;
   font-weight: bold;
-  color: #2563eb;
+  color: #FF5722; 
 }
 
 .star-display {
@@ -107,7 +121,9 @@
   background: #f9fafb;
   padding: 16px;
   border-radius: 8px;
+  border-left: 4px solid #FF5722; 
 }
+
 
 .review-info-card h3 {
   font-weight: 600;
@@ -121,8 +137,12 @@
   margin: 0;
 }
 
-.review-tags {
-  margin-bottom: 24px;
+.review-tag {
+  padding: 4px 12px;
+  background: linear-gradient(135deg, #FF5722, #FF7043); 
+  color: white; 
+  font-size: 14px;
+  border-radius: 999px;
 }
 
 .review-tags h3 {
@@ -135,14 +155,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-}
-
-.review-tag {
-  padding: 4px 12px;
-  background: #dbeafe;
-  color: #1d4ed8;
-  font-size: 14px;
-  border-radius: 999px;
 }
 
 .review-main-grid {
@@ -256,7 +268,7 @@
 
 .review-tips-section {
   margin-top: 32px;
-  background: #eff6ff;
+  background: #FFF3E0; 
   padding: 24px;
   border-radius: 8px;
 }
@@ -264,12 +276,12 @@
 .review-tips-section h3 {
   font-size: 18px;
   font-weight: 600;
-  color: #1e3a8a;
+  color: #E64A19;
   margin: 0 0 12px 0;
 }
 
 .review-tips-section p {
-  color: #1e40af;
+  color: #FF5722; 
   line-height: 1.6;
   margin: 0;
 }
@@ -281,7 +293,7 @@
 
 .review-back-button {
   padding: 12px 24px;
-  background: #4b5563;
+  background: #FF5722;
   color: white;
   border: none;
   border-radius: 8px;
@@ -290,7 +302,7 @@
 }
 
 .review-back-button:hover {
-  background: #374151;
+  background: #E64A19;
 }
 
 .review-loading {
@@ -311,7 +323,7 @@
   height: 48px;
   width: 48px;
   border: 2px solid #e5e7eb;
-  border-top: 2px solid #2563eb;
+  border-top: 2px solid #FF5722; 
   margin: 0 auto 16px;
 }
 
@@ -384,38 +396,18 @@
   border-radius: 8px;
 }
 
-.modal-close {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background: rgba(255, 255, 255, 0.9);
+.modal-close,
+.modal-nav {
+  background: rgba(255, 87, 34, 0.9); 
+  color: white;
   border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 20px;
-  font-weight: bold;
+  transition: all 0.3s ease;
 }
 
-.modal-nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(255, 255, 255, 0.9);
-  border: none;
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 20px;
-  font-weight: bold;
+.modal-close:hover,
+.modal-nav:hover:not(:disabled) {
+  background: rgba(230, 74, 25, 0.9); 
+  transform: scale(1.1);
 }
 
 .modal-nav.prev {
@@ -440,6 +432,7 @@
 .expense-bar:hover {
   opacity: 0.8;
   transform: scaleY(1.05);
+  filter: brightness(1.1);
 }
 
 .tooltip {
@@ -486,4 +479,57 @@
   opacity: 0;
   transform: translateY(-20px);
   animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.review-main-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) 2fr;
+  gap: 24px;
+  margin-top: 32px;
+}
+
+.review-left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Visited Countries card styling */
+.review-visited-card {
+  background: #fff;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.review-visited-card h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #272411;
+}
+
+.review-visited-card p {
+  margin: 0;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.visited-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;             
+  margin: 0;
+}
+
+.visited-chip {
+  background: #FF8A65;    
+  color: #FFFF;         
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }

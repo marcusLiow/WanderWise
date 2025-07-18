@@ -543,9 +543,9 @@ function WriteReview() {
 
       setSubmitMessage('Review submitted successfully! Redirecting...');
       
-      // Redirect to home page or review page
+      // Redirect to the review page with the new review ID
       setTimeout(() => {
-        navigate('/');
+        navigate(`/review/1?id=${data.id}`);
       }, 1500);
       
     } catch (err) {
