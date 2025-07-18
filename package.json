@@ -26,7 +26,9 @@
     "server": "cd backend && npm install && npm start",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "build": "react-scripts build",
-    "start": "npm run build && npm run server",
+    "build:backend": "cd backend && npm install",
+    "start": "npm run build && npm run build:backend && npm run server",
+    "deploy": "npm install && npm run build && cd backend && npm install && npm start",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

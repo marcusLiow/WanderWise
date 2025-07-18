@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
+const path = require('path');
 
 // Check if Supabase is installed
 let supabase;
@@ -19,7 +20,9 @@ try {
 }
 
 const app = express();
+const PORT = process.env.PORT || 5000;
 
+// Middleware
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
@@ -39,8 +42,10 @@ async function testSupabase() {
     console.log('❌ Supabase connection error:', error.message);
   }
 }
+
+// Test connection only in development
 if (process.env.NODE_ENV !== 'production') {
-testSupabase();
+  testSupabase();
 }
 
 // Helper functions
@@ -158,7 +163,7 @@ app.post('/api/register', async (req, res) => {
       lastName,
       email,
       password: hashedPassword,
-      nationality, // <-- Use this instead
+      nationality,
       dateOfBirth,
       university
     };
@@ -475,7 +480,6 @@ app.get('/api/search', async (req, res) => {
       });
     }
     
-    
     res.json({
       success: true,
       query: q,
@@ -527,16 +531,28 @@ app.get('/api/universities', async (req, res) => {
   }
 });
 
-//jinhong backend edited to have express serve the react build
-const path = require('path');
+// ===========================================
+// SERVE REACT BUILD (FOR PRODUCTION)
+// ===========================================
+
+// Serve React build files
 app.use(express.static(path.join(__dirname, '../build')));
+
+// Handle React routing, return all requests to React app
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../build', 'index.html'));
 });
 
+// ===========================================
 // START SERVER
-app.listen(5000, () => {
-  console.log('\n🚀 Server running on port 5000');
+// ===========================================
+
+app.listen(PORT, () => {
+  console.log(`\n🚀 Server running on port ${PORT}`);
   console.log('📊 Using Supabase for: Users, Universities, Authentication, Profiles');
   console.log('🔗 Ready to accept connections...\n');
+  
+  // Log environment info
+  console.log('🌍 Environment:', process.env.NODE_ENV || 'development');
+  console.log('📁 Serving static files from:', path.join(__dirname, '../build'));
 });
