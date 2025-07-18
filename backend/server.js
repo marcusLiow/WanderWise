@@ -525,6 +525,13 @@ app.get('/api/universities', async (req, res) => {
   }
 });
 
+//jinhong backend edited to have express serve the react build
+const path = require('path');
+app.use(express.static(path.join(__dirname, '../build')));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../build', 'index.html'));
+});
+
 // START SERVER
 app.listen(5000, () => {
   console.log('\n🚀 Server running on port 5000');
