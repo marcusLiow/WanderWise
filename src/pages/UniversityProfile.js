@@ -20,6 +20,7 @@ const UniversityProfile = () => {
   const navigate = useNavigate();
   const [university, setUniversity] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [reviewsFromTable, setReviewsFromTable] = useState([]); // New state for reviews table data
   const [topCountries, setTopCountries] = useState([]);
   const [photoHighlights, setPhotoHighlights] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -116,7 +117,74 @@ const UniversityProfile = () => {
         throw new Error('University not found');
       }
 
-      // Fetch reviews from review_details table (summary/preview data)
+      // Fetch reviews from reviews table (for ratings, expenses, and visited countries)
+      try {
+        console.log('Fetching reviews from reviews table for university ID:', universityData.id);
+        
+        const { data: reviewsTableData, error: reviewsTableError } = await supabase
+          .from('reviews')
+          .select('*')
+          .eq('university_id', universityData.id);
+
+        if (reviewsTableError) {
+          console.error('Error fetching reviews from reviews table:', reviewsTableError);
+          setReviewsFromTable([]);
+        } else {
+          console.log('Reviews from reviews table:', reviewsTableData?.length || 0);
+          setReviewsFromTable(reviewsTableData || []);
+          
+          // Process top countries from reviews table visitedCountries field
+          const countryCount = {};
+          reviewsTableData?.forEach(review => {
+            if (review.visitedCountries && Array.isArray(review.visitedCountries)) {
+              review.visitedCountries.forEach(country => {
+                if (country && country.trim()) {
+                  countryCount[country] = (countryCount[country] || 0) + 1;
+                }
+              });
+            }
+          });
+          
+          // Sort countries by count and get top 3
+          const sortedCountries = Object.entries(countryCount)
+            .sort(([,a], [,b]) => b - a)
+            .slice(0, 3);
+          
+          // Get country details for top countries
+          if (sortedCountries.length > 0) {
+            const countryNames = sortedCountries.map(([name]) => name);
+            const { data: countryData, error: countryError } = await supabase
+              .from('countries')
+              .select('name, flag')
+              .in('name', countryNames);
+            
+            if (!countryError && countryData) {
+              const topCountriesWithFlags = sortedCountries.map(([name, count]) => {
+                const countryInfo = countryData.find(c => c.name === name);
+                return {
+                  name,
+                  count,
+                  flag: countryInfo?.flag || `https://flagcdn.com/w40/${name.toLowerCase().substring(0, 2)}.png`
+                };
+              });
+              setTopCountries(topCountriesWithFlags);
+            } else {
+              // Fallback: create country objects with generated flags
+              const topCountriesWithFlags = sortedCountries.map(([name, count]) => ({
+                name,
+                count,
+                flag: `https://flagcdn.com/w40/${name.toLowerCase().substring(0, 2)}.png`
+              }));
+              setTopCountries(topCountriesWithFlags);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching reviews from reviews table:', err);
+        setReviewsFromTable([]);
+      }
+
+      // Fetch reviews from review_details table (summary/preview data for display)
       try {
         console.log('Fetching reviews for university:', universityData.name);
         console.log('University ID:', universityData.id);
@@ -198,52 +266,6 @@ const UniversityProfile = () => {
             }
           });
           setPhotoHighlights(photoHighlightsData);
-          
-          // Process top countries from visitedCountries field
-          const countryCount = {};
-          reviewsData?.forEach(review => {
-            if (review.visitedCountries && Array.isArray(review.visitedCountries)) {
-              review.visitedCountries.forEach(country => {
-                if (country && country.trim()) {
-                  countryCount[country] = (countryCount[country] || 0) + 1;
-                }
-              });
-            }
-          });
-          
-          // Sort countries by count and get top 3
-          const sortedCountries = Object.entries(countryCount)
-            .sort(([,a], [,b]) => b - a)
-            .slice(0, 3);
-          
-          // Get country details for top countries
-          if (sortedCountries.length > 0) {
-            const countryNames = sortedCountries.map(([name]) => name);
-            const { data: countryData, error: countryError } = await supabase
-              .from('countries')
-              .select('name, flag')
-              .in('name', countryNames);
-            
-            if (!countryError && countryData) {
-              const topCountriesWithFlags = sortedCountries.map(([name, count]) => {
-                const countryInfo = countryData.find(c => c.name === name);
-                return {
-                  name,
-                  count,
-                  flag: countryInfo?.flag || `https://flagcdn.com/w40/${name.toLowerCase().substring(0, 2)}.png`
-                };
-              });
-              setTopCountries(topCountriesWithFlags);
-            } else {
-              // Fallback: create country objects with generated flags
-              const topCountriesWithFlags = sortedCountries.map(([name, count]) => ({
-                name,
-                count,
-                flag: `https://flagcdn.com/w40/${name.toLowerCase().substring(0, 2)}.png`
-              }));
-              setTopCountries(topCountriesWithFlags);
-            }
-          }
         }
       } catch (err) {
         console.error('Error fetching reviews:', err);
@@ -259,22 +281,57 @@ const UniversityProfile = () => {
     }
   };
 
-  const getAverageExpenses = () => {
-    if (reviews.length === 0) return { rental: 0, food: 0, transport: 0 };
+  // Updated function to get top 3 expense categories from reviews table
+  const getTopExpenseCategories = () => {
+    if (reviewsFromTable.length === 0) return [];
     
-    const totals = reviews.reduce((acc, review) => {
-      acc.rental += review.expenseRental || 0;
-      acc.food += review.expenseFood || 0;
-      acc.transport += review.expensePublicTransport || 0;
-      return acc;
-    }, { rental: 0, food: 0, transport: 0 });
+    // Calculate averages for all expense categories
+    const expenseCategories = [
+      { name: 'Rental', field: 'expenseRental', total: 0, count: 0 },
+      { name: 'Food', field: 'expenseFood', total: 0, count: 0 },
+      { name: 'Public Transport', field: 'expensePublicTransport', total: 0, count: 0 },
+      { name: 'Shopping', field: 'expenseShopping', total: 0, count: 0 },
+      { name: 'Travel', field: 'expenseTravel', total: 0, count: 0 },
+      { name: 'Miscellaneous', field: 'expenseMiscellaneous', total: 0, count: 0 }
+    ];
 
-    const count = reviews.length;
-    return {
-      rental: totals.rental / count,
-      food: totals.food / count,
-      transport: totals.transport / count
-    };
+    // Sum up all expenses for each category
+    reviewsFromTable.forEach(review => {
+      expenseCategories.forEach(category => {
+        const value = review[category.field];
+        if (value && value > 0) {
+          category.total += parseFloat(value);
+          category.count += 1;
+        }
+      });
+    });
+
+    // Calculate averages and filter out categories with no data
+    const averages = expenseCategories
+      .map(category => ({
+        name: category.name,
+        average: category.count > 0 ? category.total / category.count : 0,
+        count: category.count
+      }))
+      .filter(category => category.average > 0)
+      .sort((a, b) => b.average - a.average)
+      .slice(0, 3); // Get top 3
+
+    return averages;
+  };
+
+  // Updated function to get average overall rating from reviews table
+  const getAverageRating = () => {
+    if (reviewsFromTable.length === 0) return null;
+    
+    const ratingsWithValues = reviewsFromTable.filter(review => 
+      review.overallRating && review.overallRating > 0
+    );
+    
+    if (ratingsWithValues.length === 0) return null;
+    
+    const total = ratingsWithValues.reduce((sum, review) => sum + review.overallRating, 0);
+    return total / ratingsWithValues.length;
   };
 
   const renderStars = (rating) => {
@@ -356,8 +413,9 @@ const UniversityProfile = () => {
     );
   }
 
-  const averageExpenses = getAverageExpenses();
-  const maxExpense = Math.max(averageExpenses.rental, averageExpenses.food, averageExpenses.transport);
+  const topExpenseCategories = getTopExpenseCategories();
+  const maxExpense = topExpenseCategories.length > 0 ? Math.max(...topExpenseCategories.map(cat => cat.average)) : 0;
+  const averageRating = getAverageRating();
 
   return (
     <div className="university-profile">
@@ -379,8 +437,14 @@ const UniversityProfile = () => {
                 <span>{university.countries?.name || "Unknown"}</span>
               </div>
               <div className="rating">
-                {renderStars(Math.round(university.rating || 0))}
-                <span className="rating-number">{university.rating || 0}/5</span>
+                {averageRating !== null ? (
+                  <>
+                    {renderStars(Math.round(averageRating))}
+                    <span className="rating-number">{averageRating.toFixed(1)}/5</span>
+                  </>
+                ) : (
+                  <span className="no-rating">No Rating</span>
+                )}
               </div>
               <p className="description">{university.description || "No description available."}</p>
             </div>
@@ -569,71 +633,35 @@ const UniversityProfile = () => {
         </div>
 
         <div className="right-section">
-          {/* Average Expenses */}
+          {/* Average Expenses - Top 3 Categories */}
           <div className="expenses-section">
-            <h3>Average Expenses</h3>
-            {reviews.length === 0 ? (
+            <h3>Highest Average Expenses</h3>
+            {topExpenseCategories.length === 0 ? (
               <div className="no-expense-data">
                 <p>No expense data available yet.</p>
               </div>
             ) : (
               <div className="expenses-chart">
-                <div className="expense-item">
-                  <div className="expense-label">Rent</div>
-                  <div className="expense-bar">
-                    <div 
-                      className="expense-fill"
-                      style={{ width: maxExpense > 0 ? `${(averageExpenses.rental / maxExpense) * 100}%` : '0%' }}
-                      onMouseEnter={() => setHoveredExpense({ type: 'rental', amount: averageExpenses.rental })}
-                      onMouseLeave={() => setHoveredExpense(null)}
-                      title={`${averageExpenses.rental.toFixed(0)}`}
-                    />
-                    {hoveredExpense && hoveredExpense.type === 'rental' && (
-                      <div className="expense-tooltip">
-                        ${hoveredExpense.amount.toFixed(0)}
-                      </div>
-                    )}
+                {topExpenseCategories.map((category, index) => (
+                  <div key={index} className="expense-item">
+                    <div className="expense-label">{category.name}</div>
+                    <div className="expense-bar">
+                      <div 
+                        className="expense-fill"
+                        style={{ width: maxExpense > 0 ? `${(category.average / maxExpense) * 100}%` : '0%' }}
+                        onMouseEnter={() => setHoveredExpense({ type: category.name, amount: category.average })}
+                        onMouseLeave={() => setHoveredExpense(null)}
+                        title={`$${category.average.toFixed(0)}`}
+                      />
+                      {hoveredExpense && hoveredExpense.type === category.name && (
+                        <div className="expense-tooltip">
+                          ${hoveredExpense.amount.toFixed(0)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="expense-amount">${category.average.toFixed(0)}</div>
                   </div>
-                  <div className="expense-amount">${averageExpenses.rental.toFixed(0)}</div>
-                </div>
-                
-                <div className="expense-item">
-                  <div className="expense-label">Food</div>
-                  <div className="expense-bar">
-                    <div 
-                      className="expense-fill"
-                      style={{ width: maxExpense > 0 ? `${(averageExpenses.food / maxExpense) * 100}%` : '0%' }}
-                      onMouseEnter={() => setHoveredExpense({ type: 'food', amount: averageExpenses.food })}
-                      onMouseLeave={() => setHoveredExpense(null)}
-                      title={`${averageExpenses.food.toFixed(0)}`}
-                    />
-                    {hoveredExpense && hoveredExpense.type === 'food' && (
-                      <div className="expense-tooltip">
-                        ${hoveredExpense.amount.toFixed(0)}
-                      </div>
-                    )}
-                  </div>
-                  <div className="expense-amount">${averageExpenses.food.toFixed(0)}</div>
-                </div>
-                
-                <div className="expense-item">
-                  <div className="expense-label">Transport</div>
-                  <div className="expense-bar">
-                    <div 
-                      className="expense-fill"
-                      style={{ width: maxExpense > 0 ? `${(averageExpenses.transport / maxExpense) * 100}%` : '0%' }}
-                      onMouseEnter={() => setHoveredExpense({ type: 'transport', amount: averageExpenses.transport })}
-                      onMouseLeave={() => setHoveredExpense(null)}
-                      title={`${averageExpenses.transport.toFixed(0)}`}
-                    />
-                    {hoveredExpense && hoveredExpense.type === 'transport' && (
-                      <div className="expense-tooltip">
-                        ${hoveredExpense.amount.toFixed(0)}
-                      </div>
-                    )}
-                  </div>
-                  <div className="expense-amount">${averageExpenses.transport.toFixed(0)}</div>
-                </div>
+                ))}
               </div>
             )}
           </div>

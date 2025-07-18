@@ -231,6 +231,101 @@ const getAllUniversities = async () => {
   }
 };
 
+// NEW: Get average rating for a university from reviews table
+const getUniversityRating = async (universityId) => {
+  try {
+    const { data: reviewsData, error: reviewsError } = await supabase
+      .from('reviews')
+      .select('overallRating')
+      .eq('university_id', universityId);
+
+    if (reviewsError) {
+      console.error('Error fetching reviews for rating:', reviewsError);
+      return null;
+    }
+
+    if (!reviewsData || reviewsData.length === 0) {
+      return null; // No reviews found
+    }
+
+    const ratingsWithValues = reviewsData.filter(review => 
+      review.overallRating && review.overallRating > 0
+    );
+    
+    if (ratingsWithValues.length === 0) {
+      return null; // No valid ratings found
+    }
+    
+    const total = ratingsWithValues.reduce((sum, review) => sum + review.overallRating, 0);
+    return total / ratingsWithValues.length;
+  } catch (error) {
+    console.error('Error getting university rating:', error);
+    return null;
+  }
+};
+
+// NEW: Get ratings for multiple universities
+const getUniversitiesWithRatings = async (universities) => {
+  try {
+    // Get all university IDs
+    const universityIds = universities.map(uni => uni.id);
+    
+    // Fetch all reviews for these universities in one query
+    const { data: reviewsData, error: reviewsError } = await supabase
+      .from('reviews')
+      .select('university_id, overallRating')
+      .in('university_id', universityIds);
+
+    if (reviewsError) {
+      console.error('Error fetching reviews for ratings:', reviewsError);
+      // Return universities with null ratings if error
+      return universities.map(uni => ({
+        ...uni,
+        calculatedRating: null
+      }));
+    }
+
+    // Group reviews by university_id and calculate averages
+    const ratingsByUniversity = {};
+    
+    if (reviewsData && reviewsData.length > 0) {
+      reviewsData.forEach(review => {
+        if (review.overallRating && review.overallRating > 0) {
+          if (!ratingsByUniversity[review.university_id]) {
+            ratingsByUniversity[review.university_id] = [];
+          }
+          ratingsByUniversity[review.university_id].push(review.overallRating);
+        }
+      });
+    }
+
+    // Calculate average ratings and add to universities
+    const universitiesWithRatings = universities.map(university => {
+      const ratings = ratingsByUniversity[university.id];
+      let calculatedRating = null;
+      
+      if (ratings && ratings.length > 0) {
+        const total = ratings.reduce((sum, rating) => sum + rating, 0);
+        calculatedRating = total / ratings.length;
+      }
+      
+      return {
+        ...university,
+        calculatedRating
+      };
+    });
+
+    return universitiesWithRatings;
+  } catch (error) {
+    console.error('Error getting universities with ratings:', error);
+    // Return universities with null ratings if error
+    return universities.map(uni => ({
+      ...uni,
+      calculatedRating: null
+    }));
+  }
+};
+
 function SearchResults() {
   const { countryName } = useParams();
   const navigate = useNavigate();
@@ -300,7 +395,11 @@ function SearchResults() {
       if (countryResult.exists) {
         // Step 2b: Country found → show list of universities in that country
         console.log('✅ Country found, showing universities for:', countryResult.countryName);
-        setUniversities(countryResult.universities);
+        
+        // Get universities with calculated ratings
+        const universitiesWithRatings = await getUniversitiesWithRatings(countryResult.universities);
+        
+        setUniversities(universitiesWithRatings);
         setDisplayCountryName(countryResult.countryName);
         setSearchType('country');
       } else {
@@ -349,7 +448,11 @@ function SearchResults() {
         setLoading(true);
         try {
           const allUniversitiesData = await getAllUniversities();
-          setUniversities(allUniversitiesData);
+          
+          // Get ratings for all universities
+          const universitiesWithRatings = await getUniversitiesWithRatings(allUniversitiesData);
+          
+          setUniversities(universitiesWithRatings);
           setSearchType('browse');
         } catch (error) {
           console.error('Error loading all universities:', error);
@@ -392,7 +495,11 @@ function SearchResults() {
     // Reset to browse all universities
     setLoading(true);
     const allUniversitiesData = await getAllUniversities();
-    setUniversities(allUniversitiesData);
+    
+    // Get ratings for all universities
+    const universitiesWithRatings = await getUniversitiesWithRatings(allUniversitiesData);
+    
+    setUniversities(universitiesWithRatings);
     setSearchType('browse');
     setDisplayCountryName('');
     setLoading(false);
@@ -529,7 +636,7 @@ function SearchResults() {
             <strong>Tips:</strong>
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            • Try searching for a specific university name (e.g., "Harvard", "Stanford")
+            • Try searching for a specific university name (e.g., "ESSEC Business School", "IE University")
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
             • Try searching for a country name (e.g., "United States", "France")
@@ -600,15 +707,15 @@ function SearchResults() {
                     )}
 
                     <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      {university.rating && university.rating > 0 ? (
+                      {university.calculatedRating !== null ? (
                         <Chip 
-                          label={`⭐ ${university.rating}/5`}
+                          label={`⭐ ${university.calculatedRating.toFixed(1)}/5`}
                           color="primary"
                           size="small"
                         />
                       ) : (
                         <Chip 
-                          label="Rating: N/A"
+                          label="No Rating"
                           variant="outlined"
                           size="small"
                         />
