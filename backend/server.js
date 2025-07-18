@@ -473,7 +473,6 @@ app.get('/api/search', async (req, res) => {
       });
     }
     
-    console.log(`✅ Found ${universities?.length || 0} universities`);
     
     res.json({
       success: true,
