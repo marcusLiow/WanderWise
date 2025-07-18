@@ -142,7 +142,7 @@ const UniListPage = () => {
         return '🌍';
     };
 
-    // UPDATED: Get placeholder image based on country/region with fixed South Korea and Taiwan URLs
+    // UPDATED: Get placeholder image based on country/region with FIXED France and Belgium URLs
     const getUniversityImage = (countryName, universityName) => {
         const countryImages = {
             'China': 'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=400&h=300&fit=crop',
@@ -157,7 +157,8 @@ const UniListPage = () => {
             'USA': 'https://images.unsplash.com/photo-1569098644584-210bcd375b59?w=400&h=300&fit=crop',
             'US': 'https://images.unsplash.com/photo-1569098644584-210bcd375b59?w=400&h=300&fit=crop',
             'Canada': 'https://images.unsplash.com/photo-1517935706615-2717063c2225?w=400&h=300&fit=crop',
-            'France': 'https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=400&h=300&fit=crop',
+            'France': 'https://images.unsplash.com/photo-1431274172761-fca41d930114?w=400&h=300&fit=crop',
+            'Belgium': 'https://images.unsplash.com/photo-1559113202-c916b8e44373?w=400&h=300&fit=crop',
             'Germany': 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=400&h=300&fit=crop',
             'United Kingdom': 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400&h=300&fit=crop',
             'UK': 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400&h=300&fit=crop',
@@ -170,7 +171,6 @@ const UniListPage = () => {
             'Turkey': 'https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?w=400&h=300&fit=crop',
             'Kazakhstan': 'https://images.unsplash.com/photo-1526481280693-3bfa7568e0f3?w=400&h=300&fit=crop',
             'Brazil': 'https://images.unsplash.com/photo-1483729558449-99ef09a8c325?w=400&h=300&fit=crop',
-            'Belgium': 'https://images.unsplash.com/photo-1564071305012-dadb7c2f5d1c?w=400&h=300&fit=crop',
             'Austria': 'https://images.unsplash.com/photo-1527004013197-933c4bb611b3?w=400&h=300&fit=crop',
             'Denmark': 'https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?w=400&h=300&fit=crop'
         };
