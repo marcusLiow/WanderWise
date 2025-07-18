@@ -507,12 +507,50 @@ const HomePage = () => {
           </div>
           
           {/* Floating Cards */}
-          <div className="floating-cards" style={{ position: 'relative' }}>
+          <div className="floating-cards" style={{ position: 'relative', width: '100%', height: '100%' }}>
+            {/* Average monthly cost - Top Right */}
             <div style={{
               ...styles.floatingCard,
-              top: '10%',
-              right: '10%',
-              animationDelay: '0s'
+              top: '8%',
+              right: '15%',
+              animationDelay: '0s',
+              maxWidth: '200px',
+              zIndex: 3
+            }}>
+              <div style={{ fontSize: '0.9rem', color: '#666', textAlign: 'center' }}>
+                💰 Average monthly cost
+              </div>
+              <div style={{ fontWeight: 'bold', fontSize: '1.2rem', color: '#FF3F00', textAlign: 'center' }}>
+                $2,400
+              </div>
+            </div>
+            
+            {/* Review card - Middle overlapping */}
+            <div style={{
+              ...styles.floatingCard,
+              top: '30%',
+              right: '48%',
+              animationDelay: '2s',
+              maxWidth: '250px',
+              zIndex: 2
+            }}>
+              <div style={{ marginBottom: '8px', textAlign: 'center' }}>
+                <span style={{ color: '#FFD700' }}>★★★★★</span>
+                <span style={{ fontWeight: 'bold', marginLeft: '8px' }}>4.8/5</span>
+              </div>
+              <div style={{ fontSize: '0.9rem', color: '#666', textAlign: 'center' }}>
+                "Amazing experience in Copenhagen!"
+              </div>
+            </div>
+            
+            {/* ESSEC Business School - Bottom overlapping */}
+            <div style={{
+              ...styles.floatingCard,
+              top: '55%',
+              right: '6%',
+              animationDelay: '4s',
+              maxWidth: '260px',
+              zIndex: 1
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{
@@ -537,35 +575,6 @@ const HomePage = () => {
                     Paris, France
                   </div>
                 </div>
-              </div>
-            </div>
-            
-            <div style={{
-              ...styles.floatingCard,
-              bottom: '20%',
-              left: '5%',
-              animationDelay: '2s'
-            }}>
-              <div style={{ marginBottom: '8px' }}>
-                <span style={{ color: '#FFD700' }}>★★★★★</span>
-                <span style={{ fontWeight: 'bold', marginLeft: '8px' }}>4.8/5</span>
-              </div>
-              <div style={{ fontSize: '0.9rem', color: '#666' }}>
-                "Amazing experience in Copenhagen!"
-              </div>
-            </div>
-            
-            <div style={{
-              ...styles.floatingCard,
-              top: '100%',
-              right: '-29%',
-              animationDelay: '4s'
-            }}>
-              <div style={{ fontSize: '0.9rem', color: '#666' }}>
-                💰 Average monthly cost
-              </div>
-              <div style={{ fontWeight: 'bold', fontSize: '1.2rem', color: '#FF3F00' }}>
-                $2,400
               </div>
             </div>
           </div>
