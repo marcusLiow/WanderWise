@@ -39,7 +39,9 @@ async function testSupabase() {
     console.log('❌ Supabase connection error:', error.message);
   }
 }
+if (process.env.NODE_ENV !== 'production') {
 testSupabase();
+}
 
 // Helper functions
 function extractUniversityFromDomain(domain) {
