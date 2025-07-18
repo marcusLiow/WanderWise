@@ -471,107 +471,82 @@ function WriteReview() {
     );
   };
 
-  // Submit handler - FIXED VERSION
-  const handleSubmit = async () => {
-    if (!currency) {
-      setSubmitMessage('Please select a currency before submitting.');
-      return;
-    }
+const handleSubmit = async () => {
+  if (!currency) {
+    setSubmitMessage('Please select a currency before submitting.');
+    return;
+  }
 
-    setIsSubmitting(true);
-    setSubmitMessage('Uploading images and submitting review...');
-    
-    try {
-      // Extract only the currency code (first 3 characters) from the full string
-      const currencyCode = currency.split(' - ')[0]; // Gets "USD" from "USD - US Dollar"
-      
-      // Get the selected university ID
-      const selectedUniversityObj = filteredUniversities.find(uni => uni.name === selectedUniversity);
-      if (!selectedUniversityObj) {
-        throw new Error('Selected university not found');
-      }
+  // Check localStorage login
+  const stored = localStorage.getItem('wanderwise_user');
+  if (!stored) {
+    setSubmitMessage('You must be logged in to submit a review.');
+    return;
+  }
+  const userObj = JSON.parse(stored);
 
-      // For now, create a temporary user (in a real app, this would come from authentication)
-      const tempUser = {
-        firstName: 'Anonymous',
-        lastName: 'User',
-        email: `user${Date.now()}@example.com`,
-        password: 'temp_password'
-      };
+  setIsSubmitting(true);
+  setSubmitMessage('Uploading images and submitting review…');
 
-      const { data: userData, error: userError } = await supabaseClient
-        .from('users')
-        .insert([tempUser])
-        .select()
-        .single();
+  try {
+    // Upload images first
+    const imageUrls = await uploadImagesToSupabase();
 
-      if (userError) throw userError;
+    // Build payload
+    const currencyCode = currency.split(' - ')[0];
+    const selectedUniversityObj = filteredUniversities.find(u => u.name === selectedUniversity);
+    if (!selectedUniversityObj) throw new Error('Selected university not found');
 
-      // Upload images to Supabase Storage FIRST
-      console.log('Starting image upload...');
-      const imageUrls = await uploadImagesToSupabase();
-      console.log('Image upload completed. URLs:', imageUrls);
+    const reviewData = {
+      user_id:               userObj.id,
+      university_id:         selectedUniversityObj.id,
+      courseStudied,
+      gpa:                   parseFloat(gpa),
+      overallRating:         computedOverallRating,
+      academicRating,
+      academicComment,
+      cultureRating,
+      cultureComment,
+      foodRating,
+      foodComment,
+      accommodationRating,
+      accommodationComment,
+      safetyRating,
+      safetyComment,
+      tags:                  selectedTags,
+      reviewText,
+      tipsText,
+      imageUrls,
+      currency:              currencyCode,
+      expenseFood:           parseFloat(expenses.food)            || 0,
+      expenseShopping:       parseFloat(expenses.shopping)        || 0,
+      expenseRental:         parseFloat(expenses.rental)          || 0,
+      expensePublicTransport:parseFloat(expenses.public_transport) || 0,
+      expenseTravel:         parseFloat(expenses.travel)          || 0,
+      expenseMiscellaneous:  parseFloat(expenses.miscellaneous)    || 0,
+      didTravel,
+      visitedCountries
+    };
 
-      // Prepare review data using new schema field names
-      const reviewData = {
-        user_id: userData.id,
-        university_id: selectedUniversityObj.id,
-        courseStudied: courseStudied,
-        gpa: parseFloat(gpa),
-        overallRating: computedOverallRating,
-        academicRating: academicRating,
-        academicComment: academicComment,
-        cultureRating: cultureRating,
-        cultureComment: cultureComment,
-        foodRating: foodRating,
-        foodComment: foodComment,
-        accommodationRating: accommodationRating,
-        accommodationComment: accommodationComment,
-        safetyRating: safetyRating,
-        safetyComment: safetyComment,
-        tags: selectedTags,
-        reviewText: reviewText,
-        tipsText: tipsText,
-        imageUrls: imageUrls, // This should now contain the uploaded URLs
-        currency: currencyCode,
-        expenseFood: parseFloat(expenses.food) || 0,
-        expenseShopping: parseFloat(expenses.shopping) || 0,
-        expenseRental: parseFloat(expenses.rental) || 0,
-        expensePublicTransport: parseFloat(expenses.public_transport) || 0,
-        expenseTravel: parseFloat(expenses.travel) || 0,
-        expenseMiscellaneous: parseFloat(expenses.miscellaneous) || 0,
-        didTravel: didTravel,
-        visitedCountries: visitedCountries
-      };
+    // 4️⃣ Insert review
+    const { data, error } = await supabaseClient
+      .from('reviews')
+      .insert([reviewData])
+      .select()
+      .single();
+    if (error) throw error;
 
-      console.log('Submitting review data:', reviewData);
+    setSubmitMessage('Review submitted successfully! Redirecting…');
+    setTimeout(() => navigate(`/review/1?id=${data.id}`), 1500);
 
-      const { data, error } = await supabaseClient
-        .from('reviews')
-        .insert([reviewData])
-        .select()
-        .single();
+  } catch (err) {
+    console.error(err);
+    setSubmitMessage(`Error submitting review: ${err.message}`);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
-      if (error) {
-        console.error('Database insert error:', error);
-        throw error;
-      }
-
-      console.log('Review submitted successfully:', data);
-      setSubmitMessage('Review submitted successfully! Redirecting...');
-      
-      // Redirect to the review page with the new review ID
-      setTimeout(() => {
-        navigate(`/review/1?id=${data.id}`);
-      }, 1500);
-      
-    } catch (err) {
-      console.error('Submission error:', err);
-      setSubmitMessage(`Error submitting review: ${err.message}`);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   // Calculate total expenses
   const totalExpenses = useMemo(() => {
