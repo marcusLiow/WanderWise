@@ -2,27 +2,23 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 
-// 🔑 SUPABASE CONNECTION (using same credentials as SearchResults.js)
 const SUPABASE_URL = 'https://aojighzqmzouwhxyndbs.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvamlnaHpxbXpvdXdoeHluZGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MDgyNTMsImV4cCI6MjA2Nzk4NDI1M30.1f2HHXbYxP8KaABhv4uw151Xj1mRDWxd63pHYgKIXnQ';
 
-// Initialize Supabase client
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const UniListPage = () => {
     const navigate = useNavigate();
     const [selectedRegion, setSelectedRegion] = useState('All');
     const [universities, setUniversities] = useState([]);
-    const [ratings, setRatings] = useState({}); // NEW: Added state for ratings
+    const [ratings, setRatings] = useState({}); 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Helper function to create URL-friendly slugs (same as SearchResults.js)
     const createSlug = (str) => {
         return str.toLowerCase().replace(/\s+/g, '-');
     };
 
-    // Region mapping for countries
     const getRegionForCountry = (countryName) => {
         const regionMapping = {
             // Asia
@@ -104,12 +100,10 @@ const UniListPage = () => {
         return regionMapping[countryName] || 'Other';
     };
 
-    // Convert country code to flag emoji
     const getFlagEmoji = (countryCode) => {
         if (!countryCode || countryCode.length !== 2) return '';
         
         try {
-            // Convert country code to flag emoji
             const codePoints = countryCode
                 .toUpperCase()
                 .split('')
@@ -121,29 +115,24 @@ const UniListPage = () => {
         }
     };
 
-    // Get flag display (emoji or fallback)
     const getCountryFlag = (flagData, countryCode, countryName) => {
-        // If flag is already an emoji or image URL, use it
         if (flagData) {
             if (flagData.startsWith('http')) {
                 return <img src={flagData} alt={`${countryName} flag`} style={{width: '20px', height: '15px', objectFit: 'cover'}} />;
             }
-            if (flagData.length <= 4) { // Likely an emoji
+            if (flagData.length <= 4) {
                 return flagData;
             }
         }
         
-        // Try to generate flag emoji from country code
         if (countryCode) {
             const flagEmoji = getFlagEmoji(countryCode);
             if (flagEmoji) return flagEmoji;
         }
         
-        // Fallback to 🌍 globe emoji
         return '🌍';
     };
 
-    // UPDATED: Get placeholder image based on country/region with FIXED France and Belgium URLs
     const getUniversityImage = (countryName, universityName) => {
         const countryImages = {
             'China': 'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=400&h=300&fit=crop',
@@ -176,12 +165,10 @@ const UniListPage = () => {
             'Denmark': 'https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?w=400&h=300&fit=crop'
         };
         
-        // First try to get country-specific image
         if (countryImages[countryName]) {
             return countryImages[countryName];
         }
         
-        // If no country match, use a reliable fallback based on university name hash
         const nameHash = Math.abs(universityName.split('').reduce((a, b) => a + b.charCodeAt(0), 0));
         const fallbackImages = [
             'https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=400&h=300&fit=crop',
@@ -197,7 +184,6 @@ const UniListPage = () => {
         return fallbackImages[nameHash % fallbackImages.length];
     };
 
-    // NEW: Function to calculate average rating for a university
     const getAverageRating = (universityId) => {
         const universityRatings = ratings[universityId];
         if (!universityRatings || universityRatings.length === 0) return null;
@@ -212,7 +198,6 @@ const UniListPage = () => {
         return total / ratingsWithValues.length;
     };
 
-    // NEW: University Card Component with enhanced error handling and rating display
     const UniversityCard = ({ university, index }) => {
         const [imageSrc, setImageSrc] = useState(university.image);
         const [imageError, setImageError] = useState(false);
@@ -221,7 +206,6 @@ const UniListPage = () => {
         const handleImageError = () => {
             if (retryCount < 2) {
                 setRetryCount(prev => prev + 1);
-                // Try different fallback images
                 const fallbackImages = [
                     getUniversityImage(university.country, university.name),
                     'https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=400&h=300&fit=crop',
@@ -234,7 +218,6 @@ const UniListPage = () => {
             }
         };
 
-        // Get the average rating for this university
         const averageRating = getAverageRating(university.id);
 
         return (
@@ -324,7 +307,6 @@ const UniListPage = () => {
         );
     };
 
-    // NEW: Fetch all ratings from reviews table
     const fetchRatings = async () => {
         try {
             console.log('Fetching ratings from reviews table...');
@@ -340,7 +322,6 @@ const UniListPage = () => {
                 return {};
             }
 
-            // Group ratings by university_id
             const ratingsMap = {};
             reviewsData?.forEach(review => {
                 if (!ratingsMap[review.university_id]) {
@@ -359,14 +340,12 @@ const UniListPage = () => {
         }
     };
 
-    // UPDATED: Fetch universities from Supabase with ratings
     useEffect(() => {
         const fetchUniversities = async () => {
             try {
                 setLoading(true);
                 setError(null);
 
-                // Fetch universities and ratings in parallel
                 const [universitiesResult, ratingsResult] = await Promise.all([
                     supabase
                         .from('universities')
@@ -395,7 +374,6 @@ const UniListPage = () => {
                 }
 
                 if (data) {
-                    // Transform data and add region information
                     const transformedData = data.map(university => ({
                         id: university.id,
                         name: university.name,
@@ -410,7 +388,7 @@ const UniListPage = () => {
                     }));
 
                     setUniversities(transformedData);
-                    setRatings(ratingsResult); // Set the ratings data
+                    setRatings(ratingsResult); 
                     console.log(`Loaded ${transformedData.length} universities from database`);
                 }
             } catch (error) {
@@ -424,13 +402,11 @@ const UniListPage = () => {
         fetchUniversities();
     }, []);
 
-    // Get unique regions from the loaded data
     const regions = useMemo(() => {
         const uniqueRegions = [...new Set(universities.map(uni => uni.region))].sort();
         return ['All', ...uniqueRegions];
     }, [universities]);
 
-    // Filter universities by selected region
     const filteredData = useMemo(() => {
         if (selectedRegion === 'All') {
             return universities.sort((a, b) => a.name.localeCompare(b.name));
@@ -440,16 +416,14 @@ const UniListPage = () => {
             .sort((a, b) => a.name.localeCompare(b.name));
     }, [selectedRegion, universities]);
 
-    // UPDATED: Navigation function - redirects directly to university page like SearchResults.js
     const handleDestinationClick = (university) => {
         const universitySlug = createSlug(university.name);
         navigate(`/university/${universitySlug}`, { state: { universityId: university.id } });
     };
 
-    // Get statistics
     const totalUniversities = universities.length;
     const totalCountries = [...new Set(universities.map(item => item.country))].length;
-    const totalRegions = regions.length - 1; // Exclude "All"
+    const totalRegions = regions.length - 1;
 
     const styles = {
         container: {

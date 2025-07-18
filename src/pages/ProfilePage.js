@@ -14,7 +14,6 @@ function ProfilePage() {
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
-  // List of common nationalities (same as SignupPage)
   const nationalities = [
     'Singaporean',
     ...['Malaysian',
@@ -99,12 +98,11 @@ function ProfilePage() {
   ];
 
   useEffect(() => {
-    // Check if user is logged in
     const savedUser = localStorage.getItem('wanderwise_user');
     if (savedUser) {
       const userData = JSON.parse(savedUser);
-      console.log('ProfilePage: User data from localStorage:', userData); // Debug log
-      console.log('ProfilePage: dateOfBirth value:', userData.dateOfBirth); // Debug log
+      console.log('ProfilePage: User data from localStorage:', userData); 
+      console.log('ProfilePage: dateOfBirth value:', userData.dateOfBirth);
       setUser(userData);
       setEditData({
         firstName: userData.firstName || '',
@@ -114,12 +112,10 @@ function ProfilePage() {
       });
       setProfileImage(userData.profileImage || null);
     } else {
-      // If no user data, redirect to login
       navigate('/login');
     }
   }, [navigate]);
 
-  // Get user's initials for avatar
   const getUserInitials = () => {
     if (!user?.firstName && !user?.name && !user?.email) return 'U';
     const name = user.firstName || user.name || user.email.split('@')[0];
@@ -128,7 +124,6 @@ function ProfilePage() {
 
   const handleEditToggle = () => {
     if (editMode) {
-      // Cancel editing - reset editData
       setEditData({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
@@ -149,7 +144,6 @@ function ProfilePage() {
   };
 
   const checkDateOfBirth = (date) => {
-    // Check DD/MM/YYYY format
     const datePattern = /^(\d{2})\/(\d{2})\/(\d{4})$/;
     const match = date.match(datePattern);
     
@@ -159,12 +153,10 @@ function ProfilePage() {
     const month = parseInt(match[2]);
     const year = parseInt(match[3]);
     
-    // Basic validation
     if (month < 1 || month > 12) return false;
     if (day < 1 || day > 31) return false;
     if (year < 1900 || year > new Date().getFullYear()) return false;
     
-    // Check if date is valid (e.g., no February 30th)
     const testDate = new Date(year, month - 1, day);
     return testDate.getDate() === day && 
            testDate.getMonth() === month - 1 && 
@@ -174,8 +166,7 @@ function ProfilePage() {
   const handleDateOfBirthChange = (e) => {
     let value = e.target.value;
     
-    // Auto-format as user types (add slashes)
-    value = value.replace(/\D/g, ''); // Remove non-digits
+    value = value.replace(/\D/g, ''); 
     if (value.length >= 2 && value.length < 4) {
       value = value.slice(0, 2) + '/' + value.slice(2);
     } else if (value.length >= 4) {
@@ -195,7 +186,6 @@ function ProfilePage() {
       const img = new Image();
       
       img.onload = () => {
-        // Calculate new dimensions
         let { width, height } = img;
         
         if (width > height) {
@@ -213,7 +203,6 @@ function ProfilePage() {
         canvas.width = width;
         canvas.height = height;
         
-        // Draw and compress
         ctx.drawImage(img, 0, 0, width, height);
         const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
         resolve(compressedDataUrl);
@@ -226,24 +215,20 @@ function ProfilePage() {
   const handleImageUpload = async (event) => {
     const file = event.target.files[0];
     if (file) {
-      // Check file size (max 10MB original)
       if (file.size > 10 * 1024 * 1024) {
         setError('Image size should be less than 10MB');
         return;
       }
 
-      // Check file type
       if (!file.type.startsWith('image/')) {
         setError('Please select a valid image file');
         return;
       }
 
       try {
-        // Resize and compress the image
         const compressedImage = await resizeImage(file);
         
-        // Check compressed size (base64 is ~33% larger than binary)
-        if (compressedImage.length > 2 * 1024 * 1024) { // ~1.5MB compressed
+        if (compressedImage.length > 2 * 1024 * 1024) { 
           setError('Image is too large even after compression. Please use a smaller image.');
           return;
         }
@@ -258,13 +243,11 @@ function ProfilePage() {
   };
 
   const handleSave = async () => {
-    // Validate required fields
     if (!editData.firstName.trim() || !editData.lastName.trim()) {
       setError('First name and last name are required');
       return;
     }
 
-    // Validate date of birth if provided
     if (editData.dateOfBirth && !checkDateOfBirth(editData.dateOfBirth)) {
       setError('Please enter a valid date of birth in DD/MM/YYYY format');
       return;
@@ -274,7 +257,6 @@ function ProfilePage() {
       setError('');
       setSuccess('');
 
-      // Prepare data for backend
       const profileData = {
         userId: user.id,
         firstName: editData.firstName.trim(),
@@ -286,8 +268,7 @@ function ProfilePage() {
 
       console.log('Sending profile update to backend:', profileData);
 
-      // Send update to backend
-      const response = await fetch('http://localhost:5000/api/profile', {
+      const response = await fetch('http://124.243.144.171:5000/api/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -295,7 +276,6 @@ function ProfilePage() {
         body: JSON.stringify(profileData)
       });
 
-      // Check if response is JSON
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         throw new Error(`Server returned ${response.status}: ${response.statusText}`);
@@ -305,7 +285,6 @@ function ProfilePage() {
       console.log('Backend response:', data);
 
       if (response.ok) {
-        // Backend update successful - update local state with backend response
         const updatedUser = {
           ...user,
           firstName: data.user.firstName,
@@ -316,18 +295,15 @@ function ProfilePage() {
           name: data.user.firstName + ' ' + data.user.lastName
         };
 
-        // Save updated data to localStorage
         localStorage.setItem('wanderwise_user', JSON.stringify(updatedUser));
         setUser(updatedUser);
         setEditMode(false);
         setSuccess('Profile updated successfully!');
         
-        // Force navbar to update by dispatching a custom event
         window.dispatchEvent(new Event('userDataUpdated'));
         
         console.log('Profile update successful');
       } else {
-        // Backend error
         setError(data.error || 'Failed to update profile');
         console.error('Backend error:', data.error);
       }

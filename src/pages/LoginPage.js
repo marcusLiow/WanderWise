@@ -14,24 +14,23 @@ function LoginPage() {
   const [forgotPasswordMessage, setForgotPasswordMessage] = useState('');
   const navigate = useNavigate();
 
-  // Add this line to test if the component is loading
   console.log('LoginPage component loaded!');
 
   const handleEmailChange = (e) => {
-    console.log('Email changed:', e.target.value); // Test if this runs
+    console.log('Email changed:', e.target.value);
     setEmail(e.target.value);
-    setError(''); // Clear any previous errors when user types
+    setError(''); 
   };
 
   const handlePasswordChange = (e) => {
-    console.log('Password changed'); // Test if this runs
+    console.log('Password changed'); 
     setPassword(e.target.value);
-    setError(''); // Clear any previous errors when user types
+    setError(''); 
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('FORM SUBMITTED - THIS SHOULD SHOW!'); // This is key
+    console.log('FORM SUBMITTED - THIS SHOULD SHOW!'); 
     
     if (!email || !password) {
       setError('Please enter both email and password');
@@ -42,9 +41,9 @@ function LoginPage() {
     setError('');
 
     try {
-      console.log('Attempting login with:', { email, password }); // Debug log
+      console.log('Attempting login with:', { email, password }); 
       
-      const response = await fetch('http://localhost:5000/api/login', {
+      const response = await fetch('http://124.243.144.171:5000/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -55,16 +54,14 @@ function LoginPage() {
         })
       });
 
-      console.log('Response status:', response.status); // Debug log
+      console.log('Response status:', response.status); 
       
       const data = await response.json();
-      console.log('Response data:', data); // Debug log
+      console.log('Response data:', data); 
 
       if (response.ok) {
-        // Only login if backend confirms credentials are correct
-        console.log('Login successful, backend response:', data); // Debug log
+        console.log('Login successful, backend response:', data);
         
-        // Save ALL data returned from backend
         const userData = {
           email: data.email,
           id: data.userId,
@@ -84,11 +81,9 @@ function LoginPage() {
         
         localStorage.setItem('wanderwise_user', JSON.stringify(userData));
         
-        // Navigate to home page
         navigate('/');
       } else {
-        // Show error from backend
-        console.log('Login failed:', data.error); // Debug log
+        console.log('Login failed:', data.error);
         setError(data.error || 'Invalid email or password');
       }
     } catch (error) {
@@ -116,27 +111,24 @@ function LoginPage() {
       return;
     }
 
-    // Validate SMU email format
     const smuEmailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]*smu\.edu\.sg$/;
     if (!smuEmailPattern.test(forgotPasswordEmail)) {
       setForgotPasswordMessage('Please enter a valid SMU email address');
       return;
     }
 
-    // Validate password strength
     if (!checkPasswordStrength(newPassword)) {
       setForgotPasswordMessage('Password must be at least 8 characters with uppercase, lowercase, and number');
       return;
     }
 
-    // Check if passwords match
     if (newPassword !== confirmNewPassword) {
       setForgotPasswordMessage('Passwords do not match');
       return;
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/reset-password', {
+      const response = await fetch('http://124.243.144.171:5000/api/reset-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -151,7 +143,6 @@ function LoginPage() {
 
       if (response.ok) {
         setForgotPasswordMessage('Password has been reset successfully! You can now login with your new password.');
-        // Clear form fields
         setForgotPasswordEmail('');
         setNewPassword('');
         setConfirmNewPassword('');

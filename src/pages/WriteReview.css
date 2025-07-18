@@ -1,6 +1,4 @@
-/* WriteReview.css - Orange Theme */
 
-/* Reset and base styles */
 * {
   box-sizing: border-box;
 }
@@ -212,7 +210,6 @@ body {
   margin: 24px 0;
 }
 
-/* Star Rating */
 .write-review-rating-section {
   margin-bottom: 24px;
 }
@@ -244,7 +241,6 @@ body {
   cursor: default;
 }
 
-/* Tags */
 .write-review-tags {
   display: flex;
   flex-wrap: wrap;
@@ -273,7 +269,6 @@ body {
   border-color: #FF5722;
 }
 
-/* Travel Section Styles */
 .write-review-radio-group {
   display: flex;
   gap: 32px;
@@ -398,7 +393,6 @@ body {
   line-height: 1.4;
 }
 
-/* Image Upload */
 .write-review-upload-area {
   border: 2px dashed #d1d5db;
   border-radius: 8px;
@@ -504,14 +498,12 @@ body {
   margin-bottom: 16px;
 }
 
-/* Expense Grid */
 .write-review-expense-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 24px;
 }
 
-/* Total */
 .write-review-total {
   background: #fff7ed;
   padding: 16px;
@@ -537,7 +529,6 @@ body {
   color: #FF5722;
 }
 
-/* Actions */
 .write-review-actions {
   display: flex;
   justify-content: flex-end;
@@ -607,7 +598,6 @@ body {
   background: #9ca3af;
 }
 
-/* Messages */
 .write-review-message {
   padding: 12px;
   border-radius: 8px;
@@ -629,7 +619,6 @@ body {
   color: #d97706;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .write-review-content {
     padding: 0 8px;

@@ -18,14 +18,12 @@ import SchoolIcon from '@mui/icons-material/School';
 import SearchIcon from '@mui/icons-material/Search';
 import { createClient } from '@supabase/supabase-js';
 
-// 🔑 SUPABASE CONNECTION
 const SUPABASE_URL = 'https://aojighzqmzouwhxyndbs.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvamlnaHpxbXpvdXdoeHluZGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MDgyNTMsImV4cCI6MjA2Nzk4NDI1M30.1f2HHXbYxP8KaABhv4uw151Xj1mRDWxd63pHYgKIXnQ';
 
 // Initialize Supabase client
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Get list of countries from the countries table
 const getCountriesList = async () => {
   try {
     const { data, error } = await supabase
@@ -38,7 +36,6 @@ const getCountriesList = async () => {
       return [];
     }
     
-    // Get country names and normalize them
     const countries = data.map(item => item.name.trim().toLowerCase());
     return countries;
   } catch (error) {
@@ -47,16 +44,14 @@ const getCountriesList = async () => {
   }
 };
 
-// UPDATED: More restrictive university search that avoids country matches
+
 const findUniversityByName = async (searchTerm) => {
   try {
     console.log('🔍 Searching for university:', searchTerm);
-    
-    // First check if the search term is likely a country name
+
     const countriesList = await getCountriesList();
     const searchLower = searchTerm.toLowerCase().trim();
     
-    // If search term matches a country name, don't treat it as university search
     const isLikelyCountry = countriesList.some(country => 
       country === searchLower || 
       country.includes(searchLower) || 
@@ -68,7 +63,6 @@ const findUniversityByName = async (searchTerm) => {
       return null;
     }
     
-    // Search for universities with more restrictive matching
     const { data, error } = await supabase
       .from('universities')
       .select(`
@@ -96,7 +90,6 @@ const findUniversityByName = async (searchTerm) => {
       return null;
     }
     
-    // Check for exact match first (case insensitive)
     const exactMatch = data.find(uni => 
       uni.name.toLowerCase() === searchTerm.toLowerCase()
     );
@@ -106,18 +99,16 @@ const findUniversityByName = async (searchTerm) => {
       return exactMatch;
     }
     
-    // For partial matches, be more restrictive
     const universityKeywords = ['university', 'college', 'institute', 'school', 'academy'];
     const containsUniversityKeyword = universityKeywords.some(keyword => 
       searchLower.includes(keyword)
     );
     
-    // If search contains university keywords and we have matches
     if (containsUniversityKeyword && data.length > 0) {
-      // Look for the best match
+
       const bestMatch = data.find(uni => {
         const uniNameLower = uni.name.toLowerCase();
-        // Check if most words from search term appear in university name
+
         const searchWords = searchLower.split(' ').filter(word => word.length > 2);
         const matchedWords = searchWords.filter(word => uniNameLower.includes(word));
         return matchedWords.length >= Math.max(1, searchWords.length - 1);
@@ -129,12 +120,10 @@ const findUniversityByName = async (searchTerm) => {
       }
     }
     
-    // If only one result and search term is substantial
     if (data.length === 1 && searchTerm.length > 3) {
       const singleResult = data[0];
       const uniNameLower = singleResult.name.toLowerCase();
       
-      // Make sure the search term significantly matches the university name
       const searchWords = searchLower.split(' ').filter(word => word.length > 2);
       const significantMatch = searchWords.some(word => 
         uniNameLower.includes(word) && word.length > 3
@@ -155,10 +144,10 @@ const findUniversityByName = async (searchTerm) => {
   }
 };
 
-// UPDATED: Find universities by country using the new schema
+
 const findCountryAndUniversities = async (countryName) => {
   try {
-    // First, find the country by name
+
     const { data: countryData, error: countryError } = await supabase
       .from('countries')
       .select('code, name')
@@ -176,7 +165,6 @@ const findCountryAndUniversities = async (countryName) => {
     
     const country = countryData[0];
     
-    // Now find universities in that country
     const { data: universitiesData, error: universitiesError } = await supabase
       .from('universities')
       .select(`
@@ -205,7 +193,6 @@ const findCountryAndUniversities = async (countryName) => {
   }
 };
 
-// UPDATED: Get all universities with country information
 const getAllUniversities = async () => {
   try {
     const { data, error } = await supabase
@@ -231,7 +218,6 @@ const getAllUniversities = async () => {
   }
 };
 
-// NEW: Get average rating for a university from reviews table
 const getUniversityRating = async (universityId) => {
   try {
     const { data: reviewsData, error: reviewsError } = await supabase
@@ -264,13 +250,11 @@ const getUniversityRating = async (universityId) => {
   }
 };
 
-// NEW: Get ratings for multiple universities
+
 const getUniversitiesWithRatings = async (universities) => {
   try {
-    // Get all university IDs
     const universityIds = universities.map(uni => uni.id);
     
-    // Fetch all reviews for these universities in one query
     const { data: reviewsData, error: reviewsError } = await supabase
       .from('reviews')
       .select('university_id, overallRating')
@@ -278,14 +262,12 @@ const getUniversitiesWithRatings = async (universities) => {
 
     if (reviewsError) {
       console.error('Error fetching reviews for ratings:', reviewsError);
-      // Return universities with null ratings if error
       return universities.map(uni => ({
         ...uni,
         calculatedRating: null
       }));
     }
 
-    // Group reviews by university_id and calculate averages
     const ratingsByUniversity = {};
     
     if (reviewsData && reviewsData.length > 0) {
@@ -299,7 +281,6 @@ const getUniversitiesWithRatings = async (universities) => {
       });
     }
 
-    // Calculate average ratings and add to universities
     const universitiesWithRatings = universities.map(university => {
       const ratings = ratingsByUniversity[university.id];
       let calculatedRating = null;
@@ -318,7 +299,6 @@ const getUniversitiesWithRatings = async (universities) => {
     return universitiesWithRatings;
   } catch (error) {
     console.error('Error getting universities with ratings:', error);
-    // Return universities with null ratings if error
     return universities.map(uni => ({
       ...uni,
       calculatedRating: null
@@ -331,29 +311,24 @@ function SearchResults() {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // State management
   const [universities, setUniversities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchType, setSearchType] = useState(''); // 'country', 'not-found', or 'browse'
+  const [searchType, setSearchType] = useState('');
   const [displayCountryName, setDisplayCountryName] = useState('');
   
-  // Search controls
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
 
-  // Helper function to create URL-friendly slugs
   const createSlug = (str) => {
     return str.toLowerCase().replace(/\s+/g, '-');
   };
 
-  // Helper function to get search query from URL
   const getSearchQueryFromUrl = () => {
     const urlParams = new URLSearchParams(location.search);
     return urlParams.get('q') || '';
   };
 
-  // UPDATED: Main search logic that handles both URL and manual searches
   const performSearch = async (searchQuery, updateUrl = false) => {
     if (!searchQuery || searchQuery.trim().length < 2) {
       setError('Please enter at least 2 characters to search');
@@ -368,18 +343,15 @@ function SearchResults() {
       console.log('=== PERFORMING SEARCH ===');
       console.log('Search query:', trimmedSearch);
 
-      // UPDATE URL if this is a manual search
       if (updateUrl) {
         const searchSlug = createSlug(trimmedSearch);
         navigate(`/search?q=${encodeURIComponent(searchSlug)}`, { replace: true });
       }
 
-      // Step 1: Check if it's a university name
       console.log('Step 1: Checking for university match...');
       const universityMatch = await findUniversityByName(trimmedSearch);
       
       if (universityMatch) {
-        // Step 2a: University found → redirect to specific uni page
         console.log('✅ University found, redirecting to:', universityMatch.name);
         const universitySlug = createSlug(universityMatch.name);
         navigate(`/university/${universitySlug}`, { 
@@ -388,22 +360,18 @@ function SearchResults() {
         return;
       }
 
-      // Step 2b: Check if it's a country name
       console.log('Step 2: Checking for country match...');
       const countryResult = await findCountryAndUniversities(trimmedSearch);
       
       if (countryResult.exists) {
-        // Step 2b: Country found → show list of universities in that country
         console.log('✅ Country found, showing universities for:', countryResult.countryName);
         
-        // Get universities with calculated ratings
         const universitiesWithRatings = await getUniversitiesWithRatings(countryResult.universities);
         
         setUniversities(universitiesWithRatings);
         setDisplayCountryName(countryResult.countryName);
         setSearchType('country');
       } else {
-        // Step 2c: Neither university nor country found → no results
         console.log('❌ No university or country found for:', trimmedSearch);
         setUniversities([]);
         setSearchType('not-found');
@@ -426,30 +394,23 @@ function SearchResults() {
       console.log('Current location:', location.pathname);
       console.log('Search params:', location.search);
 
-      // Check for search query in URL params first
       const searchQuery = getSearchQueryFromUrl();
       
       if (searchQuery) {
-        // URL-based search from query parameter
         const decodedSearch = decodeURIComponent(searchQuery).replace(/-/g, ' ');
         console.log('Decoded search term from URL query:', decodedSearch);
         
-        // Perform the search logic without updating URL (already in URL)
         await performSearch(decodedSearch, false);
       } else if (countryName) {
-        // Legacy URL-based search from path parameter
         const decodedSearch = decodeURIComponent(countryName).replace(/-/g, ' ');
         console.log('Decoded search term from URL path:', decodedSearch);
         
-        // Perform the search logic and update URL to new format
         await performSearch(decodedSearch, true);
       } else {
-        // No URL parameter - load all universities for browsing
         setLoading(true);
         try {
           const allUniversitiesData = await getAllUniversities();
           
-          // Get ratings for all universities
           const universitiesWithRatings = await getUniversitiesWithRatings(allUniversitiesData);
           
           setUniversities(universitiesWithRatings);
@@ -465,7 +426,6 @@ function SearchResults() {
     initializeData();
   }, [countryName, location.search]);
 
-  // Manual search function
   const handleSearch = async () => {
     if (!searchTerm || searchTerm.trim().length < 2) {
       setError('Please enter at least 2 characters to search');
@@ -484,19 +444,15 @@ function SearchResults() {
     }
   };
 
-  // Clear search function
   const handleClearSearch = async () => {
     setSearchTerm('');
     setError(null);
     
-    // Update URL to remove search parameters
     navigate('/search', { replace: true });
     
-    // Reset to browse all universities
     setLoading(true);
     const allUniversitiesData = await getAllUniversities();
     
-    // Get ratings for all universities
     const universitiesWithRatings = await getUniversitiesWithRatings(allUniversitiesData);
     
     setUniversities(universitiesWithRatings);
@@ -505,7 +461,6 @@ function SearchResults() {
     setLoading(false);
   };
 
-  // Handle university click
   const handleUniversityClick = (university) => {
     const universitySlug = createSlug(university.name);
     navigate(`/university/${universitySlug}`, { state: { universityId: university.id } });

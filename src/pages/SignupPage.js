@@ -24,7 +24,7 @@ function SignUpPage() {
   const [isValidDateOfBirth, setIsValidDateOfBirth] = useState(false);
   const navigate = useNavigate();
 
-  // List of common nationalities (Singaporean first, then alphabetical)
+  // List of common nationalities
   const nationalities = [
     'Singaporean',
     ...['Malaysian',
@@ -114,13 +114,11 @@ function SignUpPage() {
   };
 
   const checkPasswordStrength = (password) => {
-    // At least 8 characters, one uppercase, one lowercase, one number
     const strongPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/;
     return strongPassword.test(password);
   };
 
   const checkName = (name) => {
-    // Name should be at least 2 characters and contain only letters, spaces, hyphens, and apostrophes
     const namePattern = /^[a-zA-Z\s\-']{2,}$/;
     return namePattern.test(name.trim());
   };
@@ -188,7 +186,6 @@ function SignUpPage() {
       setIsValidPassword(true);
     }
 
-    // Recheck confirm password if it exists
     if (confirmPassword && newPassword !== confirmPassword) {
       setConfirmPasswordError('Passwords do not match');
       setIsValidConfirmPassword(false);
@@ -215,7 +212,6 @@ function SignUpPage() {
   };
 
   const checkDateOfBirth = (date) => {
-    // Check DD/MM/YYYY format
     const datePattern = /^(\d{2})\/(\d{2})\/(\d{4})$/;
     const match = date.match(datePattern);
     
@@ -225,12 +221,10 @@ function SignUpPage() {
     const month = parseInt(match[2]);
     const year = parseInt(match[3]);
     
-    // Basic validation
     if (month < 1 || month > 12) return false;
     if (day < 1 || day > 31) return false;
     if (year < 1900 || year > new Date().getFullYear()) return false;
     
-    // Check if date is valid (e.g., no February 30th)
     const testDate = new Date(year, month - 1, day);
     return testDate.getDate() === day && 
           testDate.getMonth() === month - 1 && 
@@ -240,8 +234,7 @@ function SignUpPage() {
   const handleDateOfBirthChange = (e) => {
     let value = e.target.value;
     
-    // Auto-format as user types (add slashes)
-    value = value.replace(/\D/g, ''); // Remove non-digits
+    value = value.replace(/\D/g, '');
     if (value.length >= 2 && value.length < 4) {
       value = value.slice(0, 2) + '/' + value.slice(2);
     } else if (value.length >= 4) {
@@ -278,7 +271,7 @@ function SignUpPage() {
   try {
     console.log('About to send request...');
     
-    const response = await fetch('http://localhost:5000/api/register', {
+    const response = await fetch('http://124.243.144.171:5000/api/register', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -288,7 +281,7 @@ function SignUpPage() {
         firstName: firstName,
         lastName: lastName,
         nationality: nationality,
-        dateOfBirth: dateOfBirth,  // ← ADD THIS LINE
+        dateOfBirth: dateOfBirth,
         password: password
       })
     });
@@ -296,12 +289,11 @@ function SignUpPage() {
     const data = await response.json();
 
     if (response.ok) {
-      // Save user to localStorage using data from backend
       const userData = {
         email: email,
         id: data.userId,
-        firstName: data.user.firstName,    // Get from backend response
-        lastName: data.user.lastName,      // Get from backend response
+        firstName: data.user.firstName,   
+        lastName: data.user.lastName,  
         name: data.user.firstName + ' ' + data.user.lastName,
         nationality: data.user.nationality,
         dateOfBirth: data.user.dateOfBirth, 
@@ -309,7 +301,6 @@ function SignUpPage() {
       };
       localStorage.setItem('wanderwise_user', JSON.stringify(userData));
       
-      // Navigate to home page instead of login
       navigate('/');
     } else {
       alert(data.error);

@@ -56,7 +56,7 @@
 
 .left-section {
   flex: 2;
-  min-width: 0; /* Prevents flex item from overflowing */
+  min-width: 0; 
 }
 
 .right-section {
@@ -68,7 +68,6 @@
   gap: 20px;
 }
 
-/* University Header */
 .university-header {
   background: white;
   border-radius: 16px;
@@ -166,7 +165,6 @@
   font-size: 16px;
 }
 
-/* Featured Reviews */
 .featured-reviews {
   background: white;
   border-radius: 16px;
@@ -298,7 +296,6 @@
   color: #777;
 }
 
-/* Right Section Styles */
 .expenses-section,
 .photo-highlights,
 .top-countries {
@@ -328,7 +325,6 @@
   font-weight: 700;
 }
 
-/* Expenses Chart */
 .expenses-chart {
   display: flex;
   flex-direction: column;
@@ -397,7 +393,6 @@
   font-size: 14px;
 }
 
-/* Expense tooltip styles */
 .expense-tooltip {
   position: absolute;
   top: -40px;
@@ -426,7 +421,6 @@
   border-color: #2c2c2c transparent transparent transparent;
 }
 
-/* Photo Highlights */
 .photo-carousel {
   width: 100%;
   overflow: hidden;
@@ -475,7 +469,6 @@
   font-size: 14px;
 }
 
-/* Countries List */
 .countries-list {
   display: flex;
   flex-direction: column;
@@ -530,7 +523,6 @@
   font-size: 14px;
 }
 
-/* Loading and Error States */
 .loading,
 .error {
   text-align: center;
@@ -552,7 +544,6 @@
   color: #666;
 }
 
-/* Swiper Navigation and Pagination Styles */
 .photo-carousel .swiper-button-next,
 .photo-carousel .swiper-button-prev {
   color: #ff8a65;
@@ -582,7 +573,6 @@
   opacity: 1;
 }
 
-/* Responsive Design */
 @media (max-width: 1200px) {
   .main-content {
     max-width: 1200px;

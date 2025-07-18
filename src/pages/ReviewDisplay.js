@@ -5,7 +5,6 @@ import { Navigation, Pagination, Autoplay, EffectCoverflow } from 'swiper/module
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 
-// Import Swiper styles
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
@@ -13,12 +12,10 @@ import 'swiper/css/effect-coverflow';
 
 import './ReviewDisplay.css';
 
-// Initialize Supabase
 const supabaseUrl = 'https://aojighzqmzouwhxyndbs.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvamlnaHpxbXpvdXdoeHluZGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MDgyNTMsImV4cCI6MjA2Nzk4NDI1M30.1f2HHXbYxP8KaABhv4uw151Xj1mRDWxd63pHYgKIXnQ';
 const supabaseClient = createClient(supabaseUrl, supabaseKey); 
 
-// Image Gallery Component
 const ImageGallery = ({ imageUrls }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -481,7 +478,6 @@ const ImageGallery = ({ imageUrls }) => {
   );
 };
 
-// Star Rating Component
 const StarRating = ({ rating, label }) => {
   const validRating = rating && !isNaN(rating) ? Number(rating) : 0;
   
@@ -501,7 +497,6 @@ const StarRating = ({ rating, label }) => {
   );
 };
 
-// ExpenseChart Component
 const ExpenseChart = ({ expenses, currency }) => {
   const [isVisible, setIsVisible] = useState(false);
   
@@ -705,7 +700,6 @@ const ExpenseChart = ({ expenses, currency }) => {
   );
 };
 
-// Main Review Display Component - FIXED VERSION
 const ReviewDisplay = () => {
   const [review, setReview] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -732,8 +726,6 @@ const ReviewDisplay = () => {
       setLoading(true);
       setError(null);
 
-      // FIXED: Separate queries to avoid relationship issues
-      // Step 1: Get the main review data
       const { data: reviewData, error: reviewError } = await supabaseClient
         .from('reviews')
         .select('*')
@@ -751,7 +743,6 @@ const ReviewDisplay = () => {
         throw new Error('No review found with this ID');
       }
 
-      // Step 2: Get university data separately
       let universityData = null;
       if (reviewData.university_id) {
         const { data: uniData, error: uniError } = await supabaseClient
@@ -763,7 +754,6 @@ const ReviewDisplay = () => {
         if (!uniError && uniData) {
           universityData = uniData;
           
-          // Step 3: Get country data for the university
           if (uniData.country_code) {
             const { data: countryData, error: countryError } = await supabaseClient
               .from('countries')
@@ -778,7 +768,6 @@ const ReviewDisplay = () => {
         }
       }
 
-      // Step 4: Get user data separately
       let userData = null;
       if (reviewData.user_id) {
         const { data: userDataResult, error: userError } = await supabaseClient
@@ -792,22 +781,19 @@ const ReviewDisplay = () => {
         }
       }
 
-      // Combine all data
       const combinedData = {
         ...reviewData,
         universities: universityData,
         users: userData
       };
 
-      // Process imageUrls - ensure they're valid URLs
       if (combinedData.imageUrls && Array.isArray(combinedData.imageUrls)) {
         combinedData.imageUrls = combinedData.imageUrls
-          .filter(url => url && url.trim()) // Remove empty URLs
+          .filter(url => url && url.trim()) 
           .map(url => {
             if (url.startsWith('http')) {
               return url;
             } else {
-              // Convert storage path to public URL
               const { data: publicUrl } = supabaseClient.storage
                 .from('wanderwise')
                 .getPublicUrl(url);
@@ -818,7 +804,6 @@ const ReviewDisplay = () => {
         combinedData.imageUrls = [];
       }
 
-      // Process visitedCountries - ensure it's an array
       console.log('Raw visitedCountries from database:', combinedData.visitedCountries);
       if (combinedData.visitedCountries && Array.isArray(combinedData.visitedCountries)) {
         combinedData.visitedCountries = combinedData.visitedCountries.filter(country => country && country.trim());
@@ -842,10 +827,8 @@ const ReviewDisplay = () => {
     }
   };
 
-  // Handle back button - navigate to university profile
   const handleBackClick = () => {
     if (review && review.universities) {
-      // Create a slug from the university name
       const universitySlug = review.universities.name
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
@@ -855,7 +838,7 @@ const ReviewDisplay = () => {
         state: { universityId: review.universities.id }
       });
     } else {
-      navigate(-1); // Fallback to browser back
+      navigate(-1);
     }
   };
 
@@ -882,7 +865,6 @@ const ReviewDisplay = () => {
     </div>
   );
 
-  // Calculate average rating from detailed ratings
   const detailRatings = [
     review.academicRating,
     review.cultureRating,
@@ -890,14 +872,11 @@ const ReviewDisplay = () => {
     review.safetyRating
   ].map(r => Number(r) || 0).filter(r => r > 0);
 
-  // Compute an un‑rounded average
   const rawAvg = detailRatings.reduce((sum, r) => sum + r, 0) / detailRatings.length;
 
-  // Round to 2 decimal places
   const averageRating = Math.round(rawAvg * 100) / 100;
   const formattedRating = averageRating.toFixed(2);
   
-  // Calculate total expenses
   const total = [
     review.expenseFood, 
     review.expenseShopping, 

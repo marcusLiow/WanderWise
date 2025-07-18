@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // Add this import
+import { useNavigate } from 'react-router-dom';
 
 const HomePage = () => {
-  const navigate = useNavigate(); // Add this hook
+  const navigate = useNavigate(); 
   const [searchQuery, setSearchQuery] = useState('');
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -18,13 +18,11 @@ const HomePage = () => {
     }
   };
 
-  // Add this function to handle country clicks
   const handleCountryClick = (countryName) => {
     const searchSlug = countryName.toLowerCase().replace(/\s+/g, '-');
     navigate(`/search?q=${encodeURIComponent(searchSlug)}`);
   };
 
-  // University carousel data
   const universitySlides = [
     {
       name: 'ESSEC Business School',
@@ -46,7 +44,6 @@ const HomePage = () => {
     }
   ];
 
-  // Auto-rotate carousel
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % universitySlides.length);
@@ -96,7 +93,6 @@ const HomePage = () => {
     }
   ];
 
-  // Updated Popular Destinations with working images and no university counts
   const popularDestinations = [
     { name: 'France', count: '120+ universities', image: 'https://images.unsplash.com/photo-1549144511-f099e773c147?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80'  },
     { name: 'Germany', count: '85+ universities', image: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80' },
@@ -287,12 +283,12 @@ const HomePage = () => {
       color: '#666',
       lineHeight: 1.6
     },
-    // Popular Destinations section styles
+
     graySection: {
       backgroundColor: '#fef7ed', 
       padding: '2px 20px'
     },
-    // Section title and subtitle colors for Popular Destinations
+
     destinationSectionTitle: {
       fontSize: 'clamp(2rem, 4vw, 2.5rem)',
       fontWeight: 'bold',
@@ -412,7 +408,6 @@ const HomePage = () => {
     }
   };
 
-  // CSS for animations
   const animationCSS = `
     @keyframes float {
       0%, 100% { transform: translateY(0px); }
@@ -613,7 +608,7 @@ const HomePage = () => {
                 key={index} 
                 className="hover-lift" 
                 style={styles.destinationCard}
-                onClick={() => handleCountryClick(destination.name)} // Add click handler
+                onClick={() => handleCountryClick(destination.name)}
               >
                 <div style={{
                   ...styles.destinationImage,

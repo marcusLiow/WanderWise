@@ -10,7 +10,6 @@ function Navbar() {
   const [user, setUser] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
 
-  // Check if user is logged in when component mounts OR when location changes
   useEffect(() => {
     const savedUser = localStorage.getItem('wanderwise_user');
     if (savedUser) {
@@ -21,7 +20,6 @@ function Navbar() {
     }
   }, [location]);
 
-  // Listen for profile updates
   useEffect(() => {
     const handleUserDataUpdate = () => {
       const savedUser = localStorage.getItem('wanderwise_user');
@@ -79,7 +77,6 @@ function Navbar() {
     navigate('/');
   };
 
-  // Get user's initials for avatar
   const getUserInitials = () => {
     if (!user?.firstName && !user?.name && !user?.email) return 'U';
     const name = user.firstName || user.name || user.email.split('@')[0];

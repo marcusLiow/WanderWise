@@ -3,12 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
 import './WriteReview.css';
 
-// Initialize Supabase
 const supabaseUrl = 'https://aojighzqmzouwhxyndbs.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvamlnaHpxbXpvdXdoeHluZGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MDgyNTMsImV4cCI6MjA2Nzk4NDI1M30.1f2HHXbYxP8KaABhv4uw151Xj1mRDWxd63pHYgKIXnQ';
 const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
-// Image Upload Component
 const ImageUpload = ({ images, setImages }) => {
   const fileInputRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -122,7 +120,6 @@ const ImageUpload = ({ images, setImages }) => {
   );
 };
 
-// StarRating component
 const StarRating = ({ rating, setRating, label, readOnly = false, comment, setComment, placeholder }) => (
   <div className="write-review-rating-section">
     <label className="write-review-label">
@@ -161,7 +158,6 @@ const StarRating = ({ rating, setRating, label, readOnly = false, comment, setCo
   </div>
 );
 
-// Travel Section Component
 const TravelSection = ({ didTravel, setDidTravel, visitedCountries, setVisitedCountries, countries }) => {
   const handleCountryToggle = (countryName) => {
     setVisitedCountries(prev => 
@@ -194,7 +190,7 @@ const TravelSection = ({ didTravel, setDidTravel, visitedCountries, setVisitedCo
             checked={didTravel === false}
             onChange={() => {
               setDidTravel(false);
-              setVisitedCountries([]); // Clear visited countries if no travel
+              setVisitedCountries([]);
             }}
             className="write-review-radio"
           />
@@ -240,13 +236,11 @@ const TravelSection = ({ didTravel, setDidTravel, visitedCountries, setVisitedCo
 function WriteReview() {
   const navigate = useNavigate();
   
-  // Database state
   const [countries, setCountries] = useState([]);
   const [universities, setUniversities] = useState([]);
   const [filteredUniversities, setFilteredUniversities] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Form state hooks
   const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedUniversity, setSelectedUniversity] = useState('');
   const [courseStudied, setCourseStudied] = useState('');
@@ -278,15 +272,12 @@ function WriteReview() {
     miscellaneous: ''
   });
   
-  // New travel state
   const [didTravel, setDidTravel] = useState(null);
   const [visitedCountries, setVisitedCountries] = useState([]);
 
-  // Load countries and universities from database
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Load countries
         const { data: countriesData, error: countriesError } = await supabaseClient
           .from('countries')
           .select('*')
@@ -295,7 +286,6 @@ function WriteReview() {
         if (countriesError) throw countriesError;
         setCountries(countriesData);
 
-        // Load universities
         const { data: universitiesData, error: universitiesError } = await supabaseClient
           .from('universities')
           .select(`
@@ -318,7 +308,6 @@ function WriteReview() {
     loadData();
   }, []);
 
-  // Filter universities when country changes
   useEffect(() => {
     if (selectedCountry) {
       const filtered = universities.filter(uni => uni.countries.name === selectedCountry);
@@ -328,9 +317,7 @@ function WriteReview() {
     }
   }, [selectedCountry, universities]);
 
-  // Helper functions
   const handleNext = () => {
-    // Basic validation before proceeding
     if (!selectedCountry || !selectedUniversity || !courseStudied || !gpa || 
         academicRating === 0 || cultureRating === 0 || foodRating === 0 || 
         accommodationRating === 0 || safetyRating === 0 || selectedTags.length === 0 || 
@@ -339,7 +326,6 @@ function WriteReview() {
       return;
     }
 
-    // Check minimum character requirements
     const textFields = [
       { value: academicComment, name: 'Academic Experience comment' },
       { value: cultureComment, name: 'Cultural Experience comment' },
@@ -368,10 +354,9 @@ function WriteReview() {
 
   const handleCountryChange = (countryName) => {
     setSelectedCountry(countryName);
-    setSelectedUniversity(''); // Reset university selection
+    setSelectedUniversity('');
   };
 
-  // Auto-compute overall rating
   const computedOverallRating = useMemo(() => {
     const ratings = [academicRating, cultureRating, foodRating, accommodationRating, safetyRating];
     const validRatings = ratings.filter(rating => rating > 0);
@@ -380,7 +365,6 @@ function WriteReview() {
     return Math.round(average);
   }, [academicRating, cultureRating, foodRating, accommodationRating, safetyRating]);
 
-  // Upload images to Supabase Storage - FIXED VERSION
   const uploadImagesToSupabase = async () => {
     if (images.length === 0) return [];
     
@@ -388,15 +372,12 @@ function WriteReview() {
     
     for (const image of images) {
       try {
-        // Generate unique filename
         const fileExt = image.file.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
         const filePath = `reviews/${fileName}`;
         
-        // Convert file to ArrayBuffer for better compatibility
         const arrayBuffer = await image.file.arrayBuffer();
         
-        // Upload to Supabase Storage with explicit content type
         const { data, error } = await supabaseClient.storage
           .from('wanderwise')
           .upload(filePath, arrayBuffer, {
@@ -407,10 +388,9 @@ function WriteReview() {
         
         if (error) {
           console.error('Upload error for file:', image.file.name, error);
-          continue; // Skip this image but continue with others
+          continue; 
         }
         
-        // Get public URL
         const { data: { publicUrl } } = supabaseClient.storage
           .from('wanderwise')
           .getPublicUrl(filePath);
@@ -427,7 +407,6 @@ function WriteReview() {
     return imageUrls;
   };
 
-  // Static data
   const experienceTags = [
     'Friendly Locals', 'Beautiful Campus',
     'Travel Opportunities', 'Supportive Professors',
@@ -462,7 +441,6 @@ function WriteReview() {
     'TWD - Taiwan Dollar'
   ];
 
-  // Tag click handler
   const handleTagClick = (tag) => {
     setSelectedTags(prev =>
       prev.includes(tag)
@@ -477,7 +455,6 @@ const handleSubmit = async () => {
     return;
   }
 
-  // Check localStorage login
   const stored = localStorage.getItem('wanderwise_user');
   if (!stored) {
     setSubmitMessage('You must be logged in to submit a review.');
@@ -489,10 +466,8 @@ const handleSubmit = async () => {
   setSubmitMessage('Uploading images and submitting review…');
 
   try {
-    // Upload images first
     const imageUrls = await uploadImagesToSupabase();
 
-    // Build payload
     const currencyCode = currency.split(' - ')[0];
     const selectedUniversityObj = filteredUniversities.find(u => u.name === selectedUniversity);
     if (!selectedUniversityObj) throw new Error('Selected university not found');
@@ -528,7 +503,6 @@ const handleSubmit = async () => {
       visitedCountries
     };
 
-    // 4️⃣ Insert review
     const { data, error } = await supabaseClient
       .from('reviews')
       .insert([reviewData])
@@ -548,7 +522,6 @@ const handleSubmit = async () => {
 };
 
 
-  // Calculate total expenses
   const totalExpenses = useMemo(() => {
     return (
       parseFloat(expenses.food || 0) +
@@ -560,7 +533,6 @@ const handleSubmit = async () => {
     ).toFixed(2);
   }, [expenses]);
 
-  // Loading state
   if (loading) {
     return (
       <div className="write-review-container">
@@ -573,7 +545,6 @@ const handleSubmit = async () => {
     );
   }
 
-  // Render UI
   return (
     <div className="write-review-container">
       <div className="write-review-content">

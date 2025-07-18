@@ -8,7 +8,6 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import './UniversityProfile.css';
 
-// Supabase client
 const supabase = createClient(
   'https://aojighzqmzouwhxyndbs.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvamlnaHpxbXpvdXdoeHluZGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MDgyNTMsImV4cCI6MjA2Nzk4NDI1M30.1f2HHXbYxP8KaABhv4uw151Xj1mRDWxd63pHYgKIXnQ'
@@ -20,7 +19,7 @@ const UniversityProfile = () => {
   const navigate = useNavigate();
   const [university, setUniversity] = useState(null);
   const [reviews, setReviews] = useState([]);
-  const [reviewsFromTable, setReviewsFromTable] = useState([]); // New state for reviews table data
+  const [reviewsFromTable, setReviewsFromTable] = useState([]);
   const [topCountries, setTopCountries] = useState([]);
   const [photoHighlights, setPhotoHighlights] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,7 +46,6 @@ const UniversityProfile = () => {
 
       let universityData = null;
       
-      // Try to fetch university by ID first
       if (universityId) {
         try {
           const { data: uniData, error: uniError } = await supabase
@@ -70,12 +68,10 @@ const UniversityProfile = () => {
         }
       }
       
-      // If not found by ID, try by slug/name
       if (!universityData && universitySlug) {
         try {
           const searchName = slugToName(universitySlug);
           
-          // Try exact match first
           let { data: uniData, error: uniError } = await supabase
             .from('universities')
             .select(`
@@ -88,7 +84,6 @@ const UniversityProfile = () => {
             .eq('name', searchName)
             .single();
           
-          // If exact match fails, try fuzzy match
           if (uniError) {
             const { data: fuzzyData, error: fuzzyError } = await supabase
               .from('universities')
@@ -117,7 +112,6 @@ const UniversityProfile = () => {
         throw new Error('University not found');
       }
 
-      // Fetch reviews from reviews table (for ratings, expenses, and visited countries)
       try {
         console.log('Fetching reviews from reviews table for university ID:', universityData.id);
         
@@ -133,7 +127,6 @@ const UniversityProfile = () => {
           console.log('Reviews from reviews table:', reviewsTableData?.length || 0);
           setReviewsFromTable(reviewsTableData || []);
           
-          // Process top countries from reviews table visitedCountries field
           const countryCount = {};
           reviewsTableData?.forEach(review => {
             if (review.visitedCountries && Array.isArray(review.visitedCountries)) {
@@ -145,12 +138,10 @@ const UniversityProfile = () => {
             }
           });
           
-          // Sort countries by count and get top 3
           const sortedCountries = Object.entries(countryCount)
             .sort(([,a], [,b]) => b - a)
             .slice(0, 3);
           
-          // Get country details for top countries
           if (sortedCountries.length > 0) {
             const countryNames = sortedCountries.map(([name]) => name);
             const { data: countryData, error: countryError } = await supabase
@@ -169,7 +160,6 @@ const UniversityProfile = () => {
               });
               setTopCountries(topCountriesWithFlags);
             } else {
-              // Fallback: create country objects with generated flags
               const topCountriesWithFlags = sortedCountries.map(([name, count]) => ({
                 name,
                 count,
@@ -184,12 +174,10 @@ const UniversityProfile = () => {
         setReviewsFromTable([]);
       }
 
-      // Fetch reviews from review_details table (summary/preview data for display)
       try {
         console.log('Fetching reviews for university:', universityData.name);
         console.log('University ID:', universityData.id);
         
-        // First, try to query by university name (exact match)
         let { data: reviewsData, error: reviewsError } = await supabase
           .from('review_details')
           .select('*')
@@ -198,7 +186,6 @@ const UniversityProfile = () => {
 
         console.log('Reviews query result (exact match):', { reviewsData, reviewsError });
 
-        // If no exact match, try case-insensitive search
         if ((!reviewsData || reviewsData.length === 0) && !reviewsError) {
           console.log('Trying case-insensitive search by university name...');
           
@@ -216,7 +203,6 @@ const UniversityProfile = () => {
           }
         }
 
-        // If still no results, try partial match
         if ((!reviewsData || reviewsData.length === 0) && !reviewsError) {
           console.log('Trying partial match search...');
           
@@ -234,7 +220,6 @@ const UniversityProfile = () => {
           }
         }
 
-        // Debug: Let's also check what university names are available in the database
         const { data: allUniversityNames, error: namesError } = await supabase
           .from('review_details')
           .select('university_name')
@@ -251,7 +236,6 @@ const UniversityProfile = () => {
           console.log('Review data sample:', reviewsData?.[0]);
           setReviews(reviewsData || []);
           
-          // Process photo highlights from reviews
           const photoHighlightsData = [];
           reviewsData?.forEach(review => {
             if (review.imageUrls && Array.isArray(review.imageUrls)) {
@@ -281,11 +265,9 @@ const UniversityProfile = () => {
     }
   };
 
-  // Updated function to get top 3 expense categories from reviews table
   const getTopExpenseCategories = () => {
     if (reviewsFromTable.length === 0) return [];
     
-    // Calculate averages for all expense categories
     const expenseCategories = [
       { name: 'Rental', field: 'expenseRental', total: 0, count: 0 },
       { name: 'Food', field: 'expenseFood', total: 0, count: 0 },
@@ -295,7 +277,6 @@ const UniversityProfile = () => {
       { name: 'Miscellaneous', field: 'expenseMiscellaneous', total: 0, count: 0 }
     ];
 
-    // Sum up all expenses for each category
     reviewsFromTable.forEach(review => {
       expenseCategories.forEach(category => {
         const value = review[category.field];
@@ -306,7 +287,6 @@ const UniversityProfile = () => {
       });
     });
 
-    // Calculate averages and filter out categories with no data
     const averages = expenseCategories
       .map(category => ({
         name: category.name,
@@ -315,12 +295,11 @@ const UniversityProfile = () => {
       }))
       .filter(category => category.average > 0)
       .sort((a, b) => b.average - a.average)
-      .slice(0, 3); // Get top 3
+      .slice(0, 3);
 
     return averages;
   };
 
-  // Updated function to get average overall rating from reviews table
   const getAverageRating = () => {
     if (reviewsFromTable.length === 0) return null;
     
@@ -350,7 +329,6 @@ const UniversityProfile = () => {
     if (review?.profileImage) {
       return review.profileImage;
     }
-    // Use firstName + lastName or fallback to a seed based on review id
     const seed = review?.firstName && review?.lastName 
       ? `${review.firstName}${review.lastName}` 
       : review?.id?.toString() || Math.random().toString();
@@ -375,13 +353,11 @@ const UniversityProfile = () => {
     return 'Unknown';
   };
 
-  // Handle review click - redirect to ReviewDisplay page with the review ID
   const handleReviewClick = (reviewId) => {
     console.log('Navigating to review with ID:', reviewId);
     navigate(`/review/1?id=${reviewId}`);
   };
 
-  // Handle photo click - redirect to specific review
   const handlePhotoClick = (reviewId) => {
     console.log('Navigating to review from photo with ID:', reviewId);
     navigate(`/review/1?id=${reviewId}`);
