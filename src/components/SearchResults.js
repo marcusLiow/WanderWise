@@ -21,7 +21,7 @@ import { createClient } from '@supabase/supabase-js';
 const SUPABASE_URL = 'https://aojighzqmzouwhxyndbs.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvamlnaHpxbXpvdXdoeHluZGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MDgyNTMsImV4cCI6MjA2Nzk4NDI1M30.1f2HHXbYxP8KaABhv4uw151Xj1mRDWxd63pHYgKIXnQ';
 
-// Initialize Supabase client
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const getCountriesList = async () => {
@@ -231,7 +231,7 @@ const getUniversityRating = async (universityId) => {
     }
 
     if (!reviewsData || reviewsData.length === 0) {
-      return null; // No reviews found
+      return null;
     }
 
     const ratingsWithValues = reviewsData.filter(review => 
@@ -239,7 +239,7 @@ const getUniversityRating = async (universityId) => {
     );
     
     if (ratingsWithValues.length === 0) {
-      return null; // No valid ratings found
+      return null; 
     }
     
     const total = ratingsWithValues.reduce((sum, review) => sum + review.overallRating, 0);
@@ -601,12 +601,14 @@ function SearchResults() {
           </Typography>
         </Box>
       ) : (
-        <Grid container spacing={3}>
+        <Grid container spacing={3} sx={{ alignItems: 'stretch' }}>
           {universities.map((university) => (
-            <Grid item xs={12} md={6} lg={4} key={university.id}>
+            <Grid item xs={12} md={6} key={university.id} sx={{ display: 'flex' }}>
               <Card 
                 sx={{ 
-                  height: '100%',
+                  width: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
                   transition: 'transform 0.2s, box-shadow 0.2s',
                   cursor: 'pointer',
                   '&:hover': {
@@ -617,12 +619,34 @@ function SearchResults() {
               >
                 <CardActionArea 
                   onClick={() => handleUniversityClick(university)}
-                  sx={{ height: '100%' }}
+                  sx={{ 
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'stretch'
+                  }}
                 >
-                  <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <CardContent sx={{ 
+                    height: '100%', 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    p: 3
+                  }}>
                     <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                      <SchoolIcon sx={{ mr: 1, color: 'primary.main', mt: 0.5 }} />
-                      <Typography variant="h6" component="h2" sx={{ flexGrow: 1, lineHeight: 1.3 }}>
+                      <SchoolIcon sx={{ mr: 1, color: 'primary.main', mt: 0.5, flexShrink: 0 }} />
+                      <Typography 
+                        variant="h6" 
+                        component="h2" 
+                        sx={{ 
+                          flexGrow: 1, 
+                          lineHeight: 1.3,
+                          minHeight: '2.6em',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden'
+                        }}
+                      >
                         {university.name}
                       </Typography>
                     </Box>
@@ -648,20 +672,33 @@ function SearchResults() {
                       )}
                     </Box>
 
-                    {university.description && (
-                      <Typography 
-                        variant="body2" 
-                        color="text.secondary" 
-                        sx={{ mb: 2, flexGrow: 1, lineHeight: 1.5 }}
-                      >
-                        {university.description.length > 120 
-                          ? `${university.description.substring(0, 120)}...` 
-                          : university.description
-                        }
-                      </Typography>
-                    )}
+                    <Box sx={{ flexGrow: 1, mb: 2 }}>
+                      {university.description ? (
+                        <Typography 
+                          variant="body2" 
+                          color="text.secondary" 
+                          sx={{ 
+                            lineHeight: 1.5,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 3,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            minHeight: '4.5em' 
+                          }}
+                        >
+                          {university.description}
+                        </Typography>
+                      ) : (
+                        <Box sx={{ minHeight: '4.5em' }} /> 
+                      )}
+                    </Box>
 
-                    <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center',
+                      mt: 'auto'
+                    }}>
                       {university.calculatedRating !== null ? (
                         <Chip 
                           label={`⭐ ${university.calculatedRating.toFixed(1)}/5`}
@@ -698,9 +735,10 @@ function SearchResults() {
             Browse All Universities
           </Button>
         </Box>
-      )}
+    )}
     </Container>
   );
-}
+  }
+
 
 export default SearchResults;
