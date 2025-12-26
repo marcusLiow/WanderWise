@@ -1,10 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useRive, Layout, Fit, Alignment } from '@rive-app/react-webgl';
 
 const HomePage = () => {
   const navigate = useNavigate(); 
   const [searchQuery, setSearchQuery] = useState('');
   const [currentSlide, setCurrentSlide] = useState(0);
+  const riveRef = useRef(null);
+
+  const { rive, RiveComponent } = useRive({
+    src: '/globe.riv',
+    stateMachines: 'State Machine 1',
+    layout: new Layout({
+      fit: Fit.Contain,
+      alignment: Alignment.Center,
+    }),
+    autoplay: true,
+    onLoad: () => {
+      console.log('Rive animation loaded successfully');
+    }
+  });
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
@@ -23,33 +38,52 @@ const HomePage = () => {
     navigate(`/search?q=${encodeURIComponent(searchSlug)}`);
   };
 
-  const universitySlides = [
+  const citySlides = [
     {
-      name: 'ESSEC Business School',
-      location: 'Paris, France',
-      image: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
-      description: 'World-class business education in the heart of Paris'
+      city: 'Paris',
+      country: 'France',
+      image: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80',
+      description: 'Experience art, culture, and world-class education'
     },
     {
-      name: 'University of Melbourne',
-      location: 'Melbourne, Australia', 
-      image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
-      description: 'Leading research university with vibrant campus life'
+      city: 'Melbourne',
+      country: 'Australia',
+      image: 'https://images.unsplash.com/photo-1514395462725-fb4566210144?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80',
+      description: 'Vibrant campus life in a dynamic city'
     },
     {
-      name: 'Copenhagen Business School',
-      location: 'Copenhagen, Denmark',
-      image: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
-      description: 'Innovative business programs in beautiful Scandinavia'
+      city: 'Copenhagen',
+      country: 'Denmark',
+      image: 'https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80',
+      description: 'Innovation and sustainability in beautiful Scandinavia'
+    },
+    {
+      city: 'Tokyo',
+      country: 'Japan',
+      image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80',
+      description: 'Blend of tradition and cutting-edge technology'
     }
+
+    
   ];
+
+  const marqueeImages = [
+  { city: 'Paris', image: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' },
+  { city: 'Tokyo', image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' },
+  { city: 'New York', image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' },
+  { city: 'London', image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' },
+  { city: 'Sydney', image: 'https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' },
+  { city: 'Barcelona', image: 'https://images.unsplash.com/photo-1562883676-8c7feb83f09b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' },
+  { city: 'Dubai', image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' },
+  { city: 'Singapore', image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' }
+];
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % universitySlides.length);
+      setCurrentSlide((prev) => (prev + 1) % citySlides.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, [universitySlides.length]);
+  }, [citySlides.length]);
 
   const features = [
     {
@@ -414,6 +448,21 @@ const HomePage = () => {
       50% { transform: translateY(-20px); }
     }
     
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .hero-content {
+      animation: fadeInUp 0.8s ease-out;
+    }
+    
     .hover-lift:hover {
       transform: translateY(-10px);
       box-shadow: 0 20px 40px rgba(0,0,0,0.15);
@@ -447,7 +496,7 @@ const HomePage = () => {
         text-align: center;
       }
       
-      .floating-cards {
+      .globe-container {
         display: none;
       }
       
@@ -455,126 +504,175 @@ const HomePage = () => {
         grid-template-columns: 1fr;
       }
     }
+      @keyframes scroll {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+  
+  .marquee {
+    overflow: hidden;
+    white-space: nowrap;
+    position: relative;
+  }
+  
+  .marquee-content {
+    display: inline-block;
+    animation: scroll 40s linear infinite;
+  }
+  
+  .marquee:hover .marquee-content {
+    animation-play-state: paused;
+  }
   `;
 
   return (
     <div style={styles.container}>
       <style>{animationCSS}</style>
       
-      {/* Hero Section */}
-      <section style={styles.hero}>
-        <div 
-          style={{
-            ...styles.heroBackground,
-            backgroundImage: `url(${universitySlides[currentSlide].image})`
-          }}
-        />
-        <div style={styles.heroOverlay} />
-        
-        <div style={styles.heroContent} className="hero-content">
-          <div style={styles.heroLeft}>
-            <h1 style={styles.heroTitle}>
-              Find Your Perfect
-              <br />Exchange University
-            </h1>
-            <p style={styles.heroSubtitle}>
-              Discover amazing universities worldwide through authentic student reviews and detailed expense insights. Your global education journey starts here.
-            </p>
+{/* Hero Section */}
+<section style={styles.hero}>
+  {/* White background */}
+  <div style={{
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    background: '#FFFFFF',
+    zIndex: 0
+  }} />
+  
+  {/* Globe as visible background animation */}
+  <div style={{
+    position: 'absolute',
+    top: '200px',
+    left: '45%',
+    width: '60%',
+    height: '60%',
+    transform: 'translate(-50%, -50%)',
+    opacity: 0.5,
+    zIndex: 1,
+    pointerEvents: 'none'
+  }}>
+    <RiveComponent style={{ width: '120%', height: '120%' }} />
+  </div>
+  
+  <div style={{
+    maxWidth: '1200px',
+    margin: '0 auto',
+    width: '100%',
+    position: 'relative',
+    zIndex: 2,
+    textAlign: 'center',
+    padding: '0 20px'
+  }}>
+    <h1 style={{
+      fontSize: 'clamp(2.5rem, 5vw, 3.5rem)',
+      fontWeight: 'bold',
+      color: '#D94000',
+      marginBottom: '16px',
+      lineHeight: 1.2
+    }}>
+      Find Your Perfect
+      <br />Exchange University
+    </h1>
+    <p style={{
+      fontSize: '1.25rem',
+      color: '#8B4513',
+      marginBottom: '32px',
+      fontWeight: 400,
+      lineHeight: 1.5,
+      maxWidth: '700px',
+      margin: '0 auto 32px'
+    }}>
+      Discover amazing universities worldwide through authentic student reviews and detailed expense insights. Your global education journey starts here.
+    </p>
 
-            {/* Search Bar */}
-            <div style={styles.searchContainer}>
-              <input
-                type="text"
-                placeholder="Search universities or countries..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={handleKeyPress}
-                style={styles.searchInput}
-              />
-              <button 
-                style={styles.searchButton}
-                className="search-button"
-                onClick={handleSearch}
-              >
-                Search
-              </button>
-            </div>
-          </div>
-          
-          {/* Floating Cards */}
-          <div className="floating-cards" style={{ position: 'relative', width: '100%', height: '100%' }}>
-            {/* Average monthly cost - Top Right */}
+    {/* Search Bar - Centered */}
+    <div style={{
+      display: 'flex',
+      maxWidth: '600px',
+      margin: '0 auto 48px',
+      boxShadow: '0 10px 25px rgba(255, 63, 0, 0.15)',
+      borderRadius: '50px',
+      overflow: 'hidden',
+      border: '2px solid #FFF0E6'
+    }}>
+      <input
+        type="text"
+        placeholder="Search universities or countries..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        onKeyPress={handleKeyPress}
+        style={{
+          flex: 1,
+          padding: '16px 24px',
+          fontSize: '1rem',
+          border: 'none',
+          outline: 'none',
+          backgroundColor: 'white',
+          color: '#333'
+        }}
+      />
+      <button 
+        style={styles.searchButton}
+        className="search-button"
+        onClick={handleSearch}
+      >
+        Search
+      </button>
+    </div>
+    
+    {/* City Images Marquee */}
+    <div className="marquee" style={{
+      width: '100%',
+      padding: '20px 0'
+    }}>
+      <div className="marquee-content">
+        {/* Duplicate the array twice for seamless loop */}
+        {[...marqueeImages, ...marqueeImages].map((item, index) => (
+          <div key={index} style={{
+            display: 'inline-block',
+            margin: '0 12px',
+            width: '200px',
+            height: '140px',
+            borderRadius: '12px',
+            overflow: 'hidden',
+            position: 'relative',
+            boxShadow: '0 4px 15px rgba(255, 63, 0, 0.2)',
+            border: '2px solid #FFF0E6'
+          }}>
             <div style={{
-              ...styles.floatingCard,
-              top: '8%',
-              right: '15%',
-              animationDelay: '0s',
-              maxWidth: '200px',
-              zIndex: 3
+              width: '100%',
+              height: '100%',
+              backgroundImage: `url(${item.image})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
             }}>
-              <div style={{ fontSize: '0.9rem', color: '#666', textAlign: 'center' }}>
-                💰 Average monthly cost
-              </div>
-              <div style={{ fontWeight: 'bold', fontSize: '1.2rem', color: '#FF3F00', textAlign: 'center' }}>
-                $2,400
-              </div>
-            </div>
-            
-            {/* Review card - Middle overlapping */}
-            <div style={{
-              ...styles.floatingCard,
-              top: '30%',
-              right: '48%',
-              animationDelay: '2s',
-              maxWidth: '250px',
-              zIndex: 2
-            }}>
-              <div style={{ marginBottom: '8px', textAlign: 'center' }}>
-                <span style={{ color: '#FFD700' }}>★★★★★</span>
-                <span style={{ fontWeight: 'bold', marginLeft: '8px' }}>4.8/5</span>
-              </div>
-              <div style={{ fontSize: '0.9rem', color: '#666', textAlign: 'center' }}>
-                "Amazing experience in Copenhagen!"
-              </div>
-            </div>
-            
-            {/* ESSEC Business School - Bottom overlapping */}
-            <div style={{
-              ...styles.floatingCard,
-              top: '55%',
-              right: '6%',
-              animationDelay: '4s',
-              maxWidth: '260px',
-              zIndex: 1
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '50%',
-                  backgroundColor: '#FF3F00',
-                  color: 'white',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 'bold',
-                  fontSize: '0.8rem'
-                }}>
-                  FR
-                </div>
-                <div>
-                  <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>
-                    ESSEC Business School
-                  </div>
-                  <div style={{ color: '#666', fontSize: '0.8rem' }}>
-                    Paris, France
-                  </div>
-                </div>
+              <div style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                padding: '12px',
+                background: 'linear-gradient(to top, rgba(255, 63, 0, 0.9), transparent)',
+                color: 'white',
+                fontSize: '0.9rem',
+                fontWeight: '600'
+              }}>
+                {item.city}
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* Features Section */}
       <section style={styles.section}>
