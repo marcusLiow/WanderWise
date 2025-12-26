@@ -9,7 +9,7 @@ try {
   const { createClient } = require('@supabase/supabase-js');
   
   // Supabase connection (Updated with your credentials)
-  const supabaseUrl = 'https://aojighzqmzouwhxyndbs.supabase.co/';
+  const supabaseUrl = 'https://aojighzqmzouwhxyndbs.supabase.co';
   const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvamlnaHpxbXpvdXdoeHluZGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MDgyNTMsImV4cCI6MjA2Nzk4NDI1M30.1f2HHXbYxP8KaABhv4uw151Xj1mRDWxd63pHYgKIXnQ';
   supabase = createClient(supabaseUrl, supabaseKey);
   console.log('✅ Supabase client created successfully');
@@ -44,7 +44,7 @@ async function testSupabase() {
 }
 
 // Test connection only in development
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV === 'production') {
   testSupabase();
 }
 
@@ -535,13 +535,15 @@ app.get('/api/universities', async (req, res) => {
 // SERVE REACT BUILD (FOR PRODUCTION)
 // ===========================================
 
-// Serve React build files
-app.use(express.static(path.join(__dirname, '../build')));
-
-// Handle React routing, return all requests to React app
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../build', 'index.html'));
-});
+// Serve static files from React build
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../build')));
+  
+  // Handle React routing - catch all other routes
+  app.get(/.*/, (req, res) => {
+    res.sendFile(path.join(__dirname, '../build', 'index.html'));
+  });
+}
 
 // ===========================================
 // START SERVER

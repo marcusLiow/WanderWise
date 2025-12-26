@@ -43,7 +43,7 @@ function LoginPage() {
     try {
       console.log('Attempting login with:', { email, password }); 
       
-      const response = await fetch('http://124.243.144.171:5000/api/login', {
+      const response = await fetch('http://localhost:5000/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -128,7 +128,7 @@ function LoginPage() {
     }
 
     try {
-      const response = await fetch('http://124.243.144.171:5000/api/reset-password', {
+      const response = await fetch('http://localhost:5000/api/reset-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

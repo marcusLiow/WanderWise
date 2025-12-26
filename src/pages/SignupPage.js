@@ -271,7 +271,7 @@ function SignUpPage() {
   try {
     console.log('About to send request...');
     
-    const response = await fetch('http://124.243.144.171:5000/api/register', {
+    const response = await fetch('http://localhost:5000/api/register', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
