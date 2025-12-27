@@ -6,7 +6,8 @@ const HomePage = () => {
   const navigate = useNavigate(); 
   const [searchQuery, setSearchQuery] = useState('');
   const [currentSlide, setCurrentSlide] = useState(0);
-  const riveRef = useRef(null);
+  const riveInstanceRef = useRef(null);
+  const cleanupAttemptedRef = useRef(false);
 
   const { rive, RiveComponent } = useRive({
     src: '/globe.riv',
@@ -20,6 +21,59 @@ const HomePage = () => {
       console.log('Rive animation loaded successfully');
     }
   });
+
+  // Store rive instance and override cleanup method
+  useEffect(() => {
+    if (rive && !riveInstanceRef.current) {
+      riveInstanceRef.current = rive;
+      
+      // Override the cleanup method to prevent errors
+      const originalCleanup = rive.cleanup?.bind(rive);
+      if (originalCleanup) {
+        rive.cleanup = function() {
+          try {
+            originalCleanup();
+          } catch (error) {
+            // Suppress the _a.delete error silently
+            if (!error.message?.includes('delete is not a function')) {
+              console.debug('Rive cleanup:', error.message);
+            }
+          }
+        };
+      }
+    }
+  }, [rive]);
+
+  // Cleanup on unmount with multiple safety layers
+  useEffect(() => {
+    return () => {
+      if (cleanupAttemptedRef.current) return;
+      cleanupAttemptedRef.current = true;
+
+      try {
+        if (riveInstanceRef.current) {
+          // Attempt cleanup
+          if (typeof riveInstanceRef.current.cleanup === 'function') {
+            riveInstanceRef.current.cleanup();
+          }
+          
+          // Try to stop the animation
+          if (typeof riveInstanceRef.current.pause === 'function') {
+            riveInstanceRef.current.pause();
+          }
+          
+          // Try to stop state machine
+          if (typeof riveInstanceRef.current.stop === 'function') {
+            riveInstanceRef.current.stop();
+          }
+        }
+      } catch (error) {
+        // Silently suppress all Rive cleanup errors
+      } finally {
+        riveInstanceRef.current = null;
+      }
+    };
+  }, []);
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
