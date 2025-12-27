@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
+import { Filter } from 'bad-words';
 import './WriteReview.css';
 
 const supabaseUrl = 'https://aojighzqmzouwhxyndbs.supabase.co';
@@ -235,6 +236,7 @@ const TravelSection = ({ didTravel, setDidTravel, visitedCountries, setVisitedCo
 
 function WriteReview() {
   const navigate = useNavigate();
+  const filter = useMemo(() => new Filter(), []);
   
   const [countries, setCountries] = useState([]);
   const [universities, setUniversities] = useState([]);
@@ -339,6 +341,28 @@ function WriteReview() {
       if (!field.value || field.value.trim().length < 50) {
         setSubmitMessage(`${field.name} must be at least 50 characters long.`);
         return;
+      }
+    }
+
+    // Check for profanity
+    const profanityCheck = [
+      { value: courseStudied, name: 'Course Studied' },
+      { value: academicComment, name: 'Academic Experience comment' },
+      { value: cultureComment, name: 'Cultural Experience comment' },
+      { value: foodComment, name: 'Food comment' },
+      { value: accommodationComment, name: 'Accommodation comment' },
+      { value: safetyComment, name: 'Safety comment' },
+      { value: reviewText, name: 'Overall exchange experience' },
+      { value: tipsText, name: 'Tips for future students' }
+    ];
+
+    for (const field of profanityCheck) {
+      if (field.value) {
+        console.log(`Checking ${field.name}:`, filter.isProfane(field.value));
+        if (filter.isProfane(field.value)) {
+          setSubmitMessage(`${field.name} contains inappropriate language. Please revise your text.`);
+          return;
+        }
       }
     }
 
@@ -453,6 +477,26 @@ const handleSubmit = async () => {
   if (!currency) {
     setSubmitMessage('Please select a currency before submitting.');
     return;
+  }
+
+  // Check for profanity one more time before final submission
+  const profanityCheck = [
+    { value: courseStudied, name: 'Course Studied' },
+    { value: academicComment, name: 'Academic Experience comment' },
+    { value: cultureComment, name: 'Cultural Experience comment' },
+    { value: foodComment, name: 'Food comment' },
+    { value: accommodationComment, name: 'Accommodation comment' },
+    { value: safetyComment, name: 'Safety comment' },
+    { value: reviewText, name: 'Overall exchange experience' },
+    { value: tipsText, name: 'Tips for future students' }
+  ];
+
+  for (const field of profanityCheck) {
+    if (field.value && filter.isProfane(field.value)) {
+      setSubmitMessage(`${field.name} contains inappropriate language. Please revise your text.`);
+      setCurrentStep(1); // Go back to step 1 if profanity found
+      return;
+    }
   }
 
   const stored = localStorage.getItem('wanderwise_user');
@@ -757,7 +801,9 @@ const handleSubmit = async () => {
               <div className="write-review-actions">
                 {submitMessage && (
                   <div className={`write-review-message ${
-                    submitMessage.includes('Error') || submitMessage.includes('Please fill')
+                    submitMessage.includes('Error') || 
+                    submitMessage.includes('Please fill') || 
+                    submitMessage.includes('inappropriate language')
                       ? 'error'
                       : 'success'
                   }`}>
@@ -842,7 +888,9 @@ const handleSubmit = async () => {
                 <div className="write-review-submit-section">
                   {submitMessage && (
                     <div className={`write-review-message ${
-                      submitMessage.includes('Error') || submitMessage.includes('Please select')
+                      submitMessage.includes('Error') || 
+                      submitMessage.includes('Please select') ||
+                      submitMessage.includes('inappropriate language')
                         ? 'error'
                         : 'success'
                     }`}>
