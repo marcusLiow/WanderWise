@@ -12,7 +12,7 @@ const CountryListPage = () => {
         { country: 'Hong Kong', region: 'Asia', count: 7, image: 'https://images.unsplash.com/photo-1536599018102-9f803c140fc1?w=400&h=300&fit=crop' },
         { country: 'Japan', region: 'Asia', count: 14, image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400&h=300&fit=crop' },
         { country: 'South Korea', region: 'Asia', count: 12, image: 'https://images.unsplash.com/photo-1517154421773-0529f29ea451?w=400&h=300&fit=crop' },
-        { country: 'Taiwan', region: 'Asia', count: 7, image: 'https://images.unsplash.com/photo-1519677100203-a0e668c92439?w=400&h=300&fit=crop' }, // Taiwan landmark
+        { country: 'Taiwan', region: 'Asia', count: 7, image: 'https://images.unsplash.com/photo-1519677100203-a0e668c92439?w=400&h=300&fit=crop' },
         { country: 'Thailand', region: 'Asia', count: 3, image: 'https://images.unsplash.com/photo-1528181304800-259b08848526?w=400&h=300&fit=crop' },
         { country: 'Philippines', region: 'Asia', count: 1, image: 'https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?w=400&h=300&fit=crop' },
         
@@ -24,12 +24,12 @@ const CountryListPage = () => {
         { country: 'Belgium', region: 'Europe', count: 5, image: 'https://images.unsplash.com/photo-1515777315835-281b94c9589f?w=400&h=300&fit=crop' },
         { country: 'Czech Republic', region: 'Europe', count: 1, image: 'https://images.unsplash.com/photo-1541849546-216549ae216d?w=400&h=300&fit=crop' },
         { country: 'Denmark', region: 'Europe', count: 3, image: 'https://images.unsplash.com/photo-1508189860359-777d945909ef?w=400&h=300&fit=crop' },
-        { country: 'Finland', region: 'Europe', count: 2, image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop' }, // Finland landmark
+        { country: 'Finland', region: 'Europe', count: 2, image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop' },
         { country: 'France', region: 'Europe', count: 9, image: 'https://images.unsplash.com/photo-1431274172761-fca41d930114?w=400&h=300&fit=crop' },
         { country: 'Germany', region: 'Europe', count: 8, image: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=400&h=300&fit=crop' },
         { country: 'Hungary', region: 'Europe', count: 1, image: 'https://images.unsplash.com/photo-1527838832700-5059252407fa?w=400&h=300&fit=crop' },
         { country: 'Iceland', region: 'Europe', count: 1, image: 'https://images.unsplash.com/photo-1539627831859-a911cf04d3cd?w=400&h=300&fit=crop' },
-        { country: 'Ireland', region: 'Europe', count: 2, image: 'https://images.unsplash.com/photo-1549918864-48ac978761a4?w=400&h=300&fit=crop' }, // Cliffs of Moher
+        { country: 'Ireland', region: 'Europe', count: 2, image: 'https://images.unsplash.com/photo-1549918864-48ac978761a4?w=400&h=300&fit=crop' },
         { country: 'Italy', region: 'Europe', count: 4, image: 'https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=400&h=300&fit=crop' },
         { country: 'Lithuania', region: 'Europe', count: 1, image: 'https://images.unsplash.com/photo-1571771019784-3ff35f4f4277?w=400&h=300&fit=crop' },
         { country: 'Norway', region: 'Europe', count: 2, image: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=300&fit=crop' },
@@ -46,15 +46,14 @@ const CountryListPage = () => {
         
         // North America
         { country: 'Canada', region: 'North America', count: 9, image: 'https://images.unsplash.com/photo-1517935706615-2717063c2225?w=400&h=300&fit=crop' },
-        { country: 'United States', region: 'North America', count: 12, image: 'https://images.unsplash.com/photo-1485738422979-f5c462d49f74?w=400&h=300&fit=crop' }, // Statue of Liberty
+        { country: 'United States', region: 'North America', count: 12, image: 'https://images.unsplash.com/photo-1485738422979-f5c462d49f74?w=400&h=300&fit=crop' },
         
         // Oceania
-        { country: 'Australia', region: 'Oceania', count: 1, image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop' }, // Sydney Opera House
+        { country: 'Australia', region: 'Oceania', count: 1, image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop' },
         
         // South America
         { country: 'Brazil', region: 'South America', count: 1, image: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=400&h=300&fit=crop' }
-];
-
+    ];
 
     const regions = ['All', 'Asia', 'Europe', 'North America', 'Middle East', 'Central Asia', 'Oceania', 'South America'];
 
@@ -65,9 +64,7 @@ const CountryListPage = () => {
         return exchangeData.filter(item => item.region === selectedRegion).sort((a, b) => b.count - a.count);
     }, [selectedRegion]);
 
-    // Navigation function
     const handleDestinationClick = (destinationName) => {
-        // Navigate to search results page with the destination name as query parameter
         navigate(`/search?q=${encodeURIComponent(destinationName)}`);
     };
 
@@ -80,22 +77,40 @@ const CountryListPage = () => {
             backgroundColor: '#f8f9fa'
         },
         header: {
-            background: 'linear-gradient(135deg, #ff3f00 0%, #764ba2 100%)',
-            color: 'white',
+            backgroundImage: 'url("countriescollage.jpg")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            position: 'relative',
+            color: '#ff3f00',
             padding: '60px 20px',
-            textAlign: 'center'
+            textAlign: 'center',
+            minHeight: '400px',
+        },
+
+        headerContent: {
+            position: 'relative',
+            zIndex: 2,
+            zIndex: 2,
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            padding: '40px',
+            borderRadius: '20px',
+            maxWidth: '900px',
+            margin: '0 auto',      
+            boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
         },
         title: {
             fontSize: '3rem',
             fontWeight: 'bold',
             marginBottom: '1rem',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+            color: '#ff3f00',
+            textShadow: 'none'
         },
         subtitle: {
             fontSize: '1.2rem',
-            opacity: '0.9', 
+            opacity: '0.9',
             maxWidth: '600px',
-            margin: '0 auto'
+            margin: '0 auto',
+            color: '#333'
         },
         filterSection: {
             backgroundColor: 'white',
@@ -193,7 +208,10 @@ const CountryListPage = () => {
             gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
             gap: '20px',
             marginTop: '40px',
-            padding: '0 20px'
+            position: 'relative',
+            zIndex: 2,
+            maxWidth: '800px',
+            margin: '40px auto 0'
         },
         statCard: {
             backgroundColor: 'white',
@@ -222,28 +240,33 @@ const CountryListPage = () => {
     return (
         <div style={styles.container}>
             {/* Header */}
-            <header style={styles.header}>
-                <h1 style={styles.title}>Study Abroad Destinations</h1>
-                <p style={styles.subtitle}>
-                    Discover amazing opportunities at top universities worldwide through SMU's International Student Exchange Programme
-                </p>
-                
-                {/* Stats */}
-                <div style={styles.stats}>
-                    <div style={styles.statCard}>
-                        <div style={styles.statNumber}>{totalCountries}</div>
-                        <div style={styles.statLabel}>Countries</div>
-                    </div>
-                    <div style={styles.statCard}>
-                        <div style={styles.statNumber}>{totalUniversities}</div>
-                        <div style={styles.statLabel}>Universities</div>
-                    </div>
-                    <div style={styles.statCard}>
-                        <div style={styles.statNumber}>{regions.length - 1}</div>
-                        <div style={styles.statLabel}>Regions</div>
+            <div style={styles.header}>
+                <div style={styles.headerContent}>
+                    <h1 style={styles.title}>Study Abroad Destinations</h1>
+                    <p style={styles.subtitle}>
+                        Discover amazing opportunities at top universities worldwide through
+                        SMU's International Student Exchange Programme
+                    </p>
+                    
+                    {/* Stats */}
+                    <div style={styles.statsContainer}>
+                        <div style={styles.stats}>
+                            <div style={styles.statCard}>
+                                <div style={styles.statNumber}>{totalCountries}</div>
+                                <div style={styles.statLabel}>Countries</div>
+                            </div>
+                            <div style={styles.statCard}>
+                                <div style={styles.statNumber}>{totalUniversities}</div>
+                                <div style={styles.statLabel}>Universities</div>
+                            </div>
+                            <div style={styles.statCard}>
+                                <div style={styles.statNumber}>{regions.length - 1}</div>
+                                <div style={styles.statLabel}>Regions</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </header>
+            </div>
 
             {/* Filter Section */}
             <div style={styles.filterSection}>

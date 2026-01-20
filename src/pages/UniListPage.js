@@ -236,9 +236,8 @@ const UniListPage = () => {
             >
                 <div style={{
                     ...styles.destinationImage,
-                    backgroundImage: imageError ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : `url(${imageSrc})`
+                    backgroundImage: imageError ? '#FFA756' : `url(${imageSrc})`
                 }}>
-                    {/* Hidden img tag to trigger error handling */}
                     {!imageError && (
                         <img 
                             src={imageSrc} 
@@ -279,7 +278,6 @@ const UniListPage = () => {
                     <p style={{ color: '#888', fontSize: '0.9rem', margin: '5px 0 0 0' }}>
                         {university.region}
                     </p>
-                    {/* UPDATED: Display rating from Supabase reviews table instead of university.rating */}
                     {averageRating !== null ? (
                         <p style={{ color: '#ff3f00', fontSize: '0.9rem', margin: '10px 0 0 0', fontWeight: 'bold' }}>
                             ⭐ {averageRating.toFixed(1)}/5.0
@@ -434,22 +432,36 @@ const UniListPage = () => {
             backgroundColor: '#f8f9fa'
         },
         header: {
-            background: 'linear-gradient(135deg, #ff3f00 0%, #764ba2 100%)',
-            color: 'white',
+            backgroundImage: 'url("cleancollege.jpg")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            position: 'relative',
             padding: '60px 20px',
-            textAlign: 'center'
+            textAlign: 'center',
+            minHeight: '400px'
+        },
+        headerContent: {
+            position: 'relative',
+            zIndex: 2,
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            padding: '40px',
+            borderRadius: '20px',
+            maxWidth: '900px',
+            margin: '0 auto',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
         },
         title: {
             fontSize: '3rem',
             fontWeight: 'bold',
             marginBottom: '1rem',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+            color: '#ff3f00',
+            textShadow: 'none'
         },
         subtitle: {
             fontSize: '1.2rem',
-            opacity: '0.9',
             maxWidth: '600px',
-            margin: '0 auto'
+            margin: '0 auto 2rem',
+            color: '#333'
         },
         filterSection: {
             backgroundColor: 'white',
@@ -546,8 +558,7 @@ const UniListPage = () => {
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
             gap: '20px',
-            marginTop: '40px',
-            padding: '0 20px'
+            marginTop: '0'
         },
         statCard: {
             backgroundColor: 'white',
@@ -591,8 +602,10 @@ const UniListPage = () => {
         return (
             <div style={styles.container}>
                 <header style={styles.header}>
-                    <h1 style={styles.title}>Partner Universities</h1>
-                    <p style={styles.subtitle}>Loading universities and ratings from our database...</p>
+                    <div style={styles.headerContent}>
+                        <h1 style={styles.title}>Partner Universities</h1>
+                        <p style={styles.subtitle}>Loading universities and ratings from our database...</p>
+                    </div>
                 </header>
                 <div style={styles.loadingContainer}>
                     Loading universities...
@@ -605,8 +618,10 @@ const UniListPage = () => {
         return (
             <div style={styles.container}>
                 <header style={styles.header}>
-                    <h1 style={styles.title}>Partner Universities</h1>
-                    <p style={styles.subtitle}>Something went wrong</p>
+                    <div style={styles.headerContent}>
+                        <h1 style={styles.title}>Partner Universities</h1>
+                        <p style={styles.subtitle}>Something went wrong</p>
+                    </div>
                 </header>
                 <div style={styles.errorContainer}>
                     <div>
@@ -627,24 +642,26 @@ const UniListPage = () => {
         <div style={styles.container}>
             {/* Header */}
             <header style={styles.header}>
-                <h1 style={styles.title}>Partner Universities</h1>
-                <p style={styles.subtitle}>
-                    Discover amazing opportunities at top universities worldwide through SMU's International Student Exchange Programme
-                </p>
-                
-                {/* Stats */}
-                <div style={styles.stats}>
-                    <div style={styles.statCard}>
-                        <div style={styles.statNumber}>{totalUniversities}</div>
-                        <div style={styles.statLabel}>Universities</div>
-                    </div>
-                    <div style={styles.statCard}>
-                        <div style={styles.statNumber}>{totalCountries}</div>
-                        <div style={styles.statLabel}>Countries</div>
-                    </div>
-                    <div style={styles.statCard}>
-                        <div style={styles.statNumber}>{totalRegions}</div>
-                        <div style={styles.statLabel}>Regions</div>
+                <div style={styles.headerContent}>
+                    <h1 style={styles.title}>Partner Universities</h1>
+                    <p style={styles.subtitle}>
+                        Discover amazing opportunities at top universities worldwide through SMU's International Student Exchange Programme
+                    </p>
+                    
+                    {/* Stats */}
+                    <div style={styles.stats}>
+                        <div style={styles.statCard}>
+                            <div style={styles.statNumber}>{totalUniversities}</div>
+                            <div style={styles.statLabel}>Universities</div>
+                        </div>
+                        <div style={styles.statCard}>
+                            <div style={styles.statNumber}>{totalCountries}</div>
+                            <div style={styles.statLabel}>Countries</div>
+                        </div>
+                        <div style={styles.statCard}>
+                            <div style={styles.statNumber}>{totalRegions}</div>
+                            <div style={styles.statLabel}>Regions</div>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -690,7 +707,6 @@ const UniListPage = () => {
                         }
                     </p>
 
-                    {/* UPDATED: Using enhanced UniversityCard component */}
                     <div style={styles.grid}>
                         {filteredData.map((university, index) => (
                             <UniversityCard 
