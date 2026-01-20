@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useRive, Layout, Fit, Alignment } from '@rive-app/react-webgl';
+import { useRive, Layout, Fit, Alignment } from '@rive-app/react-canvas';
 
 const HomePage = () => {
   const navigate = useNavigate(); 
