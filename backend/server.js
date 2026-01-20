@@ -1,10 +1,7 @@
-require('dotenv').config(); 
-
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const path = require('path');
-const moderationRoutes = require('./routes/moderation');
 
 // Check if Supabase is installed
 let supabase;
